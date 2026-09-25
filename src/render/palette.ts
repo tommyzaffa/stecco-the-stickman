@@ -1,0 +1,28 @@
+import * as THREE from 'three';
+
+// Tutta la palette del gioco. Il mondo è inchiostro su carta:
+// gli unici colori "veri" sono la penna rossa (obiettivi), la penna blu
+// (missioni secondarie) e gli evidenziatori (la gang).
+export const PAPER_HEX = '#f3eee2';
+export const INK_HEX = '#1e1d24';
+export const RED_HEX = '#d6333a';
+export const BLUE_HEX = '#2f5bd3';
+export const HIGHLIGHT_YELLOW_HEX = '#e8f53a';
+
+export const PAPER = new THREE.Color(PAPER_HEX);
+export const INK = new THREE.Color(INK_HEX);
+
+// RNG deterministico: lo stesso "disegno" a ogni avvio.
+export function makeRng(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export const rng = makeRng(1337);
+export const rand = (min: number, max: number) => min + (max - min) * rng();
