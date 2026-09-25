@@ -45,6 +45,9 @@ export class Fighter {
   hostile = false;
   suspicion = 0;
   opts: FighterOpts;
+  // "resistenza": dopo tre colpi di fila l'avversario non si fa più interrompere e contrattacca
+  recentHits: number[] = [];
+  armored = false;
   strafe = Math.random() > 0.5 ? 1 : -1;
 
   constructor(o: FighterOpts = {}) {
@@ -53,8 +56,8 @@ export class Fighter {
     this.dmg = o.dmg ?? 11;
     this.speed = o.speed ?? 3.6;
     this.reach = o.reach ?? 1.7;
-    this.windup = o.windup ?? 0.5;
-    this.cooldown = o.cooldown ?? 0.8;
+    this.windup = o.windup ?? 0.6;
+    this.cooldown = o.cooldown ?? 1.0;
     this.vision = o.vision;
   }
 
@@ -67,6 +70,8 @@ export class Fighter {
     this.state = 'idle';
     this.hostile = false;
     this.suspicion = 0;
+    this.armored = false;
+    this.recentHits = [];
   }
 }
 
@@ -75,6 +80,8 @@ const _v = new THREE.Vector3();
 export class Combat {
   // zona in cui le guardie ti considerano un intruso
   restricted: (p: THREE.Vector3) => boolean = () => false;
+  // punti di passaggio (porte): se un avversario non ti vede, passa da qui per raggiungerti
+  nav: THREE.Vector3[] = [];
   private lastAlert = -10;
 
   constructor(private g: Game) {}
@@ -100,6 +107,7 @@ export class Combat {
       f.hostile = true;
       f.state = 'chase';
       npc.controlled = true;
+      if (npc.body instanceof Stickman) npc.body.seated = false;
       if (f.opts.alertLine) npc.say(f.opts.alertLine, 2.5);
       if (this.g.time - this.lastAlert > 1.5) {
         this.g.audio.alert();
@@ -144,13 +152,26 @@ export class Combat {
       if (f.opts.koLine) npc.say(f.opts.koLine, 3);
       else npc.say(['Zzz...', 'Ho visto le stelline disegnate...', 'Mamma...', 'Ok. Ok. Hai vinto.'][Math.floor(Math.random() * 4)], 3);
       g.audio.ko();
+      g.addXp(15);
       g.onKo(npc);
       return;
     }
     const wasHostile = f.hostile;
     this.provoke(npc, wasHostile ? 0 : 10);
-    f.state = 'stagger';
-    f.t = 0.35;
+    f.recentHits = f.recentHits.filter((t) => g.time - t < 1.6);
+    f.recentHits.push(g.time);
+    if (f.armored) {
+      // sta già contrattaccando: incassa senza fermarsi
+    } else if (f.recentHits.length >= 3) {
+      f.recentHits = [];
+      f.armored = true;
+      f.state = 'windup';
+      f.t = 0.38;
+      npc.say(['BASTA!', 'Adesso tocca a me!', 'Ora basta!'][Math.floor(Math.random() * 3)], 1.2);
+    } else {
+      f.state = 'stagger';
+      f.t = 0.35;
+    }
     if (npc.body instanceof Stickman) npc.body.punchReaction();
     const lines = f.opts.hurtLines ?? ['Ahia!', 'Ugh!', 'Questa me la paghi!', 'Ehi!'];
     if (Math.random() < 0.4) npc.say(lines[Math.floor(Math.random() * lines.length)], 1.8);
@@ -176,7 +197,7 @@ export class Combat {
       if (!f.hostile) {
         if (f.vision && g.mode === 'play' && !g.dialogue.isOpen) {
           const seen = inRestricted && this.canSee(n, f.vision.range * (g.player.crouching ? 0.55 : 1), f.vision.fov);
-          if (seen) f.suspicion += dt * (0.55 + 1.8 * Math.max(0, 1 - d / f.vision.range)) * (g.player.crouching ? 0.6 : 1);
+          if (seen) f.suspicion += dt * (0.35 + 1.2 * Math.max(0, 1 - d / f.vision.range)) * (g.player.crouching ? 0.6 : 1);
           else f.suspicion = Math.max(0, f.suspicion - dt * 0.2);
           // insospettito: si ferma e si gira verso di te
           n.controlled = f.suspicion > 0.3;
@@ -200,9 +221,12 @@ export class Combat {
         case 'idle':
         case 'chase': {
           if (body) body.action = 'guard';
-          this.face(n, p.x, p.z, dt, 8);
-          if (d > f.reach * 0.85) {
-            speed = this.move(n, dx / d, dz / d, f.speed, dt);
+          const tgt = this.chaseTarget(n);
+          this.face(n, tgt.x, tgt.z, dt, 8);
+          if (d > f.reach * 0.85 || tgt !== p) {
+            const tx = tgt.x - n.pos.x, tz = tgt.z - n.pos.z;
+            const td = Math.hypot(tx, tz) || 1;
+            speed = this.move(n, tx / td, tz / td, f.speed, dt);
           } else if (tokens < 2 && g.mode === 'play') {
             f.state = 'windup';
             f.t = f.windup;
@@ -219,6 +243,7 @@ export class Combat {
           f.t -= dt;
           if (f.t <= 0) {
             f.state = 'strike';
+            f.armored = false;
             f.t = 0.18;
             if (body) body.action = 'strike';
             g.audio.swing('fist');
@@ -288,6 +313,25 @@ export class Combat {
     const rot = n.body.root.rotation.y;
     const dot = (dx * Math.sin(rot) + dz * Math.cos(rot)) / (d || 1);
     if (dot < Math.cos((fov * Math.PI) / 360)) return false;
-    return !this.g.world.colliders.blocked(n.pos.x, n.pos.z, p.x, p.z);
+    return !this.g.world.colliders.blocked(n.pos.x, n.pos.z, p.x, p.z, this.g.player.crouching);
+  }
+
+  // Dove andare per raggiungere il giocatore: dritto se c'è strada libera, altrimenti verso la porta migliore
+  private chaseTarget(n: NPC) {
+    const p = this.g.player.pos;
+    const col = this.g.world.colliders;
+    if (!col.blocked(n.pos.x, n.pos.z, p.x, p.z)) return p;
+    let best: THREE.Vector3 | null = null;
+    let bestCost = Infinity;
+    for (const w of this.nav) {
+      if (Math.hypot(w.x - n.pos.x, w.z - n.pos.z) < 0.6) continue;
+      if (col.blocked(n.pos.x, n.pos.z, w.x, w.z)) continue;
+      const cost = n.pos.distanceTo(w) + w.distanceTo(p) + (col.blocked(w.x, w.z, p.x, p.z) ? 12 : 0);
+      if (cost < bestCost) {
+        bestCost = cost;
+        best = w;
+      }
+    }
+    return best ?? p;
   }
 }

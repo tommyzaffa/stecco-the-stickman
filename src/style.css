@@ -220,7 +220,7 @@ b.blue { color: var(--blue); }
 
 /* --- minigioco di ballo ----------------------------------------------------- */
 .dance {
-  position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); text-align: center;
+  position: absolute; left: 50%; top: 70%; transform: translate(-50%, -50%); text-align: center;
   display: none; pointer-events: none;
 }
 .dance .key {

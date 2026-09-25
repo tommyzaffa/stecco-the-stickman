@@ -20,3 +20,21 @@ export const VOICES: Record<string, Voice> = {
   rossi: { base: 172, type: 'square', spread: 3, every: 3 },
   giallo: { base: 108, type: 'sawtooth', spread: 3, every: 3, vol: 0.065 },
 };
+
+// Capitolo 2
+Object.assign(VOICES, {
+  ornella: { base: 330, type: 'triangle', spread: 5, every: 2 },
+  nando: { base: 150, type: 'square', spread: 4, every: 2 },
+  dj: { base: 240, type: 'sawtooth', spread: 9, every: 1, vol: 0.045 },
+  rey: { base: 190, type: 'square', spread: 10, every: 2 },
+  linea: { base: 420, type: 'sine', spread: 3, every: 3, vol: 0.05 },
+  rosa: { base: 300, type: 'sawtooth', spread: 4, every: 2, vol: 0.05 },
+  verde: { base: 130, type: 'sawtooth', spread: 3, every: 3 },
+  arancione: { base: 160, type: 'sawtooth', spread: 5, every: 2 },
+  azzurro: { base: 210, type: 'sawtooth', spread: 5, every: 2 },
+  viola: { base: 120, type: 'sawtooth', spread: 3, every: 3 },
+  fluo: { base: 95, type: 'sawtooth', spread: 6, every: 3, vol: 0.075, vibrato: 6 },
+  fila1: { base: 230, type: 'triangle', spread: 5, every: 2 },
+  fila2: { base: 280, type: 'square', spread: 6, every: 2 },
+  fila3: { base: 175, type: 'triangle', spread: 4, every: 2 },
+});

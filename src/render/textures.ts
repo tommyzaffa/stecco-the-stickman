@@ -298,3 +298,22 @@ export function rulerTexture() {
   ctx.strokeRect(2, 2, 508, 60);
   return toTexture(c);
 }
+
+// Luna a spicchio col gesso
+export function moonTexture() {
+  const { c, ctx } = canvas(256, 256);
+  ctx.fillStyle = THEME.paperHex;
+  ctx.strokeStyle = THEME.inkHex;
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.arc(128, 128, 90, Math.PI * 0.35, Math.PI * 1.65);
+  ctx.bezierCurveTo(130, 60, 115, 190, 128 + Math.cos(Math.PI * 0.35) * 90, 128 + Math.sin(Math.PI * 0.35) * 90);
+  ctx.stroke();
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.arc(80 + i * 12, 100 + i * 30, 6 + i * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  return toTexture(c);
+}

@@ -15,6 +15,8 @@ meta-ironia sul fatto di essere disegnati (niente mani, niente tasche, niente co
   in ombra, post-processing con grana della carta e *line boil* a 8 fps.
 - Omini con scheletro e animazioni procedurali (camminata, corsa, pose, reazioni ai colpi).
 - Sistema di dialoghi a nodi con scelte, missioni a passi, inventario, esperienza e livelli.
+- Risse con parata e contrattacchi, guardie con campo visivo e linea di vista, minigioco di ballo.
+- Un capitolo = un luogo diverso: San Scarabocchio di giorno (inchiostro), il club di notte (gesso).
 - Audio sintetizzato con Web Audio: voci "a bip" diverse per ogni personaggio, suoni ambientali
   spaziali, musica procedurale.
 
@@ -36,11 +38,15 @@ Poi apri http://localhost:5317.
 | Shift | correre |
 | Spazio | saltare |
 | E | parlare / interagire |
-| Click | pugno |
+| Click | colpire |
+| Tasto destro | parare |
+| C | accovacciarsi |
 | Q | diario |
 | 1 / 2 | cambiare arma |
 | M | musica on/off |
 
 ## Stato
 
-Capitolo 1 completo. Il piano dei capitoli è in [docs/CAPITOLI.md](docs/CAPITOLI.md).
+Capitoli 1 e 2 completi. Il piano dei capitoli è in [docs/CAPITOLI.md](docs/CAPITOLI.md).
+
+Per saltare direttamente a un capitolo: `http://localhost:5317/?cap=2`.

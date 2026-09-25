@@ -5,6 +5,7 @@ import { COINS_NEEDED } from './quests';
 
 export function setupStory(g: Game) {
   const A = g.world.anchors;
+  g.audio.birds = true;
   g.setCheckpoint(A.spawn, A.alarm, 'Ti risvegli a casa. Qualcuno ti ha riportato qui');
   const alarmSound = g.audio.addEmitter('alarm', A.alarm, 30);
   g.audio.addEmitter('fountain', A.fountain, 16);

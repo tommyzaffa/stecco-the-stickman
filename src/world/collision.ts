@@ -1,7 +1,7 @@
 import type * as THREE from 'three';
 
 // Collisioni 2D sul piano XZ: il mondo è piatto, basta e avanza.
-export interface Rect { x0: number; z0: number; x1: number; z1: number; noSight?: boolean }
+export interface Rect { x0: number; z0: number; x1: number; z1: number; noSight?: boolean; low?: boolean }
 export interface Circle { x: number; z: number; r: number }
 
 export class Colliders {
@@ -31,12 +31,13 @@ export class Colliders {
   }
 
   // true se il segmento A→B attraversa un ostacolo (muri, mobili). Usato per la vista delle guardie.
-  blocked(ax: number, az: number, bx: number, bz: number, minSize = 0.2) {
+  // Gli ostacoli "low" (casse, banconi) nascondono solo chi è accovacciato.
+  blocked(ax: number, az: number, bx: number, bz: number, crouching = false, minSize = 0.2) {
     const dx = bx - ax, dz = bz - az;
     for (const r of this.rects) {
       // ostacoli bassi o minuscoli (es. gambe dei tavoli) non contano
       if (r.x1 - r.x0 < minSize && r.z1 - r.z0 < minSize) continue;
-      if (r.noSight) continue;
+      if (r.noSight || (r.low && !crouching)) continue;
       // slab test
       let t0 = 0, t1 = 1;
       const clip = (p: number, q: number) => {

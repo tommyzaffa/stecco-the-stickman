@@ -149,7 +149,11 @@ export class DialogueRunner {
       return;
     }
     if (this.npc?.isDog && line.kind === 'npc') return;
-    const v = line.kind === 'player' ? VOICES.player : line.who === this.active?.name && this.npc ? VOICES[this.npc.id] : undefined;
+    let v = line.kind === 'player' ? VOICES.player : line.who === this.active?.name && this.npc ? VOICES[this.npc.id] : undefined;
+    if (!v && line.kind === 'npc') {
+      const other = this.g.npcs.find((n) => n.name === line.who);
+      if (other) v = VOICES[other.id];
+    }
     if (i % (v?.every ?? 2) === 0) this.g.audio.voice(v, ch);
   }
 

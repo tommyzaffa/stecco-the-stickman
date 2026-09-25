@@ -177,7 +177,7 @@ export class Hud {
       const html = choices.map((c, i) => `<div class="choice ${i === sel ? 'sel' : ''}"><b>${i + 1}</b> ${c}</div>`).join('');
       this.dlgChoices.innerHTML = html;
       this.dlgChoices.style.display = '';
-      this.dlgHint.textContent = '1-4 oppure W/S + E per scegliere';
+      this.dlgHint.textContent = 'tasti numerici oppure W/S + E per scegliere';
     } else {
       this.dlgChoices.style.display = 'none';
       this.dlgHint.textContent = 'E / Spazio / Click per continuare';

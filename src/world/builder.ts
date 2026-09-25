@@ -257,9 +257,15 @@ export class WorldBuilder {
   };
 
   // Blocco pieno (mobili, banconi, casse...) con collisione. y = base.
-  solid = (x: number, z: number, w: number, d: number, h: number, y = 0, collide = true) => {
+  // low: nasconde alla vista delle guardie solo chi è accovacciato (casse, banconi)
+  solid = (x: number, z: number, w: number, d: number, h: number, y = 0, collide = true, low = h < 1.5) => {
     this.S.box(x, y, z, w, h, d);
-    if (collide) this.col.box(x, z, w, d);
+    if (collide) {
+      const r = this.col.box(x, z, w, d);
+      if (low) r.low = true;
+      return r;
+    }
+    return null;
   };
 
   // Tavolino rotondo
@@ -286,7 +292,7 @@ export class WorldBuilder {
     S.box(len / 2 - 0.1, 0.45, 0, 0.2, 0.25, 0.8);
     S.pop();
     const along = facing === '+z' || facing === '-z';
-    this.col.box(x, z, along ? len : 0.8, along ? 0.8 : len);
+    this.col.box(x, z, along ? len : 0.8, along ? 0.8 : len).low = true;
   };
 
   // --- fine costruzione ------------------------------------------------------------

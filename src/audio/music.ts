@@ -271,14 +271,17 @@ const DISCO_CHORDS = [
 ];
 const DISCO_ROOTS = [45, 41, 48, 43];
 
-export const SBIADISCO: Track = {
+// lead = true: la versione "Sbiadisco" con la melodia sempre presente (la preferita di Rosa)
+const disco = (lead: boolean): Track => ({
   bpm: 124,
   stepsPerBeat: 4,
   play(m, step, t) {
     const s = step % 16;
     const bar = Math.floor(step / 16);
     const ci = bar % 4;
-    const section = Math.floor(bar / 8) % 4; // 0 intro, 1 +accordi, 2 +melodia, 3 pausa (niente cassa)
+    let section = Math.floor(bar / 8) % 4; // 0 intro, 1 +accordi, 2 +melodia, 3 pausa (niente cassa)
+    if (lead) section = section === 3 ? 3 : 2;
+    else if (section === 2) section = 1;
     const chord = DISCO_CHORDS[ci];
     const root = DISCO_ROOTS[ci];
     const breakdown = section === 3 && bar % 8 < 4;
@@ -299,7 +302,7 @@ export const SBIADISCO: Track = {
       m.lead(mtof(n), t, 0.1);
     }
   },
-};
+});
 
-export const TRACKS = { paese: PAESE, sbiadisco: SBIADISCO };
+export const TRACKS = { paese: PAESE, club: disco(false), sbiadisco: disco(true) };
 export type TrackName = keyof typeof TRACKS;

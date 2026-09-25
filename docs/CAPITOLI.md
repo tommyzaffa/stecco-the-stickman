@@ -31,7 +31,7 @@ Durata indicativa: 10-20 minuti a capitolo seguendo solo la trama, il doppio fac
 Ti svegli, esci, Marco ti chiede 50 monete per il club. Scopri gli Evidenziatori e il tappo rubato.
 *Sistemi:* movimento, dialoghi, missioni, monete, livelli, pugni.
 
-### 2. Il Parallelepipedo
+### 2. Il Parallelepipedo ✅
 **Pagina:** il club, di notte. Pista da ballo, bar, bagni, ufficio VIP.
 Bisogna rimettere il tappo nell'ufficio di Don Fluo senza farsi notare. Si entra (le 50 monete
 servono), si distrae la sicurezza, si arriva all'ufficio. Colpo di scena: il tappo che Marco ha

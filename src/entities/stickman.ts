@@ -90,7 +90,7 @@ export class Stickman {
       parent.add(m);
       if (hl) {
         const g = new THREE.Mesh(up ? LIMB_UP : LIMB_DOWN, hl);
-        g.scale.set(R * 3.2, len, R * 3.2);
+        g.scale.set(R * 2.6, len, R * 2.6);
         g.renderOrder = 2;
         parent.add(g);
       }

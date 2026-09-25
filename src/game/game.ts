@@ -225,6 +225,8 @@ export class Game {
     this.audio.stopMusic();
     this.player.setCrouch(false);
     this.hud.showDiario(null);
+    this.minigame = null;
+    document.querySelectorAll('.dance').forEach((e) => e.remove());
   }
 
   save() {
@@ -535,7 +537,7 @@ export class Game {
         canMove = false;
         this.dialogue.update(dt);
         if (inp.pressed.has('KeyE') || inp.pressed.has('Space') || inp.pressed.has('Enter') || inp.clicked) this.dialogue.advance();
-        for (let i = 0; i < 4; i++) if (inp.pressed.has(`Digit${i + 1}`)) this.dialogue.choose(i);
+        for (let i = 0; i < 9; i++) if (inp.pressed.has(`Digit${i + 1}`)) this.dialogue.choose(i);
         if (inp.pressed.has('KeyW') || inp.pressed.has('ArrowUp')) this.dialogue.moveSel(-1);
         if (inp.pressed.has('KeyS') || inp.pressed.has('ArrowDown')) this.dialogue.moveSel(1);
         const n = this.dialogue.npc;
@@ -587,7 +589,8 @@ export class Game {
         }
       }
     }
-    if (playing) this.combat.update(dt);
+    // durante i dialoghi e i minigiochi la rissa è in pausa: non si prendono pugni mentre si parla
+    if (playing && !this.dialogue.isOpen && !this.minigame) this.combat.update(dt);
 
     // monete per terra
     for (const p of this.pickups) {
@@ -718,13 +721,15 @@ export class Game {
       for (const n of this.npcs) {
         if (n.hidden) continue;
         const d = Math.hypot(n.pos.x - pp.x, n.pos.z - pp.z);
+        // niente icone o fumetti attraverso i muri
+        if (d > 3 && this.world.colliders.blocked(pp.x, pp.z, n.pos.x, n.pos.z, false, 1.0)) continue;
         const f = n.fighter;
         const talking = this.dialogue.npc === n;
         let icon = f?.ko ? null : this.specs.get(n.id)?.icon?.(this) ?? null;
         // furtività: "?" che cresce, "!" quando ti ha scoperto
         if (f && !f.ko && f.hostile && d < 25) icon = 'alert';
         else if (f && !f.ko && f.suspicion > 0.05) icon = 'suspect';
-        if (icon && !talking) this.hud.npcIcon(tmp.set(n.pos.x, n.headY + 0.45, n.pos.z), cam, icon, f?.suspicion);
+        if (icon && !talking && !this.minigame) this.hud.npcIcon(tmp.set(n.pos.x, n.headY + 0.45, n.pos.z), cam, icon, f?.suspicion);
         if (n.bubble && !talking) this.hud.bubble(tmp.set(n.pos.x, n.headY + (icon ? 0.85 : 0.3), n.pos.z), cam, n.bubble);
         if (f && f.hostile && !f.ko && f.hp < f.maxHp) this.hud.enemyBar(tmp.set(n.pos.x, n.headY + 0.2, n.pos.z), cam, f.hp / f.maxHp);
         else if (d < 7 && !this.dialogue.isOpen && !f?.ko) this.hud.nameTag(tmp.set(n.pos.x, n.headY + 0.12, n.pos.z), cam, n.name);
