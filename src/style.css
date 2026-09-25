@@ -185,3 +185,54 @@ b.blue { color: var(--blue); }
   15%, 75% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
+
+/* --- risse e furtività ------------------------------------------------------ */
+.npc-icon.suspect { color: #e0a100; }
+.npc-icon.alert { color: var(--red); animation: shake .25s infinite; }
+.enemy-bar {
+  width: 70px; height: 8px; border: 2px solid var(--ink); border-radius: 5px 2px 6px 3px;
+  background: var(--paper-2); overflow: hidden;
+}
+.enemy-bar > div { height: 100%; background: var(--red); transition: width .15s; }
+.markers > .popword {
+  position: absolute; transform: translate(-50%, -50%) rotate(var(--rot)); font-family: var(--marker);
+  font-size: 34px; color: #fff200; -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--ink); animation: popword .8s ease-out forwards; pointer-events: none;
+}
+@keyframes popword {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot)) scale(.4); }
+  20% { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot)) scale(1.25); }
+  70% { opacity: 1; transform: translate(-50%, -65%) rotate(var(--rot)) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -80%) rotate(var(--rot)) scale(.9); }
+}
+@keyframes shake { 50% { margin-left: 2px; } }
+
+/* --- schermate: pulsanti ---------------------------------------------------- */
+.card .buttons { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-top: 6px; }
+.card button {
+  font-family: var(--marker); font-size: 22px; color: var(--ink); background: var(--paper-2); cursor: pointer;
+  border: 2.5px solid var(--ink); border-radius: var(--sketch-radius); padding: 6px 26px; min-width: 300px;
+  box-shadow: 2px 3px 0 rgba(30, 29, 36, .2); transition: transform .1s;
+}
+.card button:hover { transform: rotate(-1deg) scale(1.03); background: #fff; }
+.card button.primary { color: var(--red); border-color: var(--red); }
+.card button small { display: block; font-family: var(--hand); font-size: 16px; opacity: .7; }
+
+/* --- minigioco di ballo ----------------------------------------------------- */
+.dance {
+  position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); text-align: center;
+  display: none; pointer-events: none;
+}
+.dance .key {
+  font-family: var(--marker); font-size: 88px; line-height: 1; width: 130px; height: 130px;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto;
+  border: 4px solid var(--ink); border-radius: 50% 45% 55% 48%; background: var(--paper-2);
+  box-shadow: 4px 5px 0 rgba(0,0,0,.3); position: relative;
+}
+.dance .ring {
+  position: absolute; inset: -6px; border: 4px solid var(--red); border-radius: 50%;
+  transform: scale(var(--s, 2)); opacity: var(--o, 0.2);
+}
+.dance .key.ok { background: #d9f7c7; }
+.dance .key.bad { background: #f7c7c7; }
+.dance .info { font-size: 26px; margin-top: 14px; background: var(--paper-2); border: 2px solid var(--ink); border-radius: var(--sketch-radius); padding: 4px 16px; }

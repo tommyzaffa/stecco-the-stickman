@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Music } from './music';
+import { Music, TRACKS, type TrackName } from './music';
 
 // ---------------------------------------------------------------------------
 // Audio sintetizzato con Web Audio: nessun file, come per la grafica.
@@ -20,25 +20,38 @@ const DEFAULT_VOICE: Voice = { base: 200, type: 'square', spread: 6, every: 2 };
 
 type Filter = { type: BiquadFilterType; freq: number; to?: number; q?: number };
 
+// Sorgenti sonore fisse nel mondo (sveglia, fontana, folla...)
+export type EmitterKind = 'alarm' | 'fountain' | 'crowd' | 'hum';
+export interface Emitter {
+  kind: EmitterKind;
+  pos: THREE.Vector3;
+  maxD: number;
+  on: boolean;
+  vol: number;
+  nodes?: { gain: GainNode; pan: StereoPannerNode; stop: () => void };
+}
+
 export class Sound {
   ctx: AudioContext | null = null;
   private master!: GainNode;
   private sfx!: GainNode;
   private amb!: GainNode;
   private musicBus!: GainNode;
+  private musicFilter!: BiquadFilterNode;
   private noiseBuf!: AudioBuffer;
   music: Music | null = null;
   musicOn = true;
+  private wantTrack: TrackName | null = null;
+  private emitters: Emitter[] = [];
 
   // posizione dell'ascoltatore (aggiornata dal gioco a ogni frame)
   private lpos = new THREE.Vector3();
   private lyaw = 0;
 
-  // suoni in loop
-  private alarm: { gate: GainNode; pan: StereoPannerNode } | null = null;
-  private fountain: { gain: GainNode; pan: StereoPannerNode } | null = null;
+  // ambiente
   private wind: GainNode | null = null;
   private nextBird = 4;
+  birds = true;
 
   get ready() {
     return this.ctx !== null && this.ctx.state === 'running';
@@ -62,14 +75,20 @@ export class Sound {
     this.sfx = this.bus(0.9);
     this.amb = this.bus(0.55);
     this.musicBus = this.bus(0.32);
+    // la musica passa da un filtro: dietro i muri del club si sente "ovattata"
+    this.musicFilter = ctx.createBiquadFilter();
+    this.musicFilter.type = 'lowpass';
+    this.musicFilter.frequency.value = 20000;
+    this.musicFilter.connect(this.musicBus);
 
     const len = ctx.sampleRate * 2;
     this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
 
-    this.setupLoops();
-    this.music = new Music(ctx, this.musicBus);
+    this.setupWind();
+    this.music = new Music(ctx, this.musicFilter);
+    if (this.wantTrack) this.music.start(TRACKS[this.wantTrack]);
   }
 
   private bus(v: number) {
@@ -93,8 +112,38 @@ export class Sound {
     return this.musicOn;
   }
 
-  startMusic() {
-    this.music?.start();
+  playMusic(name: TrackName) {
+    this.wantTrack = name;
+    this.music?.start(TRACKS[name]);
+  }
+
+  stopMusic() {
+    this.wantTrack = null;
+    this.music?.stop();
+  }
+
+  // frequenza di taglio della musica: 20000 = piena, 400 = attraverso un muro
+  setMusicMuffle(hz: number) {
+    if (this.ctx) this.musicFilter.frequency.setTargetAtTime(hz, this.ctx.currentTime, 0.15);
+  }
+
+  beat() {
+    return this.music?.beat() ?? { phase: 0, index: 0, bpm: 120 };
+  }
+
+  get now() {
+    return this.ctx?.currentTime ?? 0;
+  }
+
+  addEmitter(kind: EmitterKind, pos: THREE.Vector3, maxD = 20, vol = 1): Emitter {
+    const e: Emitter = { kind, pos: pos.clone(), maxD, on: true, vol };
+    this.emitters.push(e);
+    return e;
+  }
+
+  clearEmitters() {
+    for (const e of this.emitters) e.nodes?.stop();
+    this.emitters = [];
   }
 
   // --- primitive ------------------------------------------------------------------
@@ -186,8 +235,8 @@ export class Sound {
   }
 
   // --- giocatore --------------------------------------------------------------------
-  footstep(run: boolean, indoor: boolean) {
-    const v = run ? 1.3 : 1;
+  footstep(run: boolean, indoor: boolean, crouch = false) {
+    const v = (run ? 1.3 : 1) * (crouch ? 0.4 : 1);
     if (indoor) {
       this.tone(95 + Math.random() * 20, 0.06, { to: 60, vol: 0.12 * v });
       this.noise(0.05, 0.05 * v, { type: 'bandpass', freq: 900, q: 1.5 });
@@ -217,6 +266,36 @@ export class Sound {
     this.noise(0.09, 0.16, { type: 'bandpass', freq: 1300, q: 0.8 });
     // il righello "vibra" come sul bordo del banco di scuola
     if (weapon === 'ruler') this.tone(196, 0.55, { type: 'triangle', vol: 0.12, vibrato: [15, 14], delay: 0.02 });
+  }
+
+  // la guardia ti ha visto: accordo stonato
+  alert() {
+    this.tone(880, 0.12, { type: 'square', vol: 0.06, filter: { type: 'lowpass', freq: 3000 } });
+    this.tone(1245, 0.3, { type: 'square', vol: 0.05, delay: 0.1, filter: { type: 'lowpass', freq: 3000 } });
+  }
+
+  ko() {
+    this.tone(300, 0.5, { to: 60, type: 'triangle', vol: 0.14 });
+    for (let i = 0; i < 3; i++) this.tone(1800 + i * 400, 0.12, { vol: 0.03, delay: 0.25 + i * 0.12 });
+  }
+
+  block() {
+    this.tone(420, 0.08, { type: 'square', vol: 0.07, filter: { type: 'lowpass', freq: 1800 } });
+    this.noise(0.06, 0.1, { type: 'bandpass', freq: 2500, q: 2 });
+  }
+
+  door() {
+    this.tone(160, 0.2, { to: 120, type: 'triangle', vol: 0.08 });
+    this.noise(0.25, 0.04, { type: 'bandpass', freq: 700, to: 400, q: 3 });
+  }
+
+  good() {
+    this.tone(880, 0.06, { type: 'triangle', vol: 0.06 });
+    this.tone(1320, 0.12, { type: 'triangle', vol: 0.06, delay: 0.05 });
+  }
+
+  miss() {
+    this.tone(200, 0.12, { type: 'square', vol: 0.05, to: 150, filter: { type: 'lowpass', freq: 1000 } });
   }
 
   hurt() {
@@ -356,40 +435,35 @@ export class Sound {
   }
 
   // --- ambiente ----------------------------------------------------------------------
-  private setupLoops() {
-    const ctx = this.ctx!;
-    const loopNoise = () => {
-      const s = ctx.createBufferSource();
-      s.buffer = this.noiseBuf;
-      s.loop = true;
-      s.start();
-      return s;
-    };
+  private loopNoise() {
+    const s = this.ctx!.createBufferSource();
+    s.buffer = this.noiseBuf;
+    s.loop = true;
+    s.start(0, Math.random() * 1.5);
+    return s;
+  }
 
-    // vento leggero
-    {
-      const f = ctx.createBiquadFilter();
-      f.type = 'lowpass';
-      f.frequency.value = 350;
-      const g = ctx.createGain();
-      g.gain.value = 0;
-      loopNoise().connect(f).connect(g).connect(this.amb);
-      this.wind = g;
-    }
-    // fontana
-    {
-      const f = ctx.createBiquadFilter();
-      f.type = 'bandpass';
-      f.frequency.value = 1400;
-      f.Q.value = 0.4;
-      const g = ctx.createGain();
-      g.gain.value = 0;
-      const p = ctx.createStereoPanner();
-      loopNoise().connect(f).connect(g).connect(p).connect(this.amb);
-      this.fountain = { gain: g, pan: p };
-    }
-    // sveglia: "DRIIIN" = onda quadra acuta con tremolo veloce
-    {
+  private setupWind() {
+    const ctx = this.ctx!;
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 350;
+    const g = ctx.createGain();
+    g.gain.value = 0;
+    this.loopNoise().connect(f).connect(g).connect(this.amb);
+    this.wind = g;
+  }
+
+  private buildEmitter(e: Emitter) {
+    const ctx = this.ctx!;
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    const pan = ctx.createStereoPanner();
+    gain.connect(pan).connect(e.kind === 'alarm' ? this.sfx : this.amb);
+    const stops: (() => void)[] = [];
+    const src = (n: AudioScheduledSourceNode) => stops.push(() => n.stop());
+    if (e.kind === 'alarm') {
+      // "DRIIIN": onda quadra acuta con tremolo veloce
       const osc = ctx.createOscillator();
       osc.type = 'square';
       osc.frequency.value = 2350;
@@ -404,44 +478,77 @@ export class Sound {
       const f = ctx.createBiquadFilter();
       f.type = 'lowpass';
       f.frequency.value = 3500;
-      const gate = ctx.createGain();
-      gate.gain.value = 0;
-      const pan = ctx.createStereoPanner();
-      osc.connect(trem).connect(f).connect(gate).connect(pan).connect(this.sfx);
+      osc.connect(trem).connect(f).connect(gain);
       osc.start();
       lfo.start();
-      this.alarm = { gate, pan };
+      src(osc);
+      src(lfo);
+    } else if (e.kind === 'fountain') {
+      const f = ctx.createBiquadFilter();
+      f.type = 'bandpass';
+      f.frequency.value = 1400;
+      f.Q.value = 0.4;
+      const n = this.loopNoise();
+      n.connect(f).connect(gain);
+      src(n);
+    } else if (e.kind === 'crowd') {
+      // brusio: rumore filtrato sulle frequenze della voce, che "respira"
+      const f = ctx.createBiquadFilter();
+      f.type = 'bandpass';
+      f.frequency.value = 520;
+      f.Q.value = 0.9;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.7;
+      const lg = ctx.createGain();
+      lg.gain.value = 180;
+      lfo.connect(lg).connect(f.frequency);
+      const n = this.loopNoise();
+      n.connect(f).connect(gain);
+      lfo.start();
+      src(n);
+      src(lfo);
+    } else {
+      // ronzio (frigo, neon)
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.value = 100;
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = 280;
+      osc.connect(f).connect(gain);
+      osc.start();
+      src(osc);
     }
+    e.nodes = { gain, pan, stop: () => { stops.forEach((s) => s()); gain.disconnect(); } };
   }
 
-  update(dt: number, s: { pos: THREE.Vector3; yaw: number; indoor: boolean; alarmOn: boolean; alarmPos: THREE.Vector3; fountainPos: THREE.Vector3; time: number }) {
+  update(dt: number, s: { pos: THREE.Vector3; yaw: number; indoor: boolean }) {
     if (!this.ctx || this.ctx.state !== 'running') return;
     const t = this.ctx.currentTime;
     this.lpos.copy(s.pos);
     this.lyaw = s.yaw;
 
-    if (this.wind) this.wind.gain.setTargetAtTime(s.indoor ? 0.015 : 0.05, t, 0.5);
+    if (this.wind) this.wind.gain.setTargetAtTime(s.indoor || !this.birds ? 0.012 : 0.05, t, 0.5);
 
-    if (this.fountain) {
-      const f = this.spatial(s.fountainPos, 16);
-      this.fountain.gain.gain.setTargetAtTime(f.vol * 0.12, t, 0.1);
-      this.fountain.pan.pan.setTargetAtTime(f.pan, t, 0.1);
+    for (const e of this.emitters) {
+      if (!e.nodes) this.buildEmitter(e);
+      const sp = this.spatial(e.pos, e.maxD);
+      let v = 0;
+      if (e.on) {
+        if (e.kind === 'alarm') v = t % 1.4 < 0.9 ? 0.05 * Math.max(0.15, sp.vol) : 0; // squilli con pause
+        else if (e.kind === 'fountain') v = sp.vol * 0.12;
+        else if (e.kind === 'crowd') v = sp.vol * 0.09;
+        else v = sp.vol * 0.02;
+      }
+      e.nodes!.gain.gain.setTargetAtTime(v * e.vol, t, e.kind === 'alarm' ? 0.01 : 0.1);
+      e.nodes!.pan.pan.setTargetAtTime(sp.pan, t, 0.05);
     }
 
-    if (this.alarm) {
-      // squilli da ~0.9 s con pause da 0.5 s
-      const ringing = s.alarmOn && s.time % 1.4 < 0.9;
-      const a = this.spatial(s.alarmPos, 30);
-      const v = ringing ? 0.05 * Math.max(0.15, a.vol) : 0;
-      this.alarm.gate.gain.setTargetAtTime(v, t, 0.01);
-      this.alarm.pan.pan.setTargetAtTime(a.pan, t, 0.05);
-    }
-
-    // uccellini (solo all'aperto)
+    // uccellini (solo all'aperto, di giorno)
     this.nextBird -= dt;
     if (this.nextBird <= 0) {
       this.nextBird = 3 + Math.random() * 7;
-      if (!s.indoor) this.bird();
+      if (!s.indoor && this.birds) this.bird();
     }
   }
 

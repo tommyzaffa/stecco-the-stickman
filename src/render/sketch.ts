@@ -11,12 +11,18 @@ import { INK, PAPER, rng } from './palette';
 
 const lineMaterials: LineMaterial[] = [];
 
-export function makeLineMaterial(width: number, color: THREE.ColorRepresentation = INK): LineMaterial {
-  const m = new LineMaterial({ color, linewidth: width, worldUnits: false });
+export function makeLineMaterial(width: number, color?: THREE.ColorRepresentation): LineMaterial {
+  const m = new LineMaterial({ color: color ?? INK.clone(), linewidth: width, worldUnits: false });
   m.fog = true;
   m.resolution.set(window.innerWidth, window.innerHeight);
   lineMaterials.push(m);
   return m;
+}
+
+export function releaseLineMaterial(m: LineMaterial) {
+  const i = lineMaterials.indexOf(m);
+  if (i >= 0) lineMaterials.splice(i, 1);
+  m.dispose();
 }
 
 export function setLineResolution(w: number, h: number) {

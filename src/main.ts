@@ -1,8 +1,6 @@
 import './style.css';
 import { Game } from './game/game';
-import { createCharacters } from './content/characters';
-import { createObjects } from './content/objects';
-import { setupStory } from './content/story';
+import { setupFlow } from './game/flow';
 
 async function boot() {
   // i font scritti a mano servono anche alle texture delle insegne
@@ -17,9 +15,7 @@ async function boot() {
 
   const canvas = document.getElementById('game') as HTMLCanvasElement;
   const game = new Game(canvas);
-  createCharacters(game);
-  createObjects(game);
-  setupStory(game);
+  setupFlow(game);
   document.getElementById('loading')?.remove();
 
   // Limitatore di frame: sugli schermi a 120 Hz il browser chiamerebbe il gioco 120 volte al

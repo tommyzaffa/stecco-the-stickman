@@ -9,8 +9,32 @@ export const RED_HEX = '#d6333a';
 export const BLUE_HEX = '#2f5bd3';
 export const HIGHLIGHT_YELLOW_HEX = '#e8f53a';
 
+// Tema corrente: di giorno inchiostro su carta, di notte gesso su carta nera.
+// PAPER e INK vengono aggiornati da setTheme(); materiali e texture ne fanno una copia
+// quando vengono creati, quindi il tema va impostato PRIMA di costruire un capitolo.
+export const THEME = { paperHex: PAPER_HEX, inkHex: INK_HEX, night: false };
 export const PAPER = new THREE.Color(PAPER_HEX);
 export const INK = new THREE.Color(INK_HEX);
+
+export const DAY = { paper: PAPER_HEX, ink: INK_HEX };
+export const NIGHT = { paper: '#1b1a21', ink: '#ebe6d8' };
+
+export function setTheme(t: { paper: string; ink: string }) {
+  THEME.paperHex = t.paper;
+  THEME.inkHex = t.ink;
+  THEME.night = t === NIGHT;
+  PAPER.set(t.paper);
+  INK.set(t.ink);
+}
+
+// Colori degli evidenziatori (la gang e tutto ciò che possiede)
+export const HL = {
+  yellow: '#e8f53a',
+  pink: '#ff5fa8',
+  green: '#5cff8a',
+  orange: '#ff9f3a',
+  cyan: '#5ce1ff',
+};
 
 // RNG deterministico: lo stesso "disegno" a ogni avvio.
 export function makeRng(seed: number) {

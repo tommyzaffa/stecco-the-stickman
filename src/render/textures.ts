@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { INK_HEX, PAPER_HEX, makeRng } from './palette';
+import { THEME, makeRng } from './palette';
 
 // Tutte le texture sono disegnate a runtime su canvas: niente file immagine.
 
@@ -40,7 +40,7 @@ export function wobblyCircle(ctx: CanvasRenderingContext2D, cx: number, cy: numb
   ctx.stroke();
 }
 
-export function headTexture(stroke = INK_HEX, fill = PAPER_HEX) {
+export function headTexture(stroke = THEME.inkHex, fill = THEME.paperHex) {
   const { c, ctx } = canvas(128, 128);
   ctx.fillStyle = fill;
   ctx.beginPath();
@@ -63,14 +63,14 @@ export function crownTexture(seed: number) {
     blobs.push([128 + Math.cos(a) * 62, 118 + Math.sin(a) * 52, 44 + rr() * 16]);
   }
   blobs.push([128, 118, 70]);
-  ctx.fillStyle = PAPER_HEX;
+  ctx.fillStyle = THEME.paperHex;
   for (const [x, y, rad] of blobs) {
     ctx.beginPath();
     ctx.arc(x, y, rad, 0, Math.PI * 2);
     ctx.fill();
   }
   // contorno: archi esterni
-  ctx.strokeStyle = INK_HEX;
+  ctx.strokeStyle = THEME.inkHex;
   ctx.lineWidth = 5;
   for (const [x, y, rad] of blobs.slice(0, -1)) {
     const a = Math.atan2(y - 118, x - 128);
@@ -108,8 +108,8 @@ export function crownTexture(seed: number) {
 export function bushTexture(seed: number) {
   const rr = makeRng(seed);
   const { c, ctx } = canvas(256, 128);
-  ctx.fillStyle = PAPER_HEX;
-  ctx.strokeStyle = INK_HEX;
+  ctx.fillStyle = THEME.paperHex;
+  ctx.strokeStyle = THEME.inkHex;
   ctx.lineWidth = 5;
   const bumps = 5;
   ctx.beginPath();
@@ -141,7 +141,7 @@ export function shadowTexture() {
   ctx.beginPath();
   ctx.ellipse(64, 64, 58, 58, 0, 0, Math.PI * 2);
   ctx.clip();
-  ctx.strokeStyle = INK_HEX;
+  ctx.strokeStyle = THEME.inkHex;
   ctx.globalAlpha = 0.55;
   ctx.lineWidth = 3;
   for (let i = -128; i < 128; i += 10) {
@@ -160,12 +160,12 @@ export function coinTexture() {
   ctx.beginPath();
   ctx.arc(64, 64, 50, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = INK_HEX;
+  ctx.strokeStyle = THEME.inkHex;
   ctx.lineWidth = 7;
   wobblyCircle(ctx, 64, 64, 50, 0.04);
   ctx.lineWidth = 3;
   wobblyCircle(ctx, 64, 64, 38, 0.06, 1.0);
-  ctx.fillStyle = INK_HEX;
+  ctx.fillStyle = THEME.inkHex;
   ctx.font = `bold 54px ${HAND_FONT}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -175,9 +175,9 @@ export function coinTexture() {
 
 export function sunTexture() {
   const { c, ctx } = canvas(256, 256);
-  ctx.strokeStyle = INK_HEX;
+  ctx.strokeStyle = THEME.inkHex;
   ctx.lineWidth = 6;
-  ctx.fillStyle = PAPER_HEX;
+  ctx.fillStyle = THEME.paperHex;
   ctx.beginPath();
   ctx.arc(128, 128, 52, 0, Math.PI * 2);
   ctx.fill();
@@ -195,7 +195,7 @@ export function sunTexture() {
   ctx.beginPath();
   ctx.arc(128, 132, 22, 0.3, Math.PI - 0.3);
   ctx.stroke();
-  ctx.fillStyle = INK_HEX;
+  ctx.fillStyle = THEME.inkHex;
   ctx.beginPath();
   ctx.arc(110, 115, 5, 0, 7);
   ctx.arc(146, 115, 5, 0, 7);
@@ -206,8 +206,8 @@ export function sunTexture() {
 export function cloudTexture(seed: number) {
   const rr = makeRng(seed);
   const { c, ctx } = canvas(512, 200);
-  ctx.strokeStyle = INK_HEX;
-  ctx.fillStyle = PAPER_HEX;
+  ctx.strokeStyle = THEME.inkHex;
+  ctx.fillStyle = THEME.paperHex;
   ctx.lineWidth = 6;
   const pts: [number, number, number][] = [];
   for (let i = 0; i < 5; i++) pts.push([110 + i * 72, 110 - Math.sin((i / 4) * Math.PI) * 30 + rr() * 10, 44 + rr() * 24]);
@@ -235,7 +235,7 @@ export function cloudTexture(seed: number) {
 // Cartelli e insegne scritti a mano.
 export function textTexture(
   text: string,
-  opts: { w?: number; h?: number; size?: number; font?: string; border?: boolean; bg?: string; color?: string } = {},
+  opts: { w?: number; h?: number; size?: number; font?: string; border?: boolean; bg?: string; color?: string; glow?: string } = {},
 ) {
   const w = opts.w ?? 512, h = opts.h ?? 128;
   const { c, ctx } = canvas(w, h);
@@ -244,7 +244,7 @@ export function textTexture(
     ctx.fillRect(0, 0, w, h);
   }
   if (opts.border) {
-    ctx.strokeStyle = INK_HEX;
+    ctx.strokeStyle = THEME.inkHex;
     ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.moveTo(8, 10);
@@ -254,7 +254,7 @@ export function textTexture(
     ctx.closePath();
     ctx.stroke();
   }
-  ctx.fillStyle = opts.color ?? INK_HEX;
+  ctx.fillStyle = opts.color ?? THEME.inkHex;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   const lines = text.split('\n');
@@ -266,6 +266,16 @@ export function textTexture(
     ctx.font = `${size}px ${opts.font ?? MARKER_FONT}`;
   }
   const lh = size * 1.1;
+  if (opts.glow) {
+    // alone da neon: più passate sfocate sotto il testo
+    ctx.save();
+    ctx.shadowColor = opts.glow;
+    for (const blur of [size * 0.6, size * 0.3]) {
+      ctx.shadowBlur = blur;
+      lines.forEach((l, i) => ctx.fillText(l, w / 2, h / 2 + (i - (lines.length - 1) / 2) * lh));
+    }
+    ctx.restore();
+  }
   lines.forEach((l, i) => ctx.fillText(l, w / 2, h / 2 + (i - (lines.length - 1) / 2) * lh));
   return toTexture(c);
 }
@@ -275,7 +285,7 @@ export function rulerTexture() {
   const { c, ctx } = canvas(512, 64);
   ctx.fillStyle = '#fbf7ea';
   ctx.fillRect(0, 0, 512, 64);
-  ctx.strokeStyle = INK_HEX;
+  ctx.strokeStyle = THEME.inkHex;
   ctx.lineWidth = 3;
   for (let i = 0; i <= 30; i++) {
     const x = 8 + i * 16.5;

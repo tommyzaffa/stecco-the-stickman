@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { Sketch, makeHatchMaterial, makeLineMaterial } from '../render/sketch';
-import { Colliders } from './collision';
-import { bushTexture, cloudTexture, crownTexture, sunTexture, textTexture, HAND_FONT } from '../render/textures';
-import { INK, PAPER_HEX, makeRng } from '../render/palette';
-import { Stickman } from '../entities/stickman';
+import { Sketch } from '../../render/sketch';
+import { cloudTexture, sunTexture, HAND_FONT } from '../../render/textures';
+import { INK } from '../../render/palette';
+import { Stickman } from '../../entities/stickman';
+import { WorldBuilder, type World } from '../../world/builder';
 
 // ---------------------------------------------------------------------------
 // San Scarabocchio: la cittadina. Tutto è costruito con primitive + inchiostro.
@@ -14,204 +14,16 @@ import { Stickman } from '../entities/stickman';
 // Lato "municipio" (z < -9): municipio, lavanderia, casa di nonna Pina, parco.
 // ---------------------------------------------------------------------------
 
-type Facing = '-z' | '+z' | '-x' | '+x';
-const FACING_ROT: Record<Facing, number> = { '+z': 0, '-z': Math.PI, '+x': Math.PI / 2, '-x': -Math.PI / 2 };
-
-export interface Town {
-  group: THREE.Group;
-  colliders: Colliders;
-  anchors: Record<string, THREE.Vector3>;
-  alarm: THREE.Group;
-  isInsideHouse: (p: THREE.Vector3) => boolean;
-}
-
-const r = makeRng(2024);
-const rr = (a: number, b: number) => a + (b - a) * r();
-
-export function buildTown(): Town {
-  const group = new THREE.Group();
-  const col = new Colliders();
-  const anchors: Record<string, THREE.Vector3> = {};
-  const A = (name: string, x: number, y: number, z: number) => (anchors[name] = new THREE.Vector3(x, y, z));
-
-  const S = new Sketch(); // tratti principali
-  const D = new Sketch(); // dettagli sottili
-  D.style = { jitter: 0.015, over: 0.06 };
-  const G = new Sketch(); // segni per terra
-  G.style = { jitter: 0.02, over: 0.1 };
-
-  const mainLines = makeLineMaterial(2.4);
-  const detailLines = makeLineMaterial(1.5);
-  const groundLines = makeLineMaterial(1.8);
-  const fill = makeHatchMaterial();
-
-  // --- helper -----------------------------------------------------------------
-  const sign = (text: string, x: number, y: number, z: number, w: number, h: number, facing: Facing, opts: Parameters<typeof textTexture>[1] = {}) => {
-    const tex = textTexture(text, { w: 512, h: Math.round((512 * h) / w), border: true, bg: PAPER_HEX, ...opts });
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex }));
-    m.position.set(x, y, z);
-    m.rotation.y = FACING_ROT[facing];
-    group.add(m);
-    return m;
-  };
-
-  // scritta per terra (tipo gesso)
-  const groundText = (text: string, x: number, z: number, w: number, h: number, rotY = 0) => {
-    const tex = textTexture(text, { w: 512, h: Math.round((512 * h) / w), font: HAND_FONT });
-    const m = new THREE.Mesh(
-      new THREE.PlaneGeometry(w, h),
-      new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }),
-    );
-    m.rotation.set(-Math.PI / 2, 0, rotY);
-    m.position.set(x, 0.03, z);
-    group.add(m);
-  };
-
-  const crowns = [0, 1, 2, 3].map((i) => crownTexture(10 + i));
-  const bushes = [0, 1].map((i) => bushTexture(20 + i));
-  const spriteMat = (map: THREE.Texture) => {
-    const m = new THREE.SpriteMaterial({ map, alphaTest: 0.5 });
-    m.alphaToCoverage = true;
-    return m;
-  };
-  const crownMats = crowns.map(spriteMat);
-  const bushMats = bushes.map(spriteMat);
-
-  const tree = (x: number, z: number, s = 1) => {
-    S.cylinder(x, 0, z, 0.14 * s, 2.3 * s, 6);
-    // due rami
-    S.seg(x, 1.7 * s, z, x + 0.5 * s, 2.4 * s, z + 0.1);
-    S.seg(x, 1.9 * s, z, x - 0.4 * s, 2.6 * s, z - 0.1);
-    const sp = new THREE.Sprite(crownMats[Math.floor(r() * crownMats.length)]);
-    sp.scale.setScalar(3.4 * s);
-    sp.position.set(x, 3.3 * s, z);
-    group.add(sp);
-    col.circle(x, z, 0.3);
-  };
-
-  const bush = (x: number, z: number, s = 1) => {
-    const sp = new THREE.Sprite(bushMats[Math.floor(r() * bushMats.length)]);
-    sp.scale.set(2.4 * s, 1.2 * s, 1);
-    sp.position.set(x, 0.58 * s, z);
-    sp.center.set(0.5, 0.5);
-    group.add(sp);
-    col.circle(x, z, 0.8 * s);
-  };
-
-  const lamp = (x: number, z: number, toward: 1 | -1) => {
-    S.seg(x, 0, z, x, 4.2, z, { over: 0.05 });
-    S.seg(x - 0.12, 0, z, x + 0.12, 0, z);
-    S.seg(x, 4.2, z, x, 4.3, z + toward * 0.9, { over: 0.03 });
-    D.box(x, 3.95, z + toward * 0.9, 0.35, 0.3, 0.35);
-    D.seg(x - 0.18, 3.95, z + toward * 0.9, x + 0.18, 3.95, z + toward * 0.9);
-    col.circle(x, z, 0.15);
-  };
-
-  const bench = (x: number, z: number, facing: Facing) => {
-    S.push(x, 0, z, FACING_ROT[facing]);
-    S.box(0, 0.42, 0, 1.8, 0.07, 0.5);
-    S.box(0, 0.55, -0.24, 1.8, 0.45, 0.06);
-    for (const bx of [-0.8, 0.8]) {
-      S.seg(bx, 0, 0.2, bx, 0.42, 0.2);
-      S.seg(bx, 0, -0.22, bx, 0.42, -0.22);
-    }
-    S.pop();
-    if (facing === '+z' || facing === '-z') col.box(x, z, 1.8, 0.55);
-    else col.box(x, z, 0.55, 1.8);
-  };
-
-  const car = (x: number, z: number, rot: number) => {
-    S.push(x, 0, z, rot);
-    D.push(x, 0, z, rot);
-    S.box(0, 0.3, 0, 3.9, 0.7, 1.7);
-    S.box(-0.2, 1.0, 0, 2.1, 0.62, 1.5);
-    for (const wx of [-1.25, 1.25]) {
-      for (const wz of [-0.87, 0.87]) {
-        S.circle(wx, 0.36, wz, 0.36, 'z', 16, 0.04);
-        D.circle(wx, 0.36, wz, 0.12, 'z', 10, 0.05);
-      }
-    }
-    // finestrini
-    for (const s of [-0.76, 0.76]) {
-      D.poly([[-1.15, 1.08, s], [-0.3, 1.08, s], [-0.3, 1.52, s], [-1.0, 1.52, s]], true);
-      D.poly([[-0.15, 1.08, s], [0.7, 1.08, s], [0.55, 1.52, s], [-0.15, 1.52, s]], true);
-    }
-    // fari
-    D.circle(1.96, 0.7, 0.55, 0.12, 'x', 10);
-    D.circle(1.96, 0.7, -0.55, 0.12, 'x', 10);
-    // paraurti e maniglie
-    D.seg(-1.95, 0.45, -0.7, -1.95, 0.45, 0.7).seg(1.95, 0.45, -0.7, 1.95, 0.45, 0.7);
-    for (const s of [-0.86, 0.86]) D.seg(-0.5, 0.85, s, -0.3, 0.85, s, { over: 0 }).seg(0.35, 0.85, s, 0.55, 0.85, s, { over: 0 });
-    S.pop();
-    D.pop();
-    const along = Math.abs(Math.cos(rot)) > 0.5;
-    if (along) col.box(x, z, 4, 1.8);
-    else col.box(x, z, 1.8, 4);
-  };
-
-  interface BOpts {
-    x0: number; x1: number; z0: number; z1: number; h: number;
-    face: '-z' | '+z';
-    roof?: 'flat' | 'gable';
-    door?: number;
-    doorW?: number;
-    sign?: string;
-    signW?: number;
-    shopWindow?: boolean;
-    noCollider?: boolean;
-  }
-  const building = (o: BOpts) => {
-    const w = o.x1 - o.x0, d = o.z1 - o.z0, cx = (o.x0 + o.x1) / 2, cz = (o.z0 + o.z1) / 2;
-    S.box(cx, 0, cz, w, o.h, d);
-    if (!o.noCollider) col.rect(o.x0, o.z0, o.x1, o.z1);
-    if (o.roof === 'gable') S.roof(cx, o.h, cz, w, d, Math.min(3.2, d * 0.35), 'x');
-    else S.box(cx, o.h, cz, w + 0.3, 0.35, d + 0.3);
-
-    const fz = o.face === '-z' ? o.z0 - 0.03 : o.z1 + 0.03;
-    const bz = o.face === '-z' ? o.z1 + 0.03 : o.z0 - 0.03;
-    const dx = o.door ?? cx;
-    const dw = o.doorW ?? 1.3;
-    // porta
-    D.rectV(dx - dw / 2, 0, fz, dw, 2.3, 'x');
-    D.circle(dx + dw * 0.3, 1.1, fz, 0.05, 'z', 8);
-    // finestre
-    const floors = Math.max(1, Math.floor(o.h / 3));
-    for (let f = 0; f < floors; f++) {
-      const y = f === 0 ? 1.0 : 0.9 + f * 3;
-      if (f === 0 && o.shopWindow) {
-        const sw = Math.min(3.2, (w - dw) / 2 - 1.2);
-        if (sw > 1) {
-          D.window(o.x0 + 0.8, 0.8, fz, sw, 1.7, 'x', false);
-          D.window(o.x1 - 0.8 - sw, 0.8, fz, sw, 1.7, 'x', false);
-        }
-        continue;
-      }
-      for (let x = o.x0 + 1.2; x + 1.2 < o.x1 - 0.6; x += 2.8) {
-        if (f === 0 && Math.abs(x + 0.6 - dx) < dw) continue;
-        D.window(x, y, fz, 1.2, 1.4, 'x');
-      }
-      // retro
-      for (let x = o.x0 + 2; x + 1.2 < o.x1 - 1; x += 4) D.window(x, y, bz, 1.2, 1.4, 'x');
-      // lati
-      for (let z = o.z0 + 2; z + 1.2 < o.z1 - 1; z += 4) {
-        D.window(o.x0 - 0.03, y, z, 1.2, 1.4, 'z');
-        D.window(o.x1 + 0.03, y, z, 1.2, 1.4, 'z');
-      }
-    }
-    if (o.sign) {
-      const sw = o.signW ?? Math.min(w - 1, 6);
-      sign(o.sign, dx, Math.min(o.h - 0.6, 3.0), fz + (o.face === '-z' ? -0.05 : 0.05), sw, sw * 0.22, o.face);
-    }
-  };
+export function buildTown(): World {
+  const b = new WorldBuilder(2024);
+  const { S, D, G, col, group, fill, A, sign, groundText, tree, bush, lamp, bench, car, building, rr } = b;
+  const r = b.r;
 
   // =========================================================================
   // TERRENO E STRADE
   // =========================================================================
   {
-    const g = new THREE.PlaneGeometry(400, 400);
-    g.rotateX(-Math.PI / 2);
-    const m = new THREE.Mesh(g, fill);
-    group.add(m);
+    b.ground();
 
     const y = 0.02;
     // bordi della via principale (interrotti all'incrocio)
@@ -358,6 +170,7 @@ export function buildTown(): Town {
     col.circle(-51.2, 11, 0.3);
     A('plant', -51.2, 0.6, 11);
     A('spawn', -48.5, 0, 18.1);
+    A('spawnLook', -49.4, 1.0, 19.4);
     A('houseDoor', -47, 1.2, 9.5);
 
     // cortile sul retro
@@ -651,7 +464,7 @@ export function buildTown(): Town {
       const top = pts[idx];
       mountains.seg(top[0], top[1] - 1, top[2], top[0] * 0.99, top[1] * 0.35, top[2] * 0.99, { over: 0 });
     }
-    const mountainMat = makeLineMaterial(1.6);
+    const mountainMat = b.lineMat(1.6);
     mountainMat.fog = false;
     const mg = mountains.build(mountainMat, fill);
     mg.renderOrder = -1;
@@ -670,21 +483,12 @@ export function buildTown(): Town {
     a.seg(0, 0.11, 0.066, 0, 0.16, 0.066, { over: 0 }).seg(0, 0.11, 0.066, 0.04, 0.11, 0.066, { over: 0 });
     a.cylinder(-0.08, 0.22, 0, 0.05, 0.05, 8).cylinder(0.08, 0.22, 0, 0.05, 0.05, 8);
     a.seg(-0.1, 0, 0, -0.12, -0.03, 0).seg(0.1, 0, 0, 0.12, -0.03, 0);
-    alarm.add(a.build(makeLineMaterial(1.6), fill));
+    alarm.add(a.build(b.lineMat(1.6), fill));
     alarm.position.set(-49.4, 0.58, 19.4);
     alarm.rotation.y = Math.PI + 0.3;
     group.add(alarm);
   }
 
-  group.add(S.build(mainLines, fill));
-  group.add(D.build(detailLines, fill));
-  group.add(G.build(groundLines, fill));
-
-  return {
-    group,
-    colliders: col,
-    anchors,
-    alarm,
-    isInsideHouse: (p) => p.x > -52 && p.x < -42 && p.z > 10.1 && p.z < 20,
-  };
+  b.props.alarm = alarm;
+  return b.finish({ isIndoor: (p) => p.x > -52 && p.x < -42 && p.z > 10.1 && p.z < 20 });
 }

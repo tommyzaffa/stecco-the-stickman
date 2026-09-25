@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import type { Input } from './input';
 import type { Colliders } from './world/collision';
-import { INK } from './render/palette';
+import { THEME } from './render/palette';
 import { headTexture, rulerTexture } from './render/textures';
 
 export type Weapon = 'fist' | 'ruler';
 
-const WALK = 4.2, RUN = 7.5, JUMP = 5.2, GRAVITY = 16, EYE = 1.62;
+const WALK = 4.2, RUN = 7.5, JUMP = 5.2, GRAVITY = 16, EYE = 1.62, EYE_CROUCH = 1.02;
 
 export class Player {
   camera: THREE.PerspectiveCamera;
@@ -18,6 +18,11 @@ export class Player {
   weapon: Weapon = 'fist';
   knock = new THREE.Vector3();
   speed = 0;
+  blocking = false;
+  crouching = false;
+  private eyeH = EYE;
+  private armMat: THREE.MeshBasicMaterial;
+  private fistMat: THREE.SpriteMaterial;
 
   private arm = new THREE.Group();
   private fist: THREE.Group;
@@ -32,13 +37,15 @@ export class Player {
     this.camera.rotation.order = 'YXZ';
 
     // braccio stilizzato in prima persona
-    const mat = new THREE.MeshBasicMaterial({ color: INK });
+    const mat = new THREE.MeshBasicMaterial({ color: THEME.inkHex });
+    this.armMat = mat;
     const limb = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1, 6).translate(0, 0.5, 0), mat);
     limb.scale.y = 0.62;
     limb.rotation.set(-1.15, 0, 0.35);
     this.arm.add(limb);
     this.fist = new THREE.Group();
-    const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: headTexture(), depthTest: false }));
+    this.fistMat = new THREE.SpriteMaterial({ map: headTexture(), depthTest: false });
+    const f = new THREE.Sprite(this.fistMat);
     f.scale.setScalar(0.085);
     this.fist.add(f);
     // punto in cui il braccio finisce
@@ -62,13 +69,25 @@ export class Player {
     this.camera.add(this.arm);
   }
 
+  // il braccio in prima persona segue il tema (inchiostro o gesso)
+  applyTheme() {
+    this.armMat.color.set(THEME.inkHex);
+    this.fistMat.map?.dispose();
+    this.fistMat.map = headTexture();
+    this.fistMat.needsUpdate = true;
+  }
+
+  setCrouch(on: boolean) {
+    this.crouching = on;
+  }
+
   setWeapon(w: Weapon) {
     this.weapon = w;
     this.ruler.visible = w === 'ruler';
   }
 
   get eye() {
-    return new THREE.Vector3(this.pos.x, this.pos.y + EYE, this.pos.z);
+    return new THREE.Vector3(this.pos.x, this.pos.y + this.eyeH, this.pos.z);
   }
 
   get forward() {
@@ -127,8 +146,9 @@ export class Player {
       if (input.down.has('KeyD') || input.down.has('ArrowRight')) mx += 1;
     }
     const len = Math.hypot(mx, mz);
-    const running = input.down.has('ShiftLeft') || input.down.has('ShiftRight');
-    const sp = running ? RUN : WALK;
+    this.blocking = canMove && input.rightDown;
+    const running = (input.down.has('ShiftLeft') || input.down.has('ShiftRight')) && !this.crouching && !this.blocking;
+    const sp = (running ? RUN : WALK) * (this.crouching ? 0.5 : 1) * (this.blocking ? 0.55 : 1);
     let vx = 0, vz = 0;
     if (len > 0) {
       mx /= len;
@@ -141,7 +161,7 @@ export class Player {
     this.pos.z += (vz + this.knock.z) * dt;
     this.knock.multiplyScalar(Math.max(0, 1 - dt * 6));
 
-    if (canMove && input.pressed.has('Space') && this.pos.y <= 0.001) {
+    if (canMove && input.pressed.has('Space') && this.pos.y <= 0.001 && !this.crouching) {
       this.vy = JUMP;
       jumped = true;
     }
@@ -161,7 +181,8 @@ export class Player {
     if (len > 0 && onGround) this.bob += dt * (running ? 13 : 9);
     if (Math.floor(prevBob / Math.PI) !== Math.floor(this.bob / Math.PI)) stepped = true;
     const bobY = onGround && len > 0 ? Math.abs(Math.sin(this.bob)) * (running ? 0.07 : 0.045) : 0;
-    this.camera.position.set(this.pos.x, this.pos.y + EYE + bobY, this.pos.z);
+    this.eyeH += ((this.crouching ? EYE_CROUCH : EYE) - this.eyeH) * Math.min(1, dt * 10);
+    this.camera.position.set(this.pos.x, this.pos.y + this.eyeH + bobY, this.pos.z);
     this.camera.rotation.set(this.pitch, this.yaw, 0);
 
     // braccio: oscillazione + attacco
@@ -171,6 +192,13 @@ export class Player {
     let ay = -0.62 + this.sway.y - bobY * 0.4 + Math.sin(performance.now() * 0.0015) * 0.006;
     let az = -0.28;
     let rx = 0, rz = 0;
+    if (this.blocking) {
+      // pugno alzato davanti alla faccia
+      ax -= 0.3;
+      ay += 0.22;
+      az += 0.05;
+      rz = 0.5;
+    }
     if (this.attackT >= 0) {
       const dur = this.weapon === 'ruler' ? 0.42 : 0.3;
       this.attackT += dt / dur;

@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import type { Game } from '../game/game';
-import type { Choice } from '../game/dialogue';
-import { Stickman } from '../entities/stickman';
+import type { Game } from '../../game/game';
+import type { Choice } from '../../game/dialogue';
+import { Stickman } from '../../entities/stickman';
 import { COINS_NEEDED } from './quests';
-import { HIGHLIGHT_YELLOW_HEX, INK } from '../render/palette';
+import { HIGHLIGHT_YELLOW_HEX, INK } from '../../render/palette';
 
 // ---------------------------------------------------------------------------
 // Gli abitanti di San Scarabocchio.
@@ -27,9 +27,9 @@ export function createCharacters(g: Game) {
     pos: [-15.9, 6.3],
     face: [-20, 0],
     look: { hat: 'cap' },
-    icon: (g) => (g.quest('main') === 2 ? 'main' : g.quest('main') === 4 ? 'main-turnin' : null),
+    icon: (g) => (g.quest('c1') === 2 ? 'main' : g.quest('c1') === 4 ? 'main-turnin' : null),
     barks: (g) => {
-      const q = g.quest('main');
+      const q = g.quest('c1');
       if (q <= 2) return ['STECCO! Sono qui!', 'Ti vedo! Cioè, vedo delle linee che si avvicinano.'];
       if (q === 3) return ['Monete, Stecco. Mo-ne-te.', 'Io sorveglio il bar. È un lavoro duro.', 'Hai controllato per terra? Per terra ci sono sempre monete.'];
       return ['Stasera si fa la storia.', 'Porta un piano. Io porto... me.'];
@@ -37,7 +37,7 @@ export function createCharacters(g: Game) {
     dialogue: {
       name: 'Marco',
       start: (g) => {
-        const q = g.quest('main');
+        const q = g.quest('c1');
         if (q <= 2) return 'intro';
         if (q === 3) return 'collect';
         if (q === 4) return 'finale';
@@ -90,10 +90,10 @@ export function createCharacters(g: Game) {
             'Quando hai 50 monete torna da me. Io resto qui a... sorvegliare il bar.',
           ],
           do: (g) => {
-            if (g.quest('main') >= 3) return;
+            if (g.quest('c1') >= 3) return;
             g.flag('metMarco');
             g.addXp(20);
-            g.setStep('main', g.state.coins >= COINS_NEEDED ? 4 : 3);
+            g.setStep('c1', g.state.coins >= COINS_NEEDED ? 4 : 3);
             g.after(3, () =>
               g.toast('Suggerimento: chi ha un <b class="blue">!</b> sopra la testa ha bisogno di aiuto. Premi <b>Q</b> per il diario.', 'info', 8000),
             );
@@ -542,7 +542,7 @@ export function createCharacters(g: Game) {
   cane.rotation.x = 0.35;
   (pina.body as Stickman).prop.add(cane);
 
-  const dogPos = g.town.anchors.dogSpot;
+  const dogPos = g.world.anchors.dogSpot;
   g.addNpc({
     id: 'pallino',
     name: 'Cane',
@@ -678,7 +678,7 @@ export function createCharacters(g: Game) {
   // =========================================================================
   // ARTURO IL FILOSOFO — Missione: Tre domande
   // =========================================================================
-  const bench = g.town.anchors.philosopherBench;
+  const bench = g.world.anchors.philosopherBench;
   g.addNpc({
     id: 'filosofo',
     name: 'Arturo il Filosofo',
@@ -764,7 +764,7 @@ export function createCharacters(g: Game) {
   // =========================================================================
   // COMPARSE (senza missioni, ma con molto da dire)
   // =========================================================================
-  const fountain = g.town.anchors.fountain;
+  const fountain = g.world.anchors.fountain;
   g.addNpc({
     id: 'fabio',
     name: 'Fabio',

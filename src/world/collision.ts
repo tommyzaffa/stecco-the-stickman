@@ -1,24 +1,62 @@
 import type * as THREE from 'three';
 
 // Collisioni 2D sul piano XZ: il mondo è piatto, basta e avanza.
-export interface Rect { x0: number; z0: number; x1: number; z1: number }
+export interface Rect { x0: number; z0: number; x1: number; z1: number; noSight?: boolean }
 export interface Circle { x: number; z: number; r: number }
 
 export class Colliders {
   rects: Rect[] = [];
   circles: Circle[] = [];
 
-  rect(x0: number, z0: number, x1: number, z1: number) {
-    this.rects.push({ x0: Math.min(x0, x1), z0: Math.min(z0, z1), x1: Math.max(x0, x1), z1: Math.max(z0, z1) });
+  // noSight: blocca il passaggio ma non la vista (es. banconi bassi, cordoni)
+  rect(x0: number, z0: number, x1: number, z1: number, noSight = false) {
+    const r: Rect = { x0: Math.min(x0, x1), z0: Math.min(z0, z1), x1: Math.max(x0, x1), z1: Math.max(z0, z1) };
+    if (noSight) r.noSight = true;
+    this.rects.push(r);
+    return r;
+  }
+
+  remove(r: Rect) {
+    const i = this.rects.indexOf(r);
+    if (i >= 0) this.rects.splice(i, 1);
   }
 
   // box centrato
-  box(cx: number, cz: number, w: number, d: number) {
-    this.rect(cx - w / 2, cz - d / 2, cx + w / 2, cz + d / 2);
+  box(cx: number, cz: number, w: number, d: number, noSight = false) {
+    return this.rect(cx - w / 2, cz - d / 2, cx + w / 2, cz + d / 2, noSight);
   }
 
   circle(x: number, z: number, r: number) {
     this.circles.push({ x, z, r });
+  }
+
+  // true se il segmento A→B attraversa un ostacolo (muri, mobili). Usato per la vista delle guardie.
+  blocked(ax: number, az: number, bx: number, bz: number, minSize = 0.2) {
+    const dx = bx - ax, dz = bz - az;
+    for (const r of this.rects) {
+      // ostacoli bassi o minuscoli (es. gambe dei tavoli) non contano
+      if (r.x1 - r.x0 < minSize && r.z1 - r.z0 < minSize) continue;
+      if (r.noSight) continue;
+      // slab test
+      let t0 = 0, t1 = 1;
+      const clip = (p: number, q: number) => {
+        if (Math.abs(p) < 1e-9) return q >= 0;
+        const t = q / p;
+        if (p < 0) {
+          if (t > t1) return false;
+          if (t > t0) t0 = t;
+        } else {
+          if (t < t0) return false;
+          if (t < t1) t1 = t;
+        }
+        return true;
+      };
+      if (clip(-dx, ax - r.x0) && clip(dx, r.x1 - ax) && clip(-dz, az - r.z0) && clip(dz, r.z1 - az) && t0 < t1 && t0 < 0.999 && t1 > 0.001) {
+        // se partiamo da dentro l'ostacolo (es. guardia appoggiata) ignoriamolo
+        if (!(ax > r.x0 && ax < r.x1 && az > r.z0 && az < r.z1)) return true;
+      }
+    }
+    return false;
   }
 
   resolve(p: THREE.Vector3, radius: number) {

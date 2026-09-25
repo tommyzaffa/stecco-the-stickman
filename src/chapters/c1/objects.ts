@@ -1,6 +1,6 @@
 import type * as THREE from 'three';
-import type { Game } from '../game/game';
-import type { Dialogue } from '../game/dialogue';
+import type { Game } from '../../game/game';
+import type { Dialogue } from '../../game/dialogue';
 
 // Oggetti con cui interagire + monete sparse per la città.
 
@@ -12,7 +12,7 @@ const narr = (lines: string[], extra: Partial<Dialogue> = {}): Dialogue => ({
 });
 
 export function createObjects(g: Game) {
-  const A = g.town.anchors;
+  const A = g.world.anchors;
   const obj = (pos: THREE.Vector3, label: string | ((g: Game) => string | null), d: Dialogue | ((g: Game) => Dialogue), radius = 2) =>
     g.addInteractable({
       pos,
@@ -22,8 +22,8 @@ export function createObjects(g: Game) {
     });
 
   // --- casa -------------------------------------------------------------------
-  obj(A.alarm, (g) => (g.quest('main') === 0 ? 'Spegni la sveglia' : 'Guarda la sveglia'), (g) =>
-    g.quest('main') === 0
+  obj(A.alarm, (g) => (g.quest('c1') === 0 ? 'Spegni la sveglia' : 'Guarda la sveglia'), (g) =>
+    g.quest('c1') === 0
       ? {
           name: '',
           start: 'a',
@@ -31,7 +31,7 @@ export function createObjects(g: Game) {
             a: {
               say: ['* Spegni la sveglia con un colpo deciso.', '* Lei ti fissa. Sa che domani vincerà di nuovo.'],
               do: (g) => {
-                g.setStep('main', 1, true);
+                g.setStep('c1', 1, true);
                 g.after(1.4, () => {
                   g.phone('Marco', 'SVEGLIA. Stasera si esce. Vieni al bar da Gino. NON fare tardi come l\'ultima volta (3 giorni).');
                   g.after(1.2, () => g.toast('Obiettivo: Esci di casa', 'quest'));
@@ -68,7 +68,7 @@ export function createObjects(g: Game) {
   obj(A.tv, 'Guarda la TV', narr(['La TV trasmette una linea orizzontale.', 'Da tre anni.', 'Non riesci a smettere di guardarla. È il programma migliore della settimana.']));
   obj(A.mirror, 'Guardati allo specchio', narr(['Ti guardi allo specchio.', 'Un cerchio. Qualche linea.', 'Bellissimo. Come sempre.']));
   obj(A.plant, 'Annaffia la pianta', narr(["Una pianta disegnata. Non ha bisogno d'acqua.", 'La annaffi lo stesso, per affetto.', 'Lei non ricambia. È una pianta.']));
-  obj(A.bed, (g) => (g.quest('main') >= 1 ? 'Torna a letto' : null), narr(['Potresti tornare a dormire.', 'Ma poi il gioco durerebbe trenta secondi. Non è il caso.']));
+  obj(A.bed, (g) => (g.quest('c1') >= 1 ? 'Torna a letto' : null), narr(['Potresti tornare a dormire.', 'Ma poi il gioco durerebbe trenta secondi. Non è il caso.']));
   obj(A.mailbox, 'Apri la cassetta della posta', narr(["Nella cassetta c'è una bolletta.", '"Bolletta inchiostro, mese di settembre."', 'Salata. Ogni linea che disegni costa.']));
 
   // --- città --------------------------------------------------------------------

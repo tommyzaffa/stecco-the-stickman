@@ -17,6 +17,9 @@ export class NPC {
   nextBark = 4 + Math.random() * 8;
   hidden = false;
   onSay: ((text: string) => void) | null = null;
+  fighter?: import('../game/combat').Fighter;
+  controlled = false; // quando true il movimento lo decide il sistema di combattimento
+  ctrlSpeed = 0;
   private pathIdx = 0;
   private waitT = 0;
   private angle = 0;
@@ -88,6 +91,11 @@ export class NPC {
     let speed = 0;
     const b = this.behavior;
     const pd = Math.hypot(player.x - this.pos.x, player.z - this.pos.z);
+    if (this.controlled) {
+      this.lastSpeed += (this.ctrlSpeed - this.lastSpeed) * Math.min(1, dt * 10);
+      this.body.update(dt, this.lastSpeed);
+      return pd;
+    }
 
     if (this.talking) {
       if (b.type !== 'sit' && b.type !== 'circle') this.face(player.x, player.z, dt);

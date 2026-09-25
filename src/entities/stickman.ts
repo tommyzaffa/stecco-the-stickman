@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { INK, INK_HEX } from '../render/palette';
+import { THEME } from '../render/palette';
 import { headTexture, shadowTexture } from '../render/textures';
 
 // ---------------------------------------------------------------------------
@@ -8,7 +8,9 @@ import { headTexture, shadowTexture } from '../render/textures';
 // ---------------------------------------------------------------------------
 
 export type Hat = 'none' | 'cap' | 'top' | 'beanie' | 'bun' | 'police' | 'party' | 'beret' | 'hair';
-export type Action = 'none' | 'wave' | 'talk' | 'push' | 'phone' | 'paint' | 'speech' | 'cane' | 'crossed' | 'think';
+export type Action =
+  | 'none' | 'wave' | 'talk' | 'push' | 'phone' | 'paint' | 'speech' | 'cane' | 'crossed' | 'think'
+  | 'dance' | 'drink' | 'guard' | 'windup' | 'strike' | 'dj';
 
 export interface StickmanOpts {
   hat?: Hat;
@@ -24,16 +26,25 @@ export interface StickmanOpts {
 const LIMB_DOWN = new THREE.CylinderGeometry(1, 1, 1, 6).translate(0, -0.5, 0);
 const LIMB_UP = new THREE.CylinderGeometry(1, 1, 1, 6).translate(0, 0.5, 0);
 const JOINT = new THREE.SphereGeometry(1, 8, 6);
-const inkMat = new THREE.MeshBasicMaterial({ color: INK });
-let headTex: THREE.Texture | null = null;
-let shadowTex: THREE.Texture | null = null;
-const coloredHeadTex = new Map<string, THREE.Texture>();
+// Materiali e texture dipendono dal tema (giorno: inchiostro, notte: gesso).
+interface Themed { ink: THREE.MeshBasicMaterial; head: THREE.Texture; shadow: THREE.Texture; colored: Map<string, THREE.Texture> }
+const themes = new Map<string, Themed>();
+function themed(): Themed {
+  const key = THEME.inkHex + THEME.paperHex;
+  let t = themes.get(key);
+  if (!t) {
+    t = { ink: new THREE.MeshBasicMaterial({ color: THEME.inkHex }), head: headTexture(), shadow: shadowTexture(), colored: new Map() };
+    themes.set(key, t);
+  }
+  return t;
+}
+let inkMat: THREE.MeshBasicMaterial;
 
 const R = 0.027; // spessore del "tratto"
 const HIP_Y = 0.92, TORSO = 0.58, UPPER = 0.34, FORE = 0.32, THIGH = 0.46, SHIN = 0.46, HEAD_OFF = 0.22, HEAD_R = 0.18;
 
 export function getShadowTexture() {
-  return (shadowTex ??= shadowTexture());
+  return themed().shadow;
 }
 
 function highlightMat(color: string) {
@@ -61,12 +72,17 @@ export class Stickman {
 
   action: Action = 'none';
   seated = false;
+  ko = false;
+  private koT = 0;
+  private danceStyle = Math.floor(Math.random() * 3);
   private phase = 0;
   private t = Math.random() * 100;
   private hurt = 0;
   private cur: Record<string, number> = {};
 
   constructor(opts: StickmanOpts = {}) {
+    const th = themed();
+    inkMat = th.ink;
     const hl = opts.highlighter ? highlightMat(opts.highlighter) : null;
     const limb = (parent: THREE.Object3D, len: number, up = false) => {
       const m = new THREE.Mesh(up ? LIMB_UP : LIMB_DOWN, inkMat);
@@ -84,6 +100,7 @@ export class Stickman {
       parent.add(j);
     };
 
+    this.root.userData.shared = true; // geometrie e materiali condivisi: non liberarli col mondo
     this.root.add(this.body);
     this.body.add(this.hips);
     this.hips.position.y = HIP_Y;
@@ -97,10 +114,10 @@ export class Stickman {
 
     let tex: THREE.Texture;
     if (opts.highlighter) {
-      tex = coloredHeadTex.get(opts.highlighter) ?? headTexture(INK_HEX, opts.highlighter);
-      coloredHeadTex.set(opts.highlighter, tex);
+      tex = th.colored.get(opts.highlighter) ?? headTexture(THEME.inkHex, opts.highlighter);
+      th.colored.set(opts.highlighter, tex);
     } else {
-      tex = headTex ??= headTexture();
+      tex = th.head;
     }
     const headMat = new THREE.SpriteMaterial({ map: tex, alphaTest: 0.5, transparent: false });
     headMat.alphaToCoverage = true;
@@ -360,6 +377,99 @@ export class Stickman {
         tg.armLZ = -0.2;
         tg.elbowLZ = -1.2;
         break;
+      case 'dance': {
+        const b = t * 4.3; // ~124 bpm
+        const bounce = Math.abs(Math.sin(b));
+        tg.hipsY = HIP_Y - 0.08 + bounce * 0.08;
+        tg.kneeLX = tg.kneeRX = 0.35 - bounce * 0.3;
+        tg.legLX = tg.legRX = -0.18 + bounce * 0.15;
+        tg.torsoZ = Math.sin(b * 0.5) * 0.12;
+        if (this.danceStyle === 0) {
+          // braccia al cielo alternate
+          tg.armLZ = 2.4 + Math.sin(b) * 0.4;
+          tg.armRZ = -2.4 + Math.sin(b) * 0.4;
+          tg.elbowLX = tg.elbowRX = -0.2;
+        } else if (this.danceStyle === 1) {
+          // "disco": un braccio in alto, uno in basso
+          const s = Math.sin(b * 0.5) > 0 ? 1 : -1;
+          tg.armRZ = s > 0 ? -2.6 : -0.4;
+          tg.armLZ = s > 0 ? 0.4 : 2.6;
+          tg.elbowLX = tg.elbowRX = -0.1;
+        } else {
+          // pugni avanti a tempo
+          tg.armLX = -1.3 + Math.sin(b) * 0.5;
+          tg.armRX = -1.3 - Math.sin(b) * 0.5;
+          tg.elbowLX = tg.elbowRX = -1.2;
+        }
+        break;
+      }
+      case 'drink':
+        tg.armRX = -0.6 + Math.max(0, Math.sin(t * 0.8)) * -0.5;
+        tg.elbowRX = -2.1;
+        tg.armLX = -0.1;
+        break;
+      case 'dj':
+        tg.armLX = tg.armRX = -1.1;
+        tg.elbowLX = tg.elbowRX = -0.6;
+        tg.armLZ = 0.3 + Math.sin(t * 8.6) * 0.15;
+        tg.armRZ = -0.3 + Math.sin(t * 4.3) * 0.2;
+        tg.torsoX = 0.15 + Math.abs(Math.sin(t * 4.3)) * 0.12;
+        break;
+      case 'guard': {
+        const s = Math.sin(t * 5) * 0.05;
+        tg.armLX = tg.armRX = -1.0 + s;
+        tg.elbowLX = tg.elbowRX = -1.9;
+        tg.armLZ = -0.25;
+        tg.armRZ = 0.25;
+        tg.torsoX = 0.12;
+        tg.legLX = -0.25;
+        tg.legRX = 0.25;
+        tg.kneeLX = tg.kneeRX = 0.25;
+        tg.hipsY = HIP_Y - 0.05 + s * 0.3;
+        if (moving) {
+          tg.legLX = Math.sin(ph) * 0.4;
+          tg.legRX = -Math.sin(ph) * 0.4;
+        }
+        break;
+      }
+      case 'windup':
+        tg.armLX = -1.0;
+        tg.elbowLX = -1.9;
+        tg.armRX = 0.9;
+        tg.armRZ = -0.6;
+        tg.elbowRX = -1.6;
+        tg.torsoX = -0.1;
+        tg.torsoZ = -0.12;
+        break;
+      case 'strike':
+        tg.armLX = -0.8;
+        tg.elbowLX = -1.9;
+        tg.armRX = -1.65;
+        tg.armRZ = 0.1;
+        tg.elbowRX = -0.05;
+        tg.torsoX = 0.3;
+        tg.legLX = -0.4;
+        tg.legRX = 0.4;
+        break;
+    }
+
+    if (this.ko) {
+      // a terra, braccia e gambe scomposte
+      this.koT = Math.min(1, this.koT + dt * 3);
+      tg.armLZ = 1.4;
+      tg.armRZ = -1.2;
+      tg.armLX = tg.armRX = 0;
+      tg.elbowLX = -0.4;
+      tg.elbowRX = -0.8;
+      tg.legLZ = 0.35;
+      tg.legRZ = -0.2;
+      tg.legLX = tg.legRX = 0;
+      tg.kneeLX = 0.3;
+      tg.kneeRX = 0;
+      tg.torsoX = 0;
+      tg.hipsY = HIP_Y;
+    } else {
+      this.koT = Math.max(0, this.koT - dt * 3);
     }
 
     if (this.hurt > 0) {
@@ -371,7 +481,8 @@ export class Stickman {
       tg.torsoZ += Math.sin(t * 30) * h * 0.1;
     }
 
-    const k = 1 - Math.exp(-dt * (moving ? 18 : 9));
+    const fast = this.action === 'strike' || this.action === 'windup' || moving;
+    const k = 1 - Math.exp(-dt * (this.action === 'strike' ? 30 : fast ? 18 : 9));
     for (const key in tg) {
       const c = this.cur[key] ?? tg[key];
       this.cur[key] = c + (tg[key] - c) * k;
@@ -387,6 +498,9 @@ export class Stickman {
     this.armR.rotation.set(c.armRX, 0, c.armRZ);
     this.elbowL.rotation.set(c.elbowLX, 0, c.elbowLZ);
     this.elbowR.rotation.set(c.elbowRX, 0, c.elbowRZ);
+    // caduta all'indietro quando va KO
+    this.body.rotation.x = -this.koT * 1.45;
+    this.body.position.y = this.koT * 0.12;
   }
 }
 
@@ -401,6 +515,7 @@ export class StickDog {
   private t = 0;
 
   constructor() {
+    inkMat = themed().ink;
     const body = new THREE.Group();
     body.position.y = 0.34;
     this.root.add(body);
@@ -428,7 +543,7 @@ export class StickDog {
     n.scale.set(R * 0.8, 0.2, R * 0.8);
     neck.add(n);
     neck.rotation.x = 0.6;
-    const headMat = new THREE.SpriteMaterial({ map: (headTex ??= headTexture()), alphaTest: 0.5 });
+    const headMat = new THREE.SpriteMaterial({ map: themed().head, alphaTest: 0.5 });
     const head = new THREE.Sprite(headMat);
     head.scale.setScalar(0.24);
     head.position.set(0, 0.22, 0.06);

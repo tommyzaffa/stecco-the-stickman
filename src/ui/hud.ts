@@ -3,7 +3,7 @@ import * as THREE from 'three';
 // HUD in HTML sopra il canvas: più facile da stilizzare "a mano" che in WebGL.
 
 export type MarkerKind = 'main' | 'side';
-export type IconKind = 'main' | 'main-turnin' | 'side' | 'turnin';
+export type IconKind = 'main' | 'main-turnin' | 'side' | 'turnin' | 'suspect' | 'alert';
 
 const el = (tag: string, cls = '', parent?: HTMLElement) => {
   const e = document.createElement(tag);
@@ -61,6 +61,8 @@ export class Hud {
   private icons: Pool;
   private bubbles: Pool;
   private tags: Pool;
+  private bars: Pool;
+  private layer: HTMLElement;
   private arrow: HTMLElement;
   private lastCoins = -1;
   private lastStats = '';
@@ -88,7 +90,9 @@ export class Hud {
     this.crosshair = el('div', 'crosshair', this.root);
 
     const layer = el('div', 'markers', this.root);
+    this.layer = layer;
     this.tags = new Pool(layer, 'nametag');
+    this.bars = new Pool(layer, 'enemy-bar');
     this.icons = new Pool(layer, 'npc-icon');
     this.markers = new Pool(layer, 'marker');
     this.bubbles = new Pool(layer, 'bubble');
@@ -201,6 +205,7 @@ export class Hud {
     this.icons.reset();
     this.bubbles.reset();
     this.tags.reset();
+    this.bars.reset();
     this.arrow.style.display = 'none';
   }
 
@@ -209,6 +214,7 @@ export class Hud {
     this.icons.finish();
     this.bubbles.finish();
     this.tags.finish();
+    this.bars.finish();
   }
 
   private project(p: THREE.Vector3, cam: THREE.Camera) {
@@ -247,13 +253,17 @@ export class Hud {
     this.arrow.style.transform = `translate(${cx + dx * k}px, ${cy + dy * k}px) translate(-50%, -50%) rotate(${ang}rad)`;
   }
 
-  npcIcon(p: THREE.Vector3, cam: THREE.Camera, kind: IconKind) {
+  npcIcon(p: THREE.Vector3, cam: THREE.Camera, kind: IconKind, level = 1) {
     const s = this.project(p, cam);
     if (!s.on || s.depth > 60) return;
     const e = this.icons.get();
     e.className = `npc-icon ${kind}`;
-    e.textContent = kind.endsWith('turnin') ? '?' : '!';
-    const sc = Math.max(0.55, Math.min(1.3, 9 / s.depth));
+    e.textContent = kind.endsWith('turnin') || kind === 'suspect' ? '?' : '!';
+    let sc = Math.max(0.55, Math.min(1.3, 9 / s.depth));
+    if (kind === 'suspect') {
+      sc *= 0.5 + level * 0.7;
+      e.style.opacity = String(0.35 + level * 0.65);
+    } else e.style.opacity = '';
     e.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -100%) scale(${sc})`;
   }
 
@@ -264,6 +274,27 @@ export class Hud {
     if (e.textContent !== text) e.textContent = text;
     e.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, calc(-100% - 12px))`;
     e.style.opacity = String(Math.min(1, (22 - s.depth) / 6));
+  }
+
+  enemyBar(p: THREE.Vector3, cam: THREE.Camera, frac: number) {
+    const s = this.project(p, cam);
+    if (!s.on || s.depth > 30) return;
+    const e = this.bars.get();
+    if (!e.firstChild) e.appendChild(document.createElement('div'));
+    (e.firstChild as HTMLElement).style.width = `${Math.max(0, frac) * 100}%`;
+    e.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -100%)`;
+  }
+
+  // Scritta da fumetto (POW! SBAM!) che esplode e sparisce
+  popWord(p: THREE.Vector3, cam: THREE.Camera, text: string) {
+    const s = this.project(p, cam);
+    if (!s.on) return;
+    const e = el('div', 'popword', this.layer);
+    e.textContent = text;
+    e.style.left = `${s.x + (Math.random() - 0.5) * 40}px`;
+    e.style.top = `${s.y + (Math.random() - 0.5) * 30}px`;
+    e.style.setProperty('--rot', `${(Math.random() - 0.5) * 30}deg`);
+    setTimeout(() => e.remove(), 800);
   }
 
   nameTag(p: THREE.Vector3, cam: THREE.Camera, text: string) {
