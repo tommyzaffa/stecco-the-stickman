@@ -34,7 +34,7 @@ quadretti, righe, il margine rosso, la copertina.
 | 2 ✅ | Il Parallelepipedo | Il club, notte (gesso) | Furtività leggera, risse con parata, ballo a tempo |
 | 3 ✅ | Il Banco dei Pegni | Quadropoli, città a quadretti | **Indagine**: indizi, testimoni, accusa finale |
 | 4 ✅ | Il Mercato Nero | Sotto Quadropoli | **Armi da fuoco**: poligono, coperture, ondate, boss |
-| 5 | L'appuntamento | Il ristorante "Da Pastello" | **Solo dialoghi**: piacere a Martina o è game over |
+| 5 ✅ | L'appuntamento | Il ristorante "Da Pastello" | **Solo dialoghi**: interesse, risposte a tempo, Marco da nascondere |
 | 6 | Consegna a domicilio | Le strade di Quadropoli | **Guida**: la macchina (senza motore) di Luca |
 
 **3. Il Banco dei Pegni.** Marco ha venduto il tappo vero a un banco dei pegni di Quadropoli.
@@ -51,7 +51,12 @@ temperino, barili d'inchiostro e il Pastellone, che si ferma a temperarsi. Dal r
 da Pastello (il ristorante dei Pastelli a Cera).
 
 **5. L'appuntamento.** Martina colleziona tappi e non lo vende. Però accetta un appuntamento.
-Tutto il capitolo è la cena: bisogna piacerle con le risposte giuste.
+Tutto il capitolo è la cena, a portate: bisogna piacerle con le risposte giuste (barra
+dell'interesse; a zero se ne va e si riparte dalla portata). Alcune risposte sono a tempo: se non
+scegli stai zitto, e col violino stare zitti è la risposta giusta. Marco "aiuta": quando Martina
+legge il menù o va in bagno spunta nella sala (pianta, finestra, acquario, lampadario...) e va
+scacciato prima che lei lo veda; si traveste da cameriere ("Marcello, con due elle") e manda
+bigliettini. Alla fine il maître riconosce Stecco e Marco: quelli del Mercato Nero. Fuga.
 - Le risposte dipendono da cosa hai: monete (il conto!), oggetti raccolti, salute, scelte fatte
   nei capitoli precedenti. Oggetti già in gioco: fiore, poesia, tre sospiri, guanti del mimo
   (cap. 3), profumo "Quaderno Nuovo" e la parola "scusa" (cap. 4). Flag utili: `noShadow`

@@ -25,7 +25,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   - `postfx.ts`: post-processing (line boil a 8 fps, grana carta, vignetta, flash danno).
   - `palette.ts`: colori e **tema** (`DAY` inchiostro su carta, `NIGHT` gesso su carta nera,
     `QUADRETTI` carta a quadretti: la griglia la disegna lo shader del tratteggio,
-    `PACCHI` carta da pacchi). `CERA` = colori dei Pastelli a Cera.
+    `PACCHI` carta da pacchi, `CARTONCINO` cartoncino prugna a lume di candela). `CERA` = colori
+    dei Pastelli a Cera.
     Il tema va impostato prima di costruire un capitolo (lo fa `Game.loadChapter`).
 - `src/world/` — `builder.ts` (`WorldBuilder`: muri, porte, edifici, cartelli, neon, alberi,
   `ceiling` per gli interni, `wallText` per le scritte sui muri...; `finish()` restituisce un
@@ -45,7 +46,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 - `src/ui/hud.ts` — HUD in HTML/CSS sopra il canvas (`src/style.css`).
 - `src/audio/` — audio tutto sintetizzato con Web Audio (nessun file): `audio.ts` effetti, voci a
   bip, sorgenti nel mondo (`addEmitter`), filtro "musica ovattata" (`setMusicMuffle`);
-  `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`, `indagine`, `mercato`, `sparatoria`).
+  `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`, `indagine`, `mercato`, `sparatoria`,
+  `cena`, `violino`).
   L'AudioContext si sblocca solo con un click (schermata del titolo).
 
 ## Sistemi riusabili
@@ -60,6 +62,13 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   PNG con cui hai iniziato). `DNode.look` = cosa guardare durante le righe del narratore di quel
   nodo (un oggetto, un punto). `g.onLine` = callback a ogni riga (es. "TOC" → suono del martelletto).
   `player.seated` per le scene da seduti. Durante i dialoghi il braccio/arma si abbassa.
+- **Risposte a tempo**: `DNode.timer` (secondi) e `DNode.timeout` (nodo se non scegli: di solito
+  "stai zitto"). Barra che si accorcia nel riquadro del dialogo.
+- **Barra di capitolo**: `g.hud.meter({label, value 0..1, color})` e `g.hud.meterPop('+10', buono)`
+  (capitolo 5: interesse di Martina).
+- **Seduti**: `player.seated` = ci si guarda intorno ma non ci si muove, non si salta e non si
+  colpisce (il click resta in `input.clicked` per il capitolo). `patrol` con `once: true` percorre
+  la strada una volta e si ferma (con `wait` si fermerebbe a ogni punto).
 - **Chi ti segue** (`behavior: 'follow'` verso il giocatore) segue le tue tracce: passa dalle porte,
   non attraversa i muri; se si perde riappare dietro di te, fuori dalla visuale.
 - **Armi da fuoco** (capitolo 4): oggetto `pistola`, tasto `weapon3`, `reload`; `GameState.clip/ammo`,
@@ -129,7 +138,8 @@ capitolo alla volta, chiudendolo del tutto** (grafica, dialoghi, suoni) prima di
 successivo. **Ogni capitolo porta una meccanica nuova** (indagine, sparatoria, appuntamento a
 dialoghi, guida, furtività su più piani...): mai due capitoli che si giocano uguali.
 Completati: capitolo 1 (San Scarabocchio), 2 (Il Parallelepipedo), 3 (Il Banco dei Pegni, Quadropoli),
-4 (Il Mercato Nero: poligono, asta, sparatoria a ondate con il Pastellone).
+4 (Il Mercato Nero: poligono, asta, sparatoria a ondate con il Pastellone),
+5 (L'appuntamento: cena a portate con Martina, interesse, risposte a tempo, Marco da scacciare).
 Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 
 ## Convenzioni per i contenuti

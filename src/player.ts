@@ -208,7 +208,7 @@ export class Player {
 
     let mx = 0, mz = 0;
     let analog = 0;
-    if (canMove) {
+    if (canMove && !this.seated) {
       if (input.isDown('forward') || input.down.has('ArrowUp')) mz -= 1;
       if (input.isDown('back') || input.down.has('ArrowDown')) mz += 1;
       if (input.isDown('left') || input.down.has('ArrowLeft')) mx -= 1;
@@ -221,7 +221,7 @@ export class Player {
       }
     }
     let len = Math.hypot(mx, mz);
-    this.blocking = canMove && input.rightDown;
+    this.blocking = canMove && !this.seated && input.rightDown;
     const running = (input.isDown('run') || analog > 0.92) && !this.crouching && !this.blocking;
     const sp = (running ? RUN : WALK) * (this.crouching ? 0.5 : 1) * (this.blocking ? 0.55 : 1);
     let vx = 0, vz = 0;
@@ -239,7 +239,7 @@ export class Player {
     this.pos.z += (vz + this.knock.z) * dt;
     this.knock.multiplyScalar(Math.max(0, 1 - dt * 6));
 
-    if (canMove && input.wasPressed('jump') && this.pos.y <= 0.001 && !this.crouching) {
+    if (canMove && !this.seated && input.wasPressed('jump') && this.pos.y <= 0.001 && !this.crouching) {
       this.vy = JUMP;
       jumped = true;
     }
@@ -324,7 +324,7 @@ export class Player {
       if (this.attackT >= 1) this.attackT = -1;
     }
     // durante dialoghi e scene il braccio (e l'arma) si abbassa: non copre la scena
-    this.lower += ((canMove ? 0 : 1) - this.lower) * Math.min(1, dt * 6);
+    this.lower += ((canMove && !this.seated ? 0 : 1) - this.lower) * Math.min(1, dt * 6);
     ay -= this.lower * 0.65;
     this.arm.position.set(ax, ay, az);
     this.arm.rotation.set(rx, 0, rz);

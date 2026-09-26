@@ -7,11 +7,11 @@ import { headTexture, shadowTexture } from '../render/textures';
 // ogni posa è calcolata con qualche seno e coseno.
 // ---------------------------------------------------------------------------
 
-export type Hat = 'none' | 'cap' | 'top' | 'beanie' | 'bun' | 'police' | 'party' | 'beret' | 'hair' | 'crayon';
+export type Hat = 'none' | 'cap' | 'top' | 'beanie' | 'bun' | 'police' | 'party' | 'beret' | 'hair' | 'crayon' | 'pencil';
 export type Action =
   | 'none' | 'wave' | 'talk' | 'push' | 'phone' | 'paint' | 'speech' | 'cane' | 'crossed' | 'think'
   | 'dance' | 'drink' | 'guard' | 'windup' | 'strike' | 'dj' | 'dizzy'
-  | 'aim' | 'cover' | 'gavel' | 'sharpen';
+  | 'aim' | 'cover' | 'gavel' | 'sharpen' | 'violin' | 'read';
 
 export interface StickmanOpts {
   hat?: Hat;
@@ -269,6 +269,19 @@ export class Stickman {
         g.add(band);
         return;
       }
+      case 'pencil': {
+        // matita colorata: legno chiaro e punta del suo colore (Martina)
+        const wood = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.24, 6), new THREE.MeshBasicMaterial({ color: '#e8cfa0' }));
+        wood.position.y = 0.06;
+        g.add(wood);
+        const lead = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.1, 6), new THREE.MeshBasicMaterial({ color: this.waxColor ?? THEME.inkHex }));
+        lead.position.y = 0.2;
+        g.add(lead);
+        const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.162, 0.162, 0.03, 6), inkMat);
+        ring.position.y = -0.06;
+        g.add(ring);
+        return;
+      }
       case 'hair':
         for (let i = -2; i <= 2; i++) {
           const h = add(new THREE.CylinderGeometry(0.012, 0.012, 0.14, 4), i * 0.05, 0.05, 0);
@@ -428,6 +441,24 @@ export class Stickman {
         }
         break;
       }
+      case 'violin':
+        // violino sulla spalla sinistra, archetto che va avanti e indietro
+        tg.armLX = -1.35;
+        tg.armLZ = 0.55;
+        tg.elbowLX = -1.7;
+        tg.armRX = -1.0 + Math.sin(t * 5) * 0.25;
+        tg.armRZ = -0.35 + Math.sin(t * 5) * 0.25;
+        tg.elbowRX = -0.9;
+        tg.torsoZ = Math.sin(t * 1.3) * 0.08;
+        break;
+      case 'read':
+        // legge (il menù): tutte e due le braccia davanti, testa un po' giù
+        tg.armLX = tg.armRX = -1.05;
+        tg.armLZ = -0.2;
+        tg.armRZ = 0.2;
+        tg.elbowLX = tg.elbowRX = -1.1;
+        tg.torsoX = 0.18;
+        break;
       case 'drink':
         tg.armRX = -0.6 + Math.max(0, Math.sin(t * 0.8)) * -0.5;
         tg.elbowRX = -2.1;

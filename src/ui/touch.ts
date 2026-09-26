@@ -253,10 +253,13 @@ export class TouchUI {
       if (this.btn.reload.innerHTML !== html) this.btn.reload.innerHTML = html;
       this.btn.reload.classList.toggle('empty', st.clip === 0 && !reloading);
     }
-    this.btn.weapon.classList.toggle('hide', !(g.has('righello') || g.has('pistola')));
     this.btn.use.classList.toggle('hide', !g.hasFocus);
     this.btn.crouch.classList.toggle('down', p.crouching);
-    const fireLabel = p.weapon === 'pistol' ? 'SPARA' : 'COLPISCI';
+    // seduti (la cena del capitolo 5): niente salti né parate, il pulsante serve a scacciare
+    r.toggle('seated', p.seated);
+    for (const id of ['jump', 'crouch', 'parry', 'weapon']) this.btn[id].classList.toggle('hide', p.seated || (id === 'weapon' && !(g.has('righello') || g.has('pistola'))));
+    if (p.seated) this.btn.reload.classList.add('hide');
+    const fireLabel = p.seated ? 'SCIÒ!' : p.weapon === 'pistol' ? 'SPARA' : 'COLPISCI';
     if (this.btn.fire.textContent !== fireLabel) this.btn.fire.textContent = fireLabel;
     if (!free) {
       if (this.stickId !== null) {

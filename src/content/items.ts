@@ -1,7 +1,7 @@
 export type ItemId =
   | 'pacco' | 'righello' | 'libro' | 'tappo' | 'sottobicchiere' | 'calzino' | 'chiave'
   | 'gomma' | 'guanti' | 'fiore' | 'poesia' | 'sospiri'
-  | 'pistola' | 'profumo' | 'ombra' | 'scusa';
+  | 'pistola' | 'profumo' | 'ombra' | 'scusa' | 'tappoVero';
 
 export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolean }> = {
   pacco: {
@@ -65,6 +65,10 @@ export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolea
   ombra: {
     name: "Un'ombra usata",
     desc: 'Tratteggiata, ancora in buono stato. Non è tua.',
+  },
+  tappoVero: {
+    name: 'Il tappo giallo (quello vero)',
+    desc: 'Il tappo di Don Fluo. Prestato da Martina: va riportato. A lei, dopo. Prima a Don Fluo.',
   },
   scusa: {
     name: '"Scusa" (parola usata)',

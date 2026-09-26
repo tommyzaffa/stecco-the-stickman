@@ -83,3 +83,14 @@ Object.assign(VOICES, {
 for (const id of ['pBlu', 'pVerde', 'pArancione', 'pMarrone', 'pNero', 'pCeleste', 'pOcra', 'pRame', 'pRosso2', 'pVerde2', 'aGiallo', 'aBianco', 'aNero', 'aRosso']) {
   VOICES[id] = { base: 230 + Math.random() * 80, type: 'sawtooth', spread: 9, every: 1, vol: 0.045 };
 }
+
+// Capitolo 5
+Object.assign(VOICES, {
+  fioraia: { base: 330, type: 'triangle', spread: 6, every: 2 },
+  bianco: { base: 175, type: 'sine', spread: 3, every: 3, vol: 0.06 },
+  marcello: { base: 265, type: 'square', spread: 9, every: 1, vol: 0.05 },
+  violinista: { base: 380, type: 'sine', spread: 8, every: 2, vol: 0.05, vibrato: 10 },
+});
+for (let i = 0; i < 6; i++) {
+  for (const s of ['a', 'b']) VOICES[`cliente${i}${s}`] = { base: 200 + Math.random() * 140, type: 'sawtooth', spread: 7, every: 2, vol: 0.04 };
+}

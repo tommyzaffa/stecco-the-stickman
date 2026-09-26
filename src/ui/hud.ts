@@ -56,6 +56,9 @@ export class Hud {
   private dlgText: HTMLElement;
   private dlgChoices: HTMLElement;
   private dlgHint: HTMLElement;
+  private dlgTimer: HTMLElement;
+  private meterEl: HTMLElement;
+  private lastMeter = '';
   private chapterEl: HTMLElement;
   fadeEl: HTMLElement;
   private diarioEl: HTMLElement;
@@ -117,6 +120,11 @@ export class Hud {
     this.dlgText = el('div', 'text', this.dlg);
     this.dlgChoices = el('div', 'choices', this.dlg);
     this.dlgHint = el('div', 'hint', this.dlg);
+    this.dlgTimer = el('div', 'dtimer', this.dlg);
+    el('div', 'fill', this.dlgTimer);
+    el('span', 'lbl', this.dlgTimer).textContent = 'rispondi prima che sia tardi';
+    this.meterEl = el('div', 'meter', this.root);
+    this.meterEl.style.display = 'none';
 
     this.dlgChoices.addEventListener('touchstart', (e) => {
       const c = (e.target as HTMLElement).closest('.choice') as HTMLElement | null;
@@ -161,6 +169,24 @@ export class Hud {
     this.level.textContent = `Livello ${s.level}`;
     this.xpFill.style.width = `${(100 * s.xp) / s.xpNext}%`;
     this.weapon.textContent = `Arma: ${s.weapon}`;
+  }
+
+  // Barra di un capitolo (es. l'interesse di Martina). null = nascosta
+  meter(m: { label: string; value: number; color: string } | null) {
+    const key = m ? `${m.label}|${Math.round(m.value * 100)}|${m.color}` : '';
+    if (key === this.lastMeter) return;
+    this.lastMeter = key;
+    this.meterEl.style.display = m ? '' : 'none';
+    if (!m) return;
+    this.meterEl.style.setProperty('--c', m.color);
+    this.meterEl.innerHTML = `<div class="lbl">${m.label}</div><div class="bar"><div class="fill" style="width:${Math.max(0, Math.min(1, m.value)) * 100}%"></div></div>`;
+  }
+
+  // +10 / -15 che salta fuori dalla barra
+  meterPop(text: string, good: boolean) {
+    const e = el('div', `meter-pop ${good ? 'good' : 'bad'}`, this.root);
+    e.textContent = text;
+    setTimeout(() => e.remove(), 1600);
   }
 
   // munizioni (solo con la pistola in mano)
@@ -236,8 +262,14 @@ export class Hud {
   }
 
   // --- dialoghi ----------------------------------------------------------------
-  dialogue(who: string, text: string, kind: string, choices: string[] | null, sel: number) {
+  dialogue(who: string, text: string, kind: string, choices: string[] | null, sel: number, timer: number | null = null) {
     this.dlg.style.display = 'block';
+    // risposta a tempo: barretta che si accorcia
+    this.dlgTimer.style.display = timer === null ? 'none' : '';
+    if (timer !== null) {
+      (this.dlgTimer.firstChild as HTMLElement).style.width = `${Math.max(0, timer) * 100}%`;
+      this.dlgTimer.classList.toggle('low', timer < 0.35);
+    }
     this.crosshair.style.display = 'none';
     this.dlg.className = `dialogue paper ${kind}`;
     this.dlgWho.textContent = who;
@@ -245,7 +277,7 @@ export class Hud {
     this.dlgText.textContent = text;
     if (choices) {
       const html = choices.map((c, i) => `<div class="choice ${i === sel ? 'sel' : ''}" data-i="${i}"><b>${i + 1}</b> ${c}</div>`).join('');
-      this.dlgChoices.innerHTML = html;
+      if (this.dlgChoices.innerHTML !== html) this.dlgChoices.innerHTML = html;
       this.dlgChoices.style.display = '';
       this.dlgHint.textContent = TOUCH ? 'tocca una risposta' : `tasti numerici oppure ${keyName('forward')}/${keyName('back')} + ${keyName('interact')} per scegliere`;
     } else {

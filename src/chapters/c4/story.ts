@@ -98,11 +98,13 @@ export function setupStory(g: Game) {
         ],
       },
       soldi: {
+        do: (g) => g.flag('callSoldi'),
         say: [(g) => `> Ho ${g.state.coins} monete.`, '@Martina| Non è in vendita. Però mi piace chi fa offerte con i soldi che non ha.'],
         next: 'cena',
       },
-      drama: { say: ['@Martina| Drammatico. Mi piace il drammatico. Ma solo a teatro, e solo se c\'è l\'intervallo.'], next: 'cena' },
+      drama: { do: (g) => g.flag('callDrama'), say: ['@Martina| Drammatico. Mi piace il drammatico. Ma solo a teatro, e solo se c\'è l\'intervallo.'], next: 'cena' },
       minaccia: {
+        do: (g) => g.flag('callMinaccia'),
         say: [
           '@Martina| Ah sì? Io ho una collezione di tappi e un sacco di amici colorati. Tu cos\'hai?',
           '> Una pistola a inchiostro.',

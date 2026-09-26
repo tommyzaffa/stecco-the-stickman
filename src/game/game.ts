@@ -276,6 +276,7 @@ export class Game {
     this.guns.ceiling = Infinity;
     this.combat.maxAimers = 2;
     this.hud.ammo(null);
+    this.hud.meter(null);
     this.scene.remove(this.world.group);
     this.world.dispose();
     this.npcs = [];
@@ -761,13 +762,13 @@ export class Game {
       } else {
         if (inp.wasPressed('interact') && this.focus) this.focus.use(this);
         if (inp.wasPressed('journal') || inp.pressed.has('Tab')) this.hud.showDiario(this.diarioHtml());
-        if (inp.clicked && !this.player.blocking) {
+        if (inp.clicked && !this.player.blocking && !this.player.seated) {
           if (this.player.weapon === 'pistol') this.fire();
           else if (this.player.attack()) this.audio.swing(this.player.weapon);
         }
         if (inp.wasPressed('reload')) this.reload();
         if (inp.wasPressed('music')) this.toast(this.audio.toggleMusic() ? 'Musica: accesa' : 'Musica: spenta', 'info', 1800);
-        if (inp.wasPressed('crouch')) this.player.setCrouch(!this.player.crouching);
+        if (inp.wasPressed('crouch') && !this.player.seated) this.player.setCrouch(!this.player.crouching);
         if (inp.wasPressed('weapon1')) this.player.setWeapon('fist');
         if (inp.wasPressed('weapon2') && this.has('righello')) this.player.setWeapon('ruler');
         if (inp.wasPressed('weapon3') && this.has('pistola') && this.player.weapon !== 'pistol') this.equipPistol();

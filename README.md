@@ -18,7 +18,8 @@ meta-ironia sul fatto di essere disegnati (niente mani, niente tasche, niente co
 - Risse con parata e contrattacchi, guardie con campo visivo e linea di vista, minigioco di ballo.
 - Un capitolo = un luogo e una meccanica diversi: San Scarabocchio di giorno (inchiostro), il club
   di notte (gesso, furtività e risse), Quadropoli a quadretti (indagine con indizi e accusa),
-  il Mercato Nero su carta da pacchi (tiro a segno e sparatoria a ondate con coperture).
+  il Mercato Nero su carta da pacchi (tiro a segno e sparatoria a ondate con coperture), la cena
+  "Da Pastello" (solo dialoghi: interesse di Martina, risposte a tempo, un amico da nascondere).
 - Audio sintetizzato con Web Audio: voci "a bip" diverse per ogni personaggio, suoni ambientali
   spaziali, musica procedurale.
 
@@ -62,7 +63,7 @@ I tasti si possono cambiare da **Impostazioni** nel menu principale.
 
 ## Stato
 
-Capitoli 1, 2, 3 e 4 completi. Il piano dei capitoli è in [docs/CAPITOLI.md](docs/CAPITOLI.md).
+Capitoli da 1 a 5 completi. Il piano dei capitoli è in [docs/CAPITOLI.md](docs/CAPITOLI.md).
 
 Dal menu principale, "Seleziona capitolo" permette di ripartire da un capitolo sbloccato
 (o sbloccarlo con la password mostrata a fine del capitolo precedente).

@@ -360,7 +360,7 @@ body.touch #hud .choice { padding: 6px 8px; }
 .touch-ui .tz-left { left: 0; width: 45%; }
 .touch-ui .tz-right { right: 0; width: 55%; }
 /* dove sta il joystick (quando non lo stai usando) */
-.touch-ui.free .tz-left::after {
+.touch-ui.free:not(.seated) .tz-left::after {
   content: ''; position: absolute; left: 64px; bottom: 44px; width: 104px; height: 104px;
   border: 2.5px dashed rgba(30, 29, 36, .22); border-radius: 50%;
 }
@@ -446,3 +446,28 @@ html.compact .menu-main .title.big { font-size: 64px; }
 html.compact .menu-main .sub { margin: 4px 0 10px; }
 html.compact .menu-foot { margin-top: 10px; }
 html.compact body.touch .card .controls { display: none; }
+
+/* risposte a tempo */
+.dialogue .dtimer { position: relative; height: 10px; margin-top: 8px; border: 2px solid var(--ink); border-radius: 6px 3px 7px 4px; overflow: hidden; }
+.dialogue .dtimer .fill { height: 100%; background: var(--ink); opacity: .55; }
+.dialogue .dtimer.low .fill { background: var(--red); opacity: .85; animation: blink .5s infinite; }
+.dialogue .dtimer .lbl { position: absolute; right: 6px; top: -3px; font-size: 11px; opacity: .6; }
+
+/* barra di capitolo (es. interesse di Martina) */
+.meter {
+  position: absolute; left: 50%; top: 14px; transform: translateX(-50%); width: min(360px, calc(var(--gw, 100vw) * 0.4));
+  text-align: center; text-shadow: 0 0 4px var(--paper), 0 0 8px var(--paper);
+}
+body.touch .meter { top: 56px; }
+.meter .lbl { font-family: var(--marker); font-size: 15px; color: var(--c); letter-spacing: .5px; }
+.meter .bar { height: 14px; border: 2.5px solid var(--ink); border-radius: 8px 3px 9px 4px; overflow: hidden; background: var(--paper-2); }
+.meter .fill { height: 100%; background: var(--c); transition: width .6s; }
+.meter-pop {
+  position: absolute; left: 50%; top: 58px; transform: translateX(-50%); font-family: var(--marker); font-size: 28px;
+  animation: meterpop 1.6s ease-out forwards; text-shadow: 0 0 4px var(--paper), 0 0 10px var(--paper);
+}
+body.touch .meter-pop { top: 100px; }
+.meter-pop.good { color: #d0457e; }
+.meter-pop.bad { color: var(--ink); }
+@keyframes meterpop { 0% { opacity: 0; transform: translate(-50%, 10px) scale(.8); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -30px) scale(1); } }
+html.compact #hud .meter { zoom: .75; }

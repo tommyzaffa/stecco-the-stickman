@@ -441,5 +441,58 @@ export const SPARATORIA: Track = {
   },
 };
 
-export const TRACKS = { paese: PAESE, club: disco(false), sbiadisco: disco(true), indagine: INDAGINE, mercato: MERCATO, sparatoria: SPARATORIA };
+// "Cena": valzer lento da ristorante (Da Pastello). Con violino = il violinista al tavolo.
+const VALZER = [
+  { root: 41, chord: [65, 69, 72] }, // F
+  { root: 45, chord: [64, 69, 72] }, // Am
+  { root: 38, chord: [62, 65, 69] }, // Dm
+  { root: 43, chord: [62, 67, 70] }, // Gm
+  { root: 48, chord: [64, 67, 70] }, // C7
+  { root: 41, chord: [65, 69, 72] }, // F
+  { root: 43, chord: [62, 67, 70] }, // Gm
+  { root: 48, chord: [64, 67, 70] }, // C7
+];
+const VIOLINO: number[][] = [
+  [81, _, _, 79, 77, _],
+  [76, _, _, _, 72, _],
+  [74, _, 77, _, 81, _],
+  [82, _, _, _, 0, 0],
+  [79, _, 77, _, 76, _],
+  [77, _, _, 81, 84, _],
+  [82, _, 79, _, 77, _],
+  [76, _, _, _, 0, 0],
+];
+const valzer = (violin: boolean): Track => ({
+  bpm: 84,
+  stepsPerBeat: 2,
+  play(m, step, t) {
+    const bar = Math.floor(step / 6) % 8;
+    const slot = step % 6; // tre battiti, due passi per battito
+    const c = VALZER[bar];
+    if (slot === 0) m.bass(mtof(c.root), t, 0.6, 0.12);
+    if (slot === 2 || slot === 4) for (const n of c.chord) m.pluck(mtof(n), t + Math.random() * 0.02, 0.018, 0.5);
+    if (slot === 0) m.hit(t, 0.012, 6000, 'highpass', 0.1, 0.7);
+    const withLead = violin || Math.floor(step / 48) % 2 === 1;
+    if (withLead) {
+      const row = VIOLINO[bar];
+      const n = row[slot];
+      if (n > 0) {
+        let len = 1;
+        while (slot + len < 6 && row[slot + len] === _) len++;
+        m.whistle(mtof(n - (violin ? 0 : 12)), t, len * (60 / 84 / 2) * 0.95, violin ? 0.055 : 0.03);
+      }
+    }
+  },
+});
+
+export const TRACKS = {
+  paese: PAESE,
+  club: disco(false),
+  sbiadisco: disco(true),
+  indagine: INDAGINE,
+  mercato: MERCATO,
+  sparatoria: SPARATORIA,
+  cena: valzer(false),
+  violino: valzer(true),
+};
 export type TrackName = keyof typeof TRACKS;

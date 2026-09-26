@@ -30,6 +30,9 @@ export interface DNode {
   next?: string | ((g: Game) => string | undefined);
   // dove guardare durante le righe del narratore (es. un oggetto di cui si parla)
   look?: (g: Game) => THREE.Vector3 | NPC | null;
+  // risposta a tempo: secondi per scegliere, poi si va a "timeout" (di solito: stai zitto)
+  timer?: number;
+  timeout?: string;
 }
 
 export interface Dialogue {
@@ -63,6 +66,8 @@ export class DialogueRunner {
   private shown = 0; // caratteri mostrati (effetto macchina da scrivere)
   private choices: Choice[] | null = null;
   private choicesAt = 0; // quando sono comparse le risposte
+  private timeLeft = 0; // risposte a tempo
+  private timeTotal = 0;
   private sel = 0;
   private onEnd: (() => void) | null = null;
   // Chi (o cosa) guardare adesso: la testa si gira verso chi parla, anche se non è
@@ -119,6 +124,7 @@ export class DialogueRunner {
     if (ch && ch.length) {
       this.choices = ch;
       this.choicesAt = performance.now();
+      this.timeTotal = this.timeLeft = n.timer ?? 0;
       this.sel = 0;
       if (this.npc) this.npc.speaking = false;
       this.render();
@@ -159,11 +165,24 @@ export class DialogueRunner {
       this.line.kind,
       this.choices ? this.choices.map((c) => this.txt(c.t)) : null,
       this.sel,
+      this.choices && this.timeTotal > 0 ? this.timeLeft / this.timeTotal : null,
     );
   }
 
   update(dt: number) {
     if (!this.active || !this.line) return;
+    // tempo per rispondere: finito il tempo, stai zitto (o quello che dice il nodo)
+    if (this.choices && this.timeTotal > 0) {
+      this.timeLeft -= dt;
+      if (this.timeLeft <= 0) {
+        this.choices = null;
+        this.timeTotal = 0;
+        this.g.audio.tick();
+        this.enter(this.node?.timeout);
+        return;
+      }
+      this.render();
+    }
     if (!this.choices && this.shown < this.line.text.length) {
       const before = Math.floor(this.shown);
       this.shown = Math.min(this.line.text.length, this.shown + dt * 55);
@@ -222,6 +241,7 @@ export class DialogueRunner {
     if (!this.choices || i < 0 || i >= this.choices.length) return;
     const c = this.choices[i];
     this.choices = null;
+    this.timeTotal = 0;
     this.g.audio.select();
     c.do?.(this.g);
     if (!this.active) return;

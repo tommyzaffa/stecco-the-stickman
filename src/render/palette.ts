@@ -34,6 +34,9 @@ export const QUADRETTI: Theme = { paper: '#f2f3f0', ink: '#1d2233', grid: { size
 // Mercato Nero: carta da pacchi. Tutto quello che si vende qui sotto è incartato.
 export const PACCHI: Theme = { paper: '#d8c29d', ink: '#2a2119' };
 
+// Da Pastello: cartoncino color prugna, inchiostro color crema (luce di candela)
+export const CARTONCINO: Theme = { paper: '#33222f', ink: '#f2e3cf' };
+
 // Colori dei Pastelli a Cera (la gang rivale): pieni, un po' sporchi, da astuccio delle elementari
 export const CERA = {
   rosso: '#d9412b',
