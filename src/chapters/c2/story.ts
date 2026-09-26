@@ -62,6 +62,11 @@ export function setupStory(g: Game) {
     return { n, pos: n.pos.clone(), rot: n.body.root.rotation.y, behavior: n.behavior as Behavior, seated: n.body instanceof Stickman && n.body.seated };
   });
   const resetGuards = () => {
+    const rope = g.world.props.rope;
+    if (g.is('ropeDown') && !rope.visible && !g.is('sbiadisco') && !g.is('rosaBribed') && !g.npc('rosa').fighter!.ko) {
+      rope.visible = true;
+      g.world.colliders.rects.push(rope.userData.rect);
+    }
     for (const s of guards) {
       const f = s.n.fighter!;
       if (f.ko) continue;
@@ -111,6 +116,20 @@ export function setupStory(g: Game) {
     const onDuty = !rosa.fighter!.ko && !g.is('sbiadisco') && !rosa.fighter!.hostile;
     if (onDuty && rosa.pos.distanceTo(A.rosa) < 3) {
       g.talk(g.specs.get('rosa')!.dialogue!, rosa);
+      return;
+    }
+    // l'hai picchiata e scappi nella zona VIP con lei alle calcagna: non è una scorciatoia.
+    // Rosa scavalca il cordone (che cade) e i due del divano si alzano: adesso sono in tre.
+    if (rosa.fighter!.hostile && !rosa.fighter!.ko) {
+      g.flag('ropeDown');
+      openRope(g);
+      g.player.pos.set(8, 0, 9.4);
+      for (const id of ['arancione', 'azzurro']) {
+        const n = g.npc(id);
+        if (!n.fighter!.ko) g.combat.provoke(n);
+      }
+      g.audio.alert();
+      g.toast('Scavalchi il cordone con Rosa alle calcagna. Il cordone cade, e i due del divano si alzano: <b>adesso sono in tre</b>.', 'bad', 6000);
       return;
     }
     g.player.pos.set(8, 0, 9.4);

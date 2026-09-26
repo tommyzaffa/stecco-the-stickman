@@ -34,7 +34,8 @@ export class TouchUI {
   private knob: HTMLElement;
   private stickId: number | null = null;
   private stickOrigin = { x: 0, y: 0 };
-  private looks = new Map<number, { x: number; y: number; t: number; moved: number; fire?: boolean }>();
+  // tocchi che girano la visuale; from = da dove sono partiti (schermo, pulsante COLPISCI o PARA)
+  private looks = new Map<number, { x: number; y: number; t: number; moved: number; from: 'screen' | 'fire' | 'parry' }>();
   private btn: Record<string, HTMLElement> = {};
 
   constructor(private g: Game) {
@@ -71,12 +72,21 @@ export class TouchUI {
 
     const inp = g.input;
     // pulsanti (per colpire basta toccare lo schermo: si colpisce dove punta il mirino)
+    // PARA: tenuto premuto para, e trascinando il dito si gira anche la visuale
     const parry = this.button('parry', 'PARA', 'b-parry');
     parry.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       inp.rightDown = true;
+      parry.classList.add('down');
+      this.trackLook(e, 'parry');
     }, { passive: false });
-    const parryEnd = () => (inp.rightDown = false);
+    parry.addEventListener('touchmove', (e) => this.lookMove(e), { passive: false });
+    const parryEnd = (e: TouchEvent) => {
+      inp.rightDown = false;
+      parry.classList.remove('down');
+      this.lookEnd(e);
+    };
     parry.addEventListener('touchend', parryEnd);
     parry.addEventListener('touchcancel', parryEnd);
 
@@ -87,7 +97,7 @@ export class TouchUI {
       e.stopPropagation();
       if (!this.root.classList.contains('free')) return;
       fire.classList.add('down');
-      this.trackLook(e, true);
+      this.trackLook(e, 'fire');
     }, { passive: false });
     fire.addEventListener('touchmove', (e) => this.lookMove(e), { passive: false });
     const fireEnd = (e: TouchEvent) => {
@@ -181,10 +191,10 @@ export class TouchUI {
   }
 
   // --- visuale ---
-  private trackLook(e: TouchEvent, fire = false) {
+  private trackLook(e: TouchEvent, from: 'screen' | 'fire' | 'parry' = 'screen') {
     for (const t of Array.from(e.changedTouches)) {
       const [x, y] = toGame(t.clientX, t.clientY);
-      this.looks.set(t.identifier, { x, y, t: performance.now(), moved: 0, fire });
+      this.looks.set(t.identifier, { x, y, t: performance.now(), moved: 0, from });
     }
   }
 
@@ -213,8 +223,8 @@ export class TouchUI {
       const l = this.looks.get(t.identifier);
       this.looks.delete(t.identifier);
       // tocco veloce e fermo (sullo schermo o sul pulsante COLPISCI): colpisci. Se hai trascinato no.
-      if (!l || l.moved >= TAP_MOVE || !this.root.classList.contains('free')) continue;
-      if (performance.now() - l.t < (l.fire ? FIRE_TAP_MS : TAP_MS)) this.g.input.clicked = true;
+      if (!l || l.from === 'parry' || l.moved >= TAP_MOVE || !this.root.classList.contains('free')) continue;
+      if (performance.now() - l.t < (l.from === 'fire' ? FIRE_TAP_MS : TAP_MS)) this.g.input.clicked = true;
     }
   }
 
