@@ -71,7 +71,23 @@ export function setupFlow(g: Game) {
     screen.style.display = 'flex';
     screen.onclick = onClick;
     g.hud.root.classList.toggle('in-menu', kind === 'menu');
+    fit();
   };
+  // La schermata deve entrare tutta: se è più alta (o larga) dello spazio, si rimpicciolisce.
+  // Sotto metà grandezza si scorre invece (non si leggerebbe più niente).
+  const fit = () => {
+    const el = screen.querySelector<HTMLElement>('.card, .menu-main');
+    if (!el || screen.style.display !== 'flex') return;
+    el.style.zoom = '';
+    // spazio libero: la schermata meno i margini della pagina che la contiene (menu principale)
+    const page = el.parentElement?.classList.contains('menu-page') ? getComputedStyle(el.parentElement) : null;
+    const padY = page ? parseFloat(page.paddingTop) + parseFloat(page.paddingBottom) : 0;
+    const padX = page ? parseFloat(page.paddingLeft) + parseFloat(page.paddingRight) : 0;
+    const extraW = el.parentElement?.querySelector('.menu-stickman')?.getBoundingClientRect().width ?? 0;
+    const z = Math.min(1, (screen.clientHeight - padY - 16) / el.offsetHeight, (screen.clientWidth - padX - extraW - 24) / el.offsetWidth);
+    if (z < 0.99) el.style.zoom = String(Math.max(0.5, z));
+  };
+  window.addEventListener('resize', () => setTimeout(fit, 60));
   const hide = () => {
     screen.style.display = 'none';
     screen.onclick = null;

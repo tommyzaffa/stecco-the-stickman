@@ -192,7 +192,7 @@ b.blue { color: var(--blue); }
 .diario .hint { text-align: right; opacity: .5; }
 
 .screen {
-  position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+  position: absolute; inset: 0; display: none; align-items: safe center; justify-content: safe center; overflow: auto;
   background: rgba(243, 238, 226, 0.72); pointer-events: auto; cursor: pointer;
 }
 .card { padding: 26px 44px 22px; text-align: center; max-width: min(640px, calc(var(--gw, 100vw) * 0.92)); transform: rotate(-0.6deg); }
@@ -414,7 +414,6 @@ body.touch #hud .ammo, body.touch #hud .prompt { display: none !important; }
 html.compact #hud .stats, html.compact #hud .objectives, html.compact #hud .toasts,
 html.compact #hud .prompt, html.compact #hud .ammo, html.compact #hud .chapter { zoom: .68; }
 html.compact #hud .dialogue, html.compact #hud .diario { zoom: .72; }
-html.compact .screen .card, html.compact .screen .menu-page { zoom: .7; }
 
 /* telefono tenuto in orizzontale con lo schermo bloccato in verticale: il gioco si disegna girato */
 html.rotated, html.rotated body { overflow: hidden; }
@@ -440,3 +439,10 @@ html.need-lock .lock-need { display: flex; }
   width: 70px; height: 40px; margin: 0 auto 6px; border: 3.5px solid var(--ink); border-radius: 9px;
   display: flex; align-items: center; justify-content: center; font-size: 18px;
 }
+
+html.compact .menu-page { padding-top: 10px; padding-bottom: 10px; }
+/* schermi bassi: menu più essenziali, così restano grandi da toccare */
+html.compact .menu-main .title.big { font-size: 64px; }
+html.compact .menu-main .sub { margin: 4px 0 10px; }
+html.compact .menu-foot { margin-top: 10px; }
+html.compact body.touch .card .controls { display: none; }
