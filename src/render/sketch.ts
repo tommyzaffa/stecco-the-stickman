@@ -4,6 +4,7 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { INK, PAPER, THEME, rng } from './palette';
+import { VIEW } from '../view';
 
 // ---------------------------------------------------------------------------
 // Materiali
@@ -14,7 +15,7 @@ const lineMaterials: LineMaterial[] = [];
 export function makeLineMaterial(width: number, color?: THREE.ColorRepresentation): LineMaterial {
   const m = new LineMaterial({ color: color ?? INK.clone(), linewidth: width, worldUnits: false });
   m.fog = true;
-  m.resolution.set(window.innerWidth, window.innerHeight);
+  m.resolution.set(VIEW.w, VIEW.h);
   lineMaterials.push(m);
   return m;
 }

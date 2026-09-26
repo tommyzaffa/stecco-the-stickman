@@ -50,6 +50,7 @@ export interface Settings {
   sensitivity: number; // moltiplicatore, 1 = normale
   music: number; // 0..1
   sfx: number; // 0..1
+  flip: boolean; // telefono: schermo girato dall'altra parte
 }
 
 const KEY = 'stilizzato.settings.v1';
@@ -57,7 +58,7 @@ const KEY = 'stilizzato.settings.v1';
 export const SETTINGS: Settings = load();
 
 function load(): Settings {
-  const s: Settings = { keys: { ...DEFAULT_KEYS }, sensitivity: 1, music: 0.8, sfx: 0.9 };
+  const s: Settings = { keys: { ...DEFAULT_KEYS }, sensitivity: 1, music: 0.8, sfx: 0.9, flip: false };
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null');
     if (raw) {
@@ -65,6 +66,7 @@ function load(): Settings {
       if (typeof raw.sensitivity === 'number') s.sensitivity = raw.sensitivity;
       if (typeof raw.music === 'number') s.music = raw.music;
       if (typeof raw.sfx === 'number') s.sfx = raw.sfx;
+      if (typeof raw.flip === 'boolean') s.flip = raw.flip;
     }
   } catch {
     /* impostazioni predefinite */

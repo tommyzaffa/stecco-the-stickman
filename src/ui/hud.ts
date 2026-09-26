@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { keyName } from '../settings';
 import { TOUCH } from '../touch';
+import { VIEW } from '../view';
 
 // HUD in HTML sopra il canvas: più facile da stilizzare "a mano" che in WebGL.
 
@@ -190,8 +191,8 @@ export class Hud {
     const side = Math.random();
     const x = side < 0.5 ? (Math.random() < 0.5 ? 2 : 78) + Math.random() * 18 : 10 + Math.random() * 80;
     const y = side < 0.5 ? 10 + Math.random() * 70 : (Math.random() < 0.5 ? 0 : 70) + Math.random() * 20;
-    e.style.left = `${x}vw`;
-    e.style.top = `${y}vh`;
+    e.style.left = `${x}%`;
+    e.style.top = `${y}%`;
     e.style.setProperty('--c', color);
     e.style.setProperty('--rot', `${Math.random() * 360}deg`);
     const pts = Array.from({ length: 12 }, (_, i) => {
@@ -292,8 +293,8 @@ export class Hud {
     const depth = -_v.z;
     _v.copy(p).project(cam);
     return {
-      x: (_v.x * 0.5 + 0.5) * window.innerWidth,
-      y: (-_v.y * 0.5 + 0.5) * window.innerHeight,
+      x: (_v.x * 0.5 + 0.5) * VIEW.w,
+      y: (-_v.y * 0.5 + 0.5) * VIEW.h,
       behind,
       depth,
       on: !behind && Math.abs(_v.x) < 1 && Math.abs(_v.y) < 1,
@@ -314,7 +315,7 @@ export class Hud {
     _v.copy(p).applyMatrix4(cam.matrixWorldInverse);
     let ang = Math.atan2(-_v.y, _v.x);
     if (s.behind && Math.abs(_v.x) < 0.001) ang = Math.PI / 2;
-    const w = window.innerWidth, h = window.innerHeight;
+    const w = VIEW.w, h = VIEW.h;
     const cx = w / 2, cy = h / 2;
     const dx = Math.cos(ang), dy = Math.sin(ang);
     const k = Math.min((cx - 60) / Math.abs(dx || 1e-6), (cy - 60) / Math.abs(dy || 1e-6));

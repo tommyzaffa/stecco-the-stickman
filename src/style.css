@@ -22,7 +22,7 @@ html, body {
   user-select: none;
 }
 
-#game { display: block; width: 100vw; height: 100vh; }
+#game { display: block; width: var(--gw, 100vw); height: var(--gh, 100vh); }
 
 #loading {
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -123,7 +123,7 @@ b.blue { color: var(--blue); }
 .ammo .h { font-size: 16px; margin-top: 2px; color: var(--red); }
 .ammo.empty { border-color: var(--red); animation: blink .8s infinite; }
 .ink-splats { position: absolute; inset: 0; overflow: hidden; }
-.ink-splat { position: absolute; width: 22vmin; height: 22vmin; margin: -11vmin 0 0 -11vmin; transform: rotate(var(--rot)); transition: opacity 1.2s; opacity: .8; }
+.ink-splat { position: absolute; width: calc(min(var(--gw, 100vw), var(--gh, 100vh)) * 0.22); height: calc(min(var(--gw, 100vw), var(--gh, 100vh)) * 0.22); margin: calc(min(var(--gw, 100vw), var(--gh, 100vh)) * -0.11) 0 0 calc(min(var(--gw, 100vw), var(--gh, 100vh)) * -0.11); transform: rotate(var(--rot)); transition: opacity 1.2s; opacity: .8; }
 .ink-splat svg { width: 100%; height: 100%; fill: var(--c); }
 .ink-splat.out { opacity: 0; }
 
@@ -157,7 +157,7 @@ b.blue { color: var(--blue); }
 /* --- dialoghi --------------------------------------------------------------- */
 .dialogue {
   display: none; position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%);
-  width: min(820px, 92vw); padding: 14px 24px 12px; min-height: 130px;
+  width: min(820px, calc(var(--gw, 100vw) * 0.92)); padding: 14px 24px 12px; min-height: 130px;
 }
 .dialogue .who { font-family: var(--marker); font-size: 19px; margin-bottom: 4px; }
 .dialogue.player .who { color: var(--blue); }
@@ -180,7 +180,7 @@ b.blue { color: var(--blue); }
 
 .diario {
   display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: min(760px, 92vw); max-height: 80vh; overflow: auto; padding: 18px 28px;
+  width: min(760px, calc(var(--gw, 100vw) * 0.92)); max-height: calc(var(--gh, 100vh) * 0.8); overflow: auto; padding: 18px 28px;
 }
 .diario h2 { font-family: var(--marker); margin: 0 0 8px; font-size: 34px; }
 .diario h3 { margin: 10px 0 4px; font-size: 22px; border-bottom: 2px dashed var(--ink); }
@@ -195,7 +195,7 @@ b.blue { color: var(--blue); }
   position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
   background: rgba(243, 238, 226, 0.72); pointer-events: auto; cursor: pointer;
 }
-.card { padding: 26px 44px 22px; text-align: center; max-width: min(640px, 92vw); transform: rotate(-0.6deg); }
+.card { padding: 26px 44px 22px; text-align: center; max-width: min(640px, calc(var(--gw, 100vw) * 0.92)); transform: rotate(-0.6deg); }
 .card .title { font-family: var(--marker); font-size: 76px; line-height: 1; letter-spacing: 2px; }
 .card .title.small { font-size: 50px; }
 .card .sub { font-size: 23px; margin: 6px 0 16px; opacity: .8; }
@@ -266,7 +266,7 @@ b.blue { color: var(--blue); }
 .dance .info { font-size: 26px; margin-top: 14px; background: var(--paper-2); border: 2px solid var(--ink); border-radius: var(--sketch-radius); padding: 4px 16px; }
 
 /* --- menu dei capitoli -------------------------------------------------------- */
-.card.chapters { max-height: 92vh; overflow: auto; }
+.card.chapters { max-height: calc(var(--gh, 100vh) * 0.92); overflow: auto; }
 .card.chapters .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .card.chapters .buttons:last-child { display: flex; }
 .card.chapters button { min-width: 0; font-size: 19px; padding: 5px 12px; }
@@ -293,23 +293,23 @@ b.blue { color: var(--blue); }
   cursor: default;
   background-color: var(--paper);
   background-image:
-    linear-gradient(90deg, transparent 0 calc(8vw - 1px), rgba(214, 51, 58, .55) calc(8vw - 1px) calc(8vw + 1px), transparent calc(8vw + 1px)),
+    linear-gradient(90deg, transparent 0 calc(calc(var(--gw, 100vw) * 0.08) - 1px), rgba(214, 51, 58, .55) calc(calc(var(--gw, 100vw) * 0.08) - 1px) calc(calc(var(--gw, 100vw) * 0.08) + 1px), transparent calc(calc(var(--gw, 100vw) * 0.08) + 1px)),
     repeating-linear-gradient(180deg, transparent 0 33px, rgba(47, 91, 211, .18) 33px 35px);
   overflow: auto;
 }
 .menu-page {
-  display: flex; align-items: center; justify-content: center; gap: 4vw;
-  width: 100%; min-height: 100%; padding: 32px 24px 32px calc(8vw + 24px);
+  display: flex; align-items: center; justify-content: center; gap: calc(var(--gw, 100vw) * 0.04);
+  width: 100%; min-height: 100%; padding: 32px 24px 32px calc(calc(var(--gw, 100vw) * 0.08) + 24px);
 }
 .menu-main { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 560px; }
 .menu-main.wide { max-width: 860px; width: 100%; }
 .menu-main .title { font-family: var(--marker); line-height: 1; }
-.menu-main .title.big { font-size: clamp(56px, 10vw, 120px); letter-spacing: 3px; transform: rotate(-2deg); }
-.menu-main .title.small { font-size: clamp(34px, 5vw, 52px); margin-bottom: 6px; }
+.menu-main .title.big { font-size: clamp(56px, calc(var(--gw, 100vw) * 0.1), 120px); letter-spacing: 3px; transform: rotate(-2deg); }
+.menu-main .title.small { font-size: clamp(34px, calc(var(--gw, 100vw) * 0.05), 52px); margin-bottom: 6px; }
 .menu-main .sub { font-size: 22px; opacity: .8; margin: 8px 0 18px; }
 .menu-main .sub.fixed { font-size: 17px; margin: 10px 0 0; }
 .menu-main .sub.fixed b { font-family: var(--marker); font-size: 14px; }
-.menu-buttons { display: flex; flex-direction: column; gap: 12px; align-items: stretch; width: min(360px, 90vw); }
+.menu-buttons { display: flex; flex-direction: column; gap: 12px; align-items: stretch; width: min(360px, calc(var(--gw, 100vw) * 0.9)); }
 .menu-main button {
   font-family: var(--marker); font-size: 22px; color: var(--ink); background: var(--paper-2); cursor: pointer;
   border: 2.5px solid var(--ink); border-radius: var(--sketch-radius); padding: 7px 22px;
@@ -320,7 +320,7 @@ b.blue { color: var(--blue); }
 .menu-main button small { display: block; font-family: var(--hand); font-size: 16px; opacity: .7; }
 .menu-main button.locked { opacity: .45; cursor: not-allowed; transform: none; }
 .menu-foot { margin-top: 26px; font-size: 17px; opacity: .6; }
-.menu-stickman { width: clamp(90px, 14vw, 180px); flex: none; transform: rotate(-4deg); }
+.menu-stickman { width: clamp(90px, calc(var(--gw, 100vw) * 0.14), 180px); flex: none; transform: rotate(-4deg); }
 .menu-stickman circle, .menu-stickman path { fill: none; stroke: var(--ink); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
 .menu-stickman circle { fill: var(--paper-2); }
 .menu-stickman .dot { fill: var(--ink); stroke: none; }
@@ -337,11 +337,11 @@ b.blue { color: var(--blue); }
 .menu-main .buttons.row { display: flex; gap: 12px; }
 
 /* impostazioni */
-.settings .sliders { display: flex; flex-direction: column; gap: 8px; width: min(560px, 92vw); margin: 6px 0 14px; }
+.settings .sliders { display: flex; flex-direction: column; gap: 8px; width: min(560px, calc(var(--gw, 100vw) * 0.92)); margin: 6px 0 14px; }
 .slider { display: grid; grid-template-columns: 1fr 180px 56px; align-items: center; gap: 12px; font-size: 20px; text-align: left; }
 .slider b { font-family: var(--marker); font-size: 16px; text-align: right; }
 .slider input { accent-color: var(--red); }
-.binds { display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr)); gap: 6px 26px; width: min(640px, 92vw); }
+.binds { display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr)); gap: 6px 26px; width: min(640px, calc(var(--gw, 100vw) * 0.92)); }
 .bind { display: flex; justify-content: space-between; align-items: center; font-size: 19px; border-bottom: 1.5px dashed rgba(30, 29, 36, .25); padding: 2px 0; }
 .bind button { min-width: 110px; font-size: 17px !important; padding: 3px 12px !important; }
 .bind button.waiting { color: var(--red); border-color: var(--red); animation: blink 1s infinite; }
@@ -401,19 +401,14 @@ body.touch #hud .choice { padding: 6px 8px; }
 .touch-ui .d-left { left: 0; top: 43px; }
 .touch-ui .d-right { left: 146px; top: 43px; }
 .touch-ui .d-back { left: 73px; top: 86px; }
-/* in verticale: gira il telefono */
-.rotate {
-  position: fixed; inset: 0; z-index: 50; display: none; flex-direction: column; gap: 18px;
-  align-items: center; justify-content: center; background: var(--paper); font-size: 24px; text-align: center; padding: 24px;
-}
-.rotate .phone { width: 46px; height: 80px; border: 4px solid var(--ink); border-radius: 10px; animation: turn 2s ease-in-out infinite; }
-@keyframes turn { 40%, 60% { transform: rotate(-90deg); } }
-@media (orientation: portrait) { body.touch .rotate { display: flex; } }
+/* schermi bassi (telefono in orizzontale): interfaccia più piccola. La classe la mette view.ts
+   (col telefono girato "a mano" le media query vedrebbero lo schermo in verticale) */
+html.compact #hud .stats, html.compact #hud .objectives, html.compact #hud .toasts,
+html.compact #hud .prompt, html.compact #hud .ammo, html.compact #hud .chapter { zoom: .68; }
+html.compact #hud .dialogue, html.compact #hud .diario { zoom: .72; }
+html.compact .screen .card, html.compact .screen .menu-page { zoom: .7; }
+html.compact body.touch #hud .ammo { right: 250px; bottom: 16px; }
 
-/* schermi bassi (telefono in orizzontale): interfaccia più piccola */
-@media (max-height: 540px) {
-  #hud .stats, #hud .objectives, #hud .toasts, #hud .prompt, #hud .ammo, #hud .chapter { zoom: .68; }
-  #hud .dialogue, #hud .diario { zoom: .72; }
-  .screen .card, .screen .menu-page { zoom: .7; }
-  body.touch #hud .ammo { right: 250px; bottom: 16px; }
-}
+/* telefono tenuto in orizzontale con lo schermo bloccato in verticale: il gioco si disegna girato */
+html.rotated, html.rotated body { overflow: hidden; }
+html.rotated body { position: fixed; left: 0; top: 0; transform-origin: 0 0; }

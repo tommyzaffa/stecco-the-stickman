@@ -19,6 +19,7 @@ import { Sound } from '../audio/audio';
 import type { Chapter } from '../chapters/types';
 import { keyName } from '../settings';
 import { TOUCH } from '../touch';
+import { VIEW, updateView } from '../view';
 import { TouchUI } from '../ui/touch';
 
 export interface Interactable {
@@ -185,13 +186,14 @@ export class Game {
   }
 
   constructor(canvas: HTMLCanvasElement) {
+    updateView();
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setSize(VIEW.w, VIEW.h);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.scene.fog = new THREE.Fog(PAPER.clone(), 30, 115);
 
     this.input = new Input(canvas);
-    this.player = new Player(window.innerWidth / window.innerHeight);
+    this.player = new Player(VIEW.w / VIEW.h);
     this.scene.add(this.player.camera);
     // sul telefono niente antialiasing e meno pixel: il tratto a matita regge lo stesso
     this.post = new PaperPost(this.renderer, this.scene, this.player.camera, TOUCH ? 0 : 4);
@@ -205,13 +207,16 @@ export class Game {
     this.coinMat = cm;
 
     window.addEventListener('resize', () => this.resize());
+    // sui telefoni la misura giusta a volte arriva un attimo dopo la rotazione
+    window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 250));
     this.resize();
   }
 
   // Su schermi Retina disegnare a risoluzione piena costa 4 volte tanto e con il tratto a matita
   // non si nota: limitiamo i pixel disegnati per frame (~2.4 milioni, circa un 1080p).
   resize() {
-    const w = window.innerWidth, h = window.innerHeight;
+    updateView();
+    const w = VIEW.w, h = VIEW.h;
     const MAX_PIXELS = TOUCH ? 1.0e6 : 2.4e6;
     const pr = Math.max(1, Math.min(window.devicePixelRatio, Math.sqrt(MAX_PIXELS / (w * h))));
     this.renderer.setPixelRatio(pr);

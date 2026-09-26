@@ -84,6 +84,11 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   pulsanti (USA, GIÙ, ARMA...), `parryName()`/`attackName()` per i testi su parata e attacco:
   **nei testi mai "click" o "tasto destro" scritti a mano**. Sul telefono: meno pixel, niente
   antialiasing, mira assistita della pistola. Interfaccia compatta sotto i 540 px di altezza.
+- **Rotazione** (`src/view.ts`): se sul telefono lo schermo è verticale (blocco rotazione attivo),
+  la pagina si disegna girata di 90° e si gioca tenendolo in orizzontale (barre di Safari di
+  lato). `VIEW.w/h` = dimensioni del gioco: **usarle al posto di `window.innerWidth/Height`**, e
+  nel CSS `var(--gw)/var(--gh)` al posto di `vw/vh`. I tocchi passano da `toGame()`. "Capovolgi lo
+  schermo" nelle impostazioni per l'altro verso. Su iPhone in orizzontale vero: consiglio una volta.
 
 ## Capitoli e salvataggi
 

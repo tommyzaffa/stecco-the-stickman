@@ -1,5 +1,6 @@
 import type { Game } from '../game/game';
 import type { Action } from '../settings';
+import { toGame } from '../view';
 
 // ---------------------------------------------------------------------------
 // Comandi a schermo per il telefono (in orizzontale):
@@ -36,7 +37,6 @@ export class TouchUI {
   constructor(private g: Game) {
     document.body.classList.add('touch');
     this.root = el('div', 'touch-ui', document.body);
-    el('div', 'rotate', document.body, '<div class="phone"></div><div>Gira il telefono in orizzontale</div>');
 
     // zone: sinistra = joystick, destra = visuale (i pulsanti stanno sopra)
     const left = el('div', 'tz tz-left', this.root);
@@ -128,9 +128,10 @@ export class TouchUI {
   private stickStart(e: TouchEvent) {
     e.preventDefault();
     const t = e.changedTouches[0];
+    const [x, y] = toGame(t.clientX, t.clientY);
     this.stickId = t.identifier;
-    this.stickOrigin = { x: t.clientX, y: t.clientY };
-    this.stick.style.transform = `translate(${t.clientX}px, ${t.clientY}px)`;
+    this.stickOrigin = { x, y };
+    this.stick.style.transform = `translate(${x}px, ${y}px)`;
     this.stick.classList.add('on');
     this.knob.style.transform = 'translate(0px, 0px)';
   }
@@ -139,7 +140,8 @@ export class TouchUI {
     e.preventDefault();
     for (const t of Array.from(e.changedTouches)) {
       if (t.identifier !== this.stickId) continue;
-      let dx = t.clientX - this.stickOrigin.x, dy = t.clientY - this.stickOrigin.y;
+      const [x, y] = toGame(t.clientX, t.clientY);
+      let dx = x - this.stickOrigin.x, dy = y - this.stickOrigin.y;
       const d = Math.hypot(dx, dy);
       if (d > STICK_R) {
         dx = (dx / d) * STICK_R;
@@ -162,7 +164,10 @@ export class TouchUI {
 
   // --- visuale ---
   private trackLook(e: TouchEvent) {
-    for (const t of Array.from(e.changedTouches)) this.looks.set(t.identifier, { x: t.clientX, y: t.clientY, t: performance.now(), moved: 0 });
+    for (const t of Array.from(e.changedTouches)) {
+      const [x, y] = toGame(t.clientX, t.clientY);
+      this.looks.set(t.identifier, { x, y, t: performance.now(), moved: 0 });
+    }
   }
 
   private lookStart(e: TouchEvent) {
@@ -175,12 +180,13 @@ export class TouchUI {
     for (const t of Array.from(e.changedTouches)) {
       const l = this.looks.get(t.identifier);
       if (!l) continue;
-      const dx = t.clientX - l.x, dy = t.clientY - l.y;
+      const [x, y] = toGame(t.clientX, t.clientY);
+      const dx = x - l.x, dy = y - l.y;
       this.g.input.mouseDX += dx * LOOK_SPEED;
       this.g.input.mouseDY += dy * LOOK_SPEED;
       l.moved += Math.abs(dx) + Math.abs(dy);
-      l.x = t.clientX;
-      l.y = t.clientY;
+      l.x = x;
+      l.y = y;
     }
   }
 
@@ -192,8 +198,6 @@ export class TouchUI {
   update() {
     const g = this.g;
     const inp = g.input;
-    // telefono girato in verticale: pausa (c'è l'avviso "gira il telefono")
-    if (inp.locked && g.mode === 'play' && matchMedia('(orientation: portrait)').matches) inp.unlock();
     const playing = g.mode === 'play' && inp.locked && !g.hud.screenVisible;
     const talk = playing && g.dialogue.isOpen;
     const dance = playing && !!g.minigame && !talk;
