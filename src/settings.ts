@@ -1,3 +1,5 @@
+import { TOUCH } from './touch';
+
 // ---------------------------------------------------------------------------
 // Impostazioni del giocatore: comandi da tastiera, sensibilità del mouse, volumi.
 // Salvate in localStorage. Il mouse (click = colpisci, tasto destro = para) resta fisso.
@@ -120,7 +122,30 @@ export function codeLabel(code: string) {
   return names[code] ?? code;
 }
 
+// Etichette dei pulsanti a schermo (telefono)
+const TOUCH_LABELS: Record<Action, string> = {
+  forward: '▲',
+  back: '▼',
+  left: '◀',
+  right: '▶',
+  run: 'joystick in fondo',
+  jump: 'SALTA',
+  crouch: 'GIÙ',
+  interact: 'USA',
+  journal: 'DIARIO',
+  music: 'MUSICA',
+  weapon1: 'ARMA',
+  weapon2: 'ARMA',
+  weapon3: 'ARMA',
+  reload: 'RICARICA',
+};
+
 // Nome del tasto assegnato a un'azione (per i testi del gioco)
 export function keyName(action: Action) {
+  if (TOUCH) return TOUCH_LABELS[action];
   return codeLabel(SETTINGS.keys[action]);
 }
+
+// colpire e parare: mouse su computer, pulsanti sul telefono
+export const attackName = () => (TOUCH ? 'COLPISCI' : 'click');
+export const parryName = () => (TOUCH ? 'il pulsante PARA' : 'il tasto destro');

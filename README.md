@@ -22,7 +22,15 @@ meta-ironia sul fatto di essere disegnati (niente mani, niente tasche, niente co
 - Audio sintetizzato con Web Audio: voci "a bip" diverse per ogni personaggio, suoni ambientali
   spaziali, musica procedurale.
 
-## Avvio
+## Gioca
+
+**https://tommyzaffa.github.io/stilizzato/** (si aggiorna da solo a ogni push su `main`).
+
+Funziona anche da telefono, in orizzontale: joystick a sinistra, trascina a destra per guardarti
+intorno, pulsanti trasparenti per colpire, parare, saltare, usare. Aggiunto alla schermata Home si
+apre a tutto schermo.
+
+## Avvio in locale
 
 ```bash
 npm install

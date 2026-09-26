@@ -1,3 +1,4 @@
+import { parryName } from '../../settings';
 import * as THREE from 'three';
 import type { Game } from '../../game/game';
 import type { Dialogue } from '../../game/dialogue';
@@ -38,10 +39,10 @@ const FLUO_TALK: Dialogue = {
       ],
     },
     spiega: {
-      say: ['@Evidenziatore Giallo| Spiegalo ai miei pugni.', '* Loro parano sempre. Aspetta che attacchino, para col tasto destro, poi colpisci finché sono scoperti.'],
+      say: ['@Evidenziatore Giallo| Spiegalo ai miei pugni.', () => `* Loro parano sempre. Aspetta che attacchino, para con ${parryName()}, poi colpisci finché sono scoperti.`],
     },
     pugni: {
-      say: ['Almeno ha stile. Poco. Grigio. Ma ha stile.', '* Loro parano sempre. Aspetta che attacchino, para col tasto destro, poi colpisci finché sono scoperti.'],
+      say: ['Almeno ha stile. Poco. Grigio. Ma ha stile.', () => `* Loro parano sempre. Aspetta che attacchino, para con ${parryName()}, poi colpisci finché sono scoperti.`],
     },
   },
 };

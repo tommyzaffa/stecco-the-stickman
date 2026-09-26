@@ -1,7 +1,9 @@
 import { SETTINGS, type Action } from './settings';
+import { TOUCH } from './touch';
 
 // Tastiera + mouse. "pressed" vale solo per il frame in cui il tasto è stato premuto.
 // Le azioni (avanti, salta, parla...) passano dai tasti scelti nelle impostazioni.
+// Sul telefono i comandi a schermo (ui/touch.ts) scrivono qui dentro le stesse cose.
 export class Input {
   down = new Set<string>();
   pressed = new Set<string>();
@@ -9,7 +11,11 @@ export class Input {
   mouseDY = 0;
   clicked = false;
   rightDown = false;
-  locked = false;
+  locked = false; // in gioco (mouse catturato, o sul telefono: partita in corso)
+  moveX = 0; // joystick (-1..1)
+  moveY = 0;
+  cycleWeapon = false; // pulsante ARMA (telefono)
+  onLock: ((locked: boolean) => void)[] = [];
   // se impostato, il prossimo tasto premuto va qui (per riassegnare i comandi)
   captureKey: ((code: string) => void) | null = null;
 
@@ -42,12 +48,33 @@ export class Input {
     });
     document.addEventListener('contextmenu', (e) => e.preventDefault());
     document.addEventListener('pointerlockchange', () => {
-      this.locked = document.pointerLockElement === this.canvas;
-      if (!this.locked) {
-        this.down.clear();
-        this.rightDown = false;
-      }
+      if (TOUCH) return;
+      this.setLocked(document.pointerLockElement === this.canvas);
     });
+    // app in secondo piano (telefono): pausa
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && TOUCH && this.locked) this.setLocked(false);
+    });
+  }
+
+  private setLocked(on: boolean) {
+    this.locked = on;
+    if (!on) {
+      this.down.clear();
+      this.rightDown = false;
+      this.moveX = this.moveY = 0;
+    }
+    for (const f of this.onLock) f(on);
+  }
+
+  // pulsanti a schermo: premi (un frame) o tieni premuta un'azione
+  press(a: Action) {
+    this.pressed.add(SETTINGS.keys[a]);
+  }
+
+  hold(a: Action, on: boolean) {
+    if (on) this.down.add(SETTINGS.keys[a]);
+    else this.down.delete(SETTINGS.keys[a]);
   }
 
   isDown(a: Action) {
@@ -59,11 +86,19 @@ export class Input {
   }
 
   lock() {
+    if (TOUCH) {
+      this.setLocked(true);
+      return;
+    }
     const p = this.canvas.requestPointerLock() as unknown as Promise<void> | undefined;
     p?.catch?.(() => {});
   }
 
   unlock() {
+    if (TOUCH) {
+      if (this.locked) this.setLocked(false);
+      return;
+    }
     if (document.pointerLockElement) document.exitPointerLock();
   }
 
@@ -71,5 +106,6 @@ export class Input {
     this.pressed.clear();
     this.mouseDX = this.mouseDY = 0;
     this.clicked = false;
+    this.cycleWeapon = false;
   }
 }

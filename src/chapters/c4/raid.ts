@@ -5,7 +5,7 @@ import { Stickman } from '../../entities/stickman';
 import { PLAYER_INK } from '../../game/guns';
 import { COVERS, REFS, type Barrel } from './world';
 import { RAID } from './quests';
-import { keyName } from '../../settings';
+import { keyName, parryName } from '../../settings';
 
 // ---------------------------------------------------------------------------
 // La sparatoria del Mercato Nero: i Pastelli a Cera arrivano a ondate dai tunnel.
@@ -107,7 +107,7 @@ function attack(g: Game, w: number) {
       g.combat.provoke(n);
       if (n.fighter!.opts.zigzag && !g.is('tutAppuntito')) {
         g.flag('tutAppuntito');
-        g.toast(`Un <b>Appuntito</b> corre verso di te col temperino!<br>Sparagli prima che arrivi, oppure para (tasto destro) e colpiscilo quando è scoperto.`, 'bad', 6500);
+        g.toast(`Un <b>Appuntito</b> corre verso di te col temperino!<br>Sparagli prima che arrivi, oppure para (${parryName()}) e colpiscilo quando è scoperto.`, 'bad', 6500);
       }
     };
     if (e.delay) g.after(e.delay, go);

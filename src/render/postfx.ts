@@ -62,11 +62,11 @@ export class PaperPost {
   composer: EffectComposer;
   paper: ShaderPass;
 
-  constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
+  constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, samples = 4) {
     const size = renderer.getDrawingBufferSize(new THREE.Vector2());
     // L'ultimo passaggio (carta) scrive direttamente sullo schermo e fa anche la conversione sRGB:
     // niente OutputPass, un disegno a schermo intero in meno per frame.
-    const rt = new THREE.WebGLRenderTarget(size.x, size.y, { samples: 4, type: THREE.UnsignedByteType });
+    const rt = new THREE.WebGLRenderTarget(size.x, size.y, { samples, type: THREE.UnsignedByteType });
     this.composer = new EffectComposer(renderer, rt);
     this.composer.addPass(new RenderPass(scene, camera));
     this.paper = new ShaderPass(PaperShader);

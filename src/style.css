@@ -347,3 +347,73 @@ b.blue { color: var(--blue); }
 .bind button.waiting { color: var(--red); border-color: var(--red); animation: blink 1s infinite; }
 .screen.overlay .menu-page { padding: 24px; }
 .screen.overlay .menu-main { background: var(--paper-2); border: 2.5px solid var(--ink); border-radius: var(--sketch-radius); padding: 22px 30px; box-shadow: 3px 4px 0 rgba(30, 29, 36, .18); }
+
+/* --- comandi touch (telefono) ------------------------------------------------ */
+body.touch { touch-action: none; -webkit-touch-callout: none; overscroll-behavior: none; }
+body.touch #hud { z-index: 3; }
+body.touch #hud .choice, body.touch #hud .prompt, body.touch #hud .diario { pointer-events: auto; }
+body.touch #hud .choice { padding: 6px 8px; }
+.touch-ui { position: fixed; inset: 0; z-index: 2; display: none; pointer-events: none; touch-action: none; -webkit-user-select: none; user-select: none; }
+.touch-ui.on { display: block; }
+.touch-ui .tz { position: absolute; top: 0; bottom: 0; pointer-events: none; }
+.touch-ui.free .tz { pointer-events: auto; }
+.touch-ui .tz-left { left: 0; width: 45%; }
+.touch-ui .tz-right { right: 0; width: 55%; }
+/* dove sta il joystick (quando non lo stai usando) */
+.touch-ui.free .tz-left::after {
+  content: ''; position: absolute; left: 64px; bottom: 44px; width: 104px; height: 104px;
+  border: 2.5px dashed rgba(30, 29, 36, .22); border-radius: 50%;
+}
+.touch-ui .stick {
+  position: absolute; left: 0; top: 0; width: 112px; height: 112px; margin: -56px 0 0 -56px;
+  border: 2.5px solid rgba(30, 29, 36, .45); border-radius: 50%; background: rgba(250, 247, 238, .2);
+  display: none; pointer-events: none;
+}
+.touch-ui .stick.on { display: block; }
+.touch-ui .knob {
+  position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; margin: -25px 0 0 -25px;
+  border-radius: 50%; background: rgba(30, 29, 36, .38);
+}
+.touch-ui .tb {
+  position: absolute; display: none; align-items: center; justify-content: center; pointer-events: auto;
+  width: 58px; height: 58px; border: 2.5px solid rgba(30, 29, 36, .55); border-radius: 50% 46% 52% 48%;
+  background: rgba(250, 247, 238, .3); color: rgba(30, 29, 36, .85);
+  font-family: var(--marker); font-size: 12px; letter-spacing: .5px; text-align: center;
+}
+.touch-ui.free .tb { display: flex; }
+.touch-ui .tb.down { background: rgba(30, 29, 36, .28); }
+.touch-ui .tb.hide { display: none !important; }
+.touch-ui .b-fire { right: 24px; bottom: 26px; width: 94px; height: 94px; font-size: 15px; border-width: 3px; }
+.touch-ui .b-parry { right: 130px; bottom: 18px; }
+.touch-ui .b-jump { right: 36px; bottom: 134px; }
+.touch-ui .b-crouch { right: 118px; bottom: 96px; }
+.touch-ui .b-reload { right: 196px; bottom: 30px; font-size: 10px; }
+.touch-ui .b-weapon { right: 104px; bottom: 170px; width: 50px; height: 50px; font-size: 11px; }
+.touch-ui .b-use { right: 194px; bottom: 118px; width: 68px; height: 68px; font-size: 15px; background: rgba(250, 247, 238, .65); border-color: var(--ink); }
+.touch-ui .b-pause, .touch-ui .b-journal { top: 10px; height: 38px; border-radius: 12px 9px 13px 10px; }
+.touch-ui .b-pause { left: calc(50% + 6px); width: 46px; font-size: 14px; }
+.touch-ui .b-journal { left: calc(50% - 76px); width: 74px; font-size: 12px; }
+/* frecce del minigioco di ballo */
+.touch-ui .dpad { position: absolute; right: 28px; bottom: 24px; width: 210px; height: 150px; display: none; }
+.touch-ui.dance .dpad { display: block; }
+.touch-ui.dance .dpad .tb { display: flex; width: 64px; height: 64px; font-size: 26px; font-family: var(--hand); }
+.touch-ui .d-forward { left: 73px; top: 0; }
+.touch-ui .d-left { left: 0; top: 43px; }
+.touch-ui .d-right { left: 146px; top: 43px; }
+.touch-ui .d-back { left: 73px; top: 86px; }
+/* in verticale: gira il telefono */
+.rotate {
+  position: fixed; inset: 0; z-index: 50; display: none; flex-direction: column; gap: 18px;
+  align-items: center; justify-content: center; background: var(--paper); font-size: 24px; text-align: center; padding: 24px;
+}
+.rotate .phone { width: 46px; height: 80px; border: 4px solid var(--ink); border-radius: 10px; animation: turn 2s ease-in-out infinite; }
+@keyframes turn { 40%, 60% { transform: rotate(-90deg); } }
+@media (orientation: portrait) { body.touch .rotate { display: flex; } }
+
+/* schermi bassi (telefono in orizzontale): interfaccia più piccola */
+@media (max-height: 540px) {
+  #hud .stats, #hud .objectives, #hud .toasts, #hud .prompt, #hud .ammo, #hud .chapter { zoom: .68; }
+  #hud .dialogue, #hud .diario { zoom: .72; }
+  .screen .card, .screen .menu-page { zoom: .7; }
+  body.touch #hud .ammo { right: 250px; bottom: 16px; }
+}

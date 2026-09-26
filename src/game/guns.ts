@@ -3,6 +3,7 @@ import type { Game } from './game';
 import type { NPC } from '../entities/npc';
 import { splatTexture } from '../render/textures';
 import { Stickman } from '../entities/stickman';
+import { TOUCH } from '../touch';
 
 // ---------------------------------------------------------------------------
 // Armi da fuoco (dal capitolo 4). Colpi istantanei lungo un raggio che si ferma
@@ -118,11 +119,46 @@ export class Guns {
     return { t: maxT, point: origin.clone().addScaledVector(dir, maxT), npc: null, target: null, kind: 'none' };
   }
 
+  // Mira assistita (telefono): se un nemico è quasi sotto il mirino, il colpo va a lui.
+  // Si sceglie il punto (testa o petto) più vicino a dove stai mirando.
+  private assist(dir: THREE.Vector3) {
+    const g = this.g;
+    const eye = g.player.eye;
+    let best: THREE.Vector3 | null = null;
+    let bestA = 0.075; // circa 4 gradi
+    for (const n of g.npcs) {
+      const f = n.fighter;
+      if (!f || n.hidden || f.ko || !f.hostile) continue;
+      for (const y of [n.topY - 0.15, n.pos.y + 1.2]) {
+        const p = new THREE.Vector3(n.pos.x, y, n.pos.z);
+        const d = p.clone().sub(eye);
+        const a = d.angleTo(dir);
+        if (a >= bestA || d.length() > 32) continue;
+        if (this.raycast(eye, d.normalize(), null, 40).npc !== n) continue;
+        bestA = a;
+        best = p;
+      }
+    }
+    // anche le sagome del poligono e i barili
+    for (const t of this.targets) {
+      if (!t.alive()) continue;
+      const p = new THREE.Vector3(t.x, (t.y0 + t.y1) / 2, t.z);
+      const d = p.clone().sub(eye);
+      const a = d.angleTo(dir);
+      if (a >= bestA || d.length() > 32) continue;
+      if (this.raycast(eye, d.normalize(), null, 40).target !== t) continue;
+      bestA = a;
+      best = p;
+    }
+    return best ? best.sub(eye).normalize() : dir;
+  }
+
   // Sparo del giocatore
   playerShoot() {
     const g = this.g;
     const pl = g.player;
-    const dir = pl.forward.normalize();
+    let dir = pl.forward.normalize();
+    if (TOUCH) dir = this.assist(dir);
     const hit = this.raycast(pl.eye, dir);
     pl.camera.updateMatrixWorld();
     this.streak(pl.muzzle(), hit.point, PLAYER_INK, 0.012);

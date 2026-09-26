@@ -7,6 +7,8 @@ import { CERA, THEME } from '../../render/palette';
 import { raidCrash } from './raid';
 import { presentLot, sendLot } from './auction';
 import { rangeRunning } from './range';
+import { keyName } from '../../settings';
+import { TOUCH } from '../../touch';
 
 // ---------------------------------------------------------------------------
 // Il Mercato Nero: venditori di cose disegnate male, un'asta, un buttafuori al contrario
@@ -213,7 +215,15 @@ export function createCharacters(g: Game) {
             g.state.ammo = Math.max(g.state.ammo, 24);
             g.player.setWeapon('pistol');
             g.setStep('c4', 2);
-            g.after(1, () => g.toast('<b>Pistola a inchiostro</b><br>Click: spara · R: ricarica · 1: pugni · 3: pistola<br><small>(i tasti si cambiano dalle impostazioni)</small>', 'info', 7000));
+            g.after(1, () =>
+              g.toast(
+                TOUCH
+                  ? '<b>Pistola a inchiostro</b><br>SPARA: spara · RICARICA: ricarica · ARMA: cambia arma'
+                  : `<b>Pistola a inchiostro</b><br>Click: spara · ${keyName('reload')}: ricarica · ${keyName('weapon1')}: pugni · ${keyName('weapon3')}: pistola<br><small>(i tasti si cambiano dalle impostazioni)</small>`,
+                'info',
+                7000,
+              ),
+            );
           },
         },
         prova: { say: ['Linea di tiro, sei sagome, niente nonne. Quando vuoi.'] },

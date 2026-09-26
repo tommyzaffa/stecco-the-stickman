@@ -18,6 +18,8 @@ import { VOICES } from '../content/voices';
 import { Sound } from '../audio/audio';
 import type { Chapter } from '../chapters/types';
 import { keyName } from '../settings';
+import { TOUCH } from '../touch';
+import { TouchUI } from '../ui/touch';
 
 export interface Interactable {
   pos: THREE.Vector3;
@@ -170,6 +172,13 @@ export class Game {
   onGameOver: ((title: string, text: string, retry: () => void) => void) | null = null;
   onLine: ((l: ParsedLine) => void) | null = null; // ogni nuova riga di dialogo (per effetti sonori a tempo)
 
+  touch: TouchUI | null = null;
+
+  // c'è qualcosa con cui interagire davanti a te (per il pulsante USA)
+  get hasFocus() {
+    return this.focus !== null;
+  }
+
   // Gioco in corso (non su titolo, pausa o schermata finale): decide quanti fps servono.
   get active() {
     return this.mode === 'play' && this.input.locked && !this.hud.screenVisible;
@@ -184,10 +193,12 @@ export class Game {
     this.input = new Input(canvas);
     this.player = new Player(window.innerWidth / window.innerHeight);
     this.scene.add(this.player.camera);
-    this.post = new PaperPost(this.renderer, this.scene, this.player.camera);
+    // sul telefono niente antialiasing e meno pixel: il tratto a matita regge lo stesso
+    this.post = new PaperPost(this.renderer, this.scene, this.player.camera, TOUCH ? 0 : 4);
     this.dialogue = new DialogueRunner(this);
     this.combat = new Combat(this);
     this.guns = new Guns(this);
+    if (TOUCH) this.touch = new TouchUI(this);
 
     const cm = new THREE.SpriteMaterial({ map: coinTexture(), alphaTest: 0.5 });
     cm.alphaToCoverage = true;
@@ -201,7 +212,7 @@ export class Game {
   // non si nota: limitiamo i pixel disegnati per frame (~2.4 milioni, circa un 1080p).
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
-    const MAX_PIXELS = 2.4e6;
+    const MAX_PIXELS = TOUCH ? 1.0e6 : 2.4e6;
     const pr = Math.max(1, Math.min(window.devicePixelRatio, Math.sqrt(MAX_PIXELS / (w * h))));
     this.renderer.setPixelRatio(pr);
     this.renderer.setSize(w, h);
@@ -524,6 +535,12 @@ export class Game {
     if (s.clip === 0 && s.ammo > 0) this.after(0.3, () => this.reload());
   }
 
+  private equipPistol() {
+    this.player.setWeapon('pistol');
+    this.reloadId++;
+    if (this.state.clip === 0) this.reload();
+  }
+
   reload() {
     const s = this.state, p = this.player;
     if (p.weapon !== 'pistol' || p.reloadT > 0 || s.clip >= this.clipSize || s.ammo <= 0) return;
@@ -700,6 +717,7 @@ export class Game {
   // Ciclo di gioco
   // =========================================================================
   update(dt: number) {
+    this.touch?.update(); // i pulsanti a schermo scrivono nell'input prima che venga letto
     if (!this.world) {
       this.input.endFrame();
       return;
@@ -745,10 +763,13 @@ export class Game {
         if (inp.wasPressed('crouch')) this.player.setCrouch(!this.player.crouching);
         if (inp.wasPressed('weapon1')) this.player.setWeapon('fist');
         if (inp.wasPressed('weapon2') && this.has('righello')) this.player.setWeapon('ruler');
-        if (inp.wasPressed('weapon3') && this.has('pistola') && this.player.weapon !== 'pistol') {
-          this.player.setWeapon('pistol');
-          this.reloadId++;
-          if (this.state.clip === 0) this.reload();
+        if (inp.wasPressed('weapon3') && this.has('pistola') && this.player.weapon !== 'pistol') this.equipPistol();
+        if (inp.cycleWeapon) {
+          // pulsante ARMA (telefono): la prossima arma che hai
+          const owned = (['fist', 'ruler', 'pistol'] as const).filter((w) => w === 'fist' || (w === 'ruler' ? this.has('righello') : this.has('pistola')));
+          const next = owned[(owned.indexOf(this.player.weapon) + 1) % owned.length];
+          if (next === 'pistol') this.equipPistol();
+          else this.player.setWeapon(next);
         }
       }
     }

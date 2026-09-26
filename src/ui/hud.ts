@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { keyName } from '../settings';
+import { TOUCH } from '../touch';
 
 // HUD in HTML sopra il canvas: più facile da stilizzare "a mano" che in WebGL.
 
@@ -65,6 +66,10 @@ export class Hud {
   private bars: Pool;
   private layer: HTMLElement;
   private arrow: HTMLElement;
+  // comandi touch: toccare una risposta, il suggerimento "USA" o il diario
+  onChoice: ((i: number) => void) | null = null;
+  onPrompt: (() => void) | null = null;
+  onDiario: (() => void) | null = null;
   private lastCoins = -1;
   private lastStats = '';
   private ammoEl: HTMLElement;
@@ -112,9 +117,24 @@ export class Hud {
     this.dlgChoices = el('div', 'choices', this.dlg);
     this.dlgHint = el('div', 'hint', this.dlg);
 
+    this.dlgChoices.addEventListener('touchstart', (e) => {
+      const c = (e.target as HTMLElement).closest('.choice') as HTMLElement | null;
+      if (!c || !this.onChoice) return;
+      e.preventDefault();
+      this.onChoice(Number(c.dataset.i));
+    }, { passive: false });
+    this.promptEl.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this.onPrompt?.();
+    }, { passive: false });
+
     this.chapterEl = el('div', 'chapter', this.root);
     this.fadeEl = el('div', 'fade', this.root);
     this.diarioEl = el('div', 'diario paper', this.root);
+    this.diarioEl.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this.onDiario?.();
+    }, { passive: false });
     this.screen = el('div', 'screen', this.root);
   }
 
@@ -223,13 +243,13 @@ export class Hud {
     this.dlgWho.style.display = who ? '' : 'none';
     this.dlgText.textContent = text;
     if (choices) {
-      const html = choices.map((c, i) => `<div class="choice ${i === sel ? 'sel' : ''}"><b>${i + 1}</b> ${c}</div>`).join('');
+      const html = choices.map((c, i) => `<div class="choice ${i === sel ? 'sel' : ''}" data-i="${i}"><b>${i + 1}</b> ${c}</div>`).join('');
       this.dlgChoices.innerHTML = html;
       this.dlgChoices.style.display = '';
-      this.dlgHint.textContent = `tasti numerici oppure ${keyName('forward')}/${keyName('back')} + ${keyName('interact')} per scegliere`;
+      this.dlgHint.textContent = TOUCH ? 'tocca una risposta' : `tasti numerici oppure ${keyName('forward')}/${keyName('back')} + ${keyName('interact')} per scegliere`;
     } else {
       this.dlgChoices.style.display = 'none';
-      this.dlgHint.textContent = `${keyName('interact')} / Spazio / Click per continuare`;
+      this.dlgHint.textContent = TOUCH ? 'tocca per continuare' : `${keyName('interact')} / Spazio / Click per continuare`;
     }
   }
 

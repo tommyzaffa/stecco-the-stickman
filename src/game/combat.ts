@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Game } from './game';
 import type { NPC } from '../entities/npc';
 import { Stickman } from '../entities/stickman';
+import { parryName } from '../settings';
 
 // ---------------------------------------------------------------------------
 // Risse e furtività.
@@ -192,7 +193,7 @@ export class Combat {
       this.provoke(npc, f.hostile ? 0 : 10);
       if (!g.is('tutParry')) {
         g.flag('tutParry');
-        g.toast('Gli Evidenziatori <b>parano sempre</b>.<br>Aspetta che attacchino, <b>para col tasto destro</b>, poi colpisci finché sono scoperti.', 'info', 9000);
+        g.toast(`Gli Evidenziatori <b>parano sempre</b>.<br>Aspetta che attacchino, <b>para con ${parryName()}</b>, poi colpisci finché sono scoperti.`, 'info', 9000);
       }
       // chi insiste a colpire la guardia alzata si prende una risposta
       if ((f.state === 'chase' || f.state === 'idle') && Math.random() < 0.5 && !this.someoneOpen()) {

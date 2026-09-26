@@ -72,6 +72,19 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   ti inquadrano (`player.stillT`). `g.guns.targets` per sagome e barili.
   `g.guns.ceiling` = soffitto per i colpi al chiuso. `NpcSpec.onShot/shotLines` per i civili colpiti.
 
+## Pubblicazione e telefono
+
+- Il gioco è online su https://tommyzaffa.github.io/stilizzato/ : `.github/workflows/deploy.yml`
+  lo ricostruisce e lo pubblica a ogni push su `main` (repo pubblico, `vite.config.ts` con
+  `base: './'`).
+- **Telefono** (`src/touch.ts` rileva il touch; `?touch=1` lo forza su computer per provarlo):
+  `src/ui/touch.ts` disegna joystick, zona per la visuale e pulsanti, e scrive in `Input`
+  (`moveX/moveY`, `press(azione)`, `hold`, `cycleWeapon`). Niente pointer lock: `input.lock()`
+  è virtuale e `input.onLock` avvisa il flusso (pausa). `keyName()` restituisce i nomi dei
+  pulsanti (USA, GIÙ, ARMA...), `parryName()`/`attackName()` per i testi su parata e attacco:
+  **nei testi mai "click" o "tasto destro" scritti a mano**. Sul telefono: meno pixel, niente
+  antialiasing, mira assistita della pistola. Interfaccia compatta sotto i 540 px di altezza.
+
 ## Capitoli e salvataggi
 
 - Si salva in `localStorage` all'inizio di ogni capitolo (stato del giocatore + capitolo).

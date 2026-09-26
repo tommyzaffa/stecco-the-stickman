@@ -203,20 +203,30 @@ export class Player {
     }
 
     let mx = 0, mz = 0;
+    let analog = 0;
     if (canMove) {
       if (input.isDown('forward') || input.down.has('ArrowUp')) mz -= 1;
       if (input.isDown('back') || input.down.has('ArrowDown')) mz += 1;
       if (input.isDown('left') || input.down.has('ArrowLeft')) mx -= 1;
       if (input.isDown('right') || input.down.has('ArrowRight')) mx += 1;
+      // joystick a schermo: spinto fino in fondo si corre
+      analog = Math.hypot(input.moveX, input.moveY);
+      if (analog > 0.15) {
+        mx += input.moveX;
+        mz += input.moveY;
+      }
     }
-    const len = Math.hypot(mx, mz);
+    let len = Math.hypot(mx, mz);
     this.blocking = canMove && input.rightDown;
-    const running = input.isDown('run') && !this.crouching && !this.blocking;
+    const running = (input.isDown('run') || analog > 0.92) && !this.crouching && !this.blocking;
     const sp = (running ? RUN : WALK) * (this.crouching ? 0.5 : 1) * (this.blocking ? 0.55 : 1);
     let vx = 0, vz = 0;
     if (len > 0) {
-      mx /= len;
-      mz /= len;
+      // col joystick si può anche camminare piano
+      const k = analog > 0.15 ? Math.min(1, Math.max(0.35, analog)) : 1;
+      mx = (mx / len) * k;
+      mz = (mz / len) * k;
+      len = k;
       const s = Math.sin(this.yaw), c = Math.cos(this.yaw);
       vx = (mx * c + mz * s) * sp;
       vz = (-mx * s + mz * c) * sp;

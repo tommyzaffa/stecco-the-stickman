@@ -1,6 +1,7 @@
 import { Game } from './game';
 import { CHAPTERS } from '../chapters';
 import { ACTIONS, SETTINGS, bindKey, codeLabel, keyName, resetKeys, saveSettings } from '../settings';
+import { TOUCH } from '../touch';
 
 // ---------------------------------------------------------------------------
 // Schermate fuori dal gioco: menu principale, capitoli, impostazioni, pausa,
@@ -30,8 +31,14 @@ export function unlockChapter(n: number) {
   }
 }
 
-// Riepilogo dei comandi con i tasti scelti nelle impostazioni
-const controls = () => `
+// Riepilogo dei comandi con i tasti scelti nelle impostazioni (o i pulsanti a schermo sul telefono)
+const controls = () => TOUCH ? `
+  <div class="controls">
+    <div><b>pollice sinistro</b> muoviti (in fondo corri)</div><div><b>trascina a destra</b> guardati intorno</div>
+    <div><b>COLPISCI</b> colpisci / spara</div><div><b>PARA</b> tieni premuto per parare</div>
+    <div><b>USA</b> parla / interagisci</div><div><b>GIÙ</b> accovacciati</div>
+    <div><b>ARMA</b> cambia arma</div><div><b>❚❚</b> pausa</div>
+  </div>` : `
   <div class="controls">
     <div><b>${keyName('forward')}${keyName('left')}${keyName('back')}${keyName('right')}</b> muoviti</div><div><b>Mouse</b> guardati intorno</div>
     <div><b>${keyName('run')}</b> corri</div><div><b>${keyName('jump')}</b> salta</div>
@@ -83,6 +90,13 @@ export function setupFlow(g: Game) {
     g.chapterDef.start(g);
     hide();
     g.input.lock();
+    // telefono: schermo intero e orizzontale, dove il browser lo permette (su iPhone no)
+    if (TOUCH && !document.fullscreenElement) {
+      document.documentElement
+        .requestFullscreen?.({ navigationUI: 'hide' })
+        .then(() => (window.screen.orientation as unknown as { lock?: (o: string) => Promise<void> }).lock?.('landscape'))
+        .catch(() => {});
+    }
   };
 
   const startChapter = (num: number, fresh: boolean) => {
@@ -203,16 +217,16 @@ export function setupFlow(g: Game) {
         <div class="menu-main wide settings">
           <div class="title small">Impostazioni</div>
           <div class="sliders">
-            ${slider('sensitivity', 'Sensibilità del mouse', 0.3, 2.5, 0.05, SETTINGS.sensitivity)}
+            ${slider('sensitivity', TOUCH ? 'Sensibilità della visuale' : 'Sensibilità del mouse', 0.3, 2.5, 0.05, SETTINGS.sensitivity)}
             ${slider('music', 'Volume musica', 0, 1, 0.05, SETTINGS.music)}
             ${slider('sfx', 'Volume effetti e voci', 0, 1, 0.05, SETTINGS.sfx)}
           </div>
-          <div class="sub">Comandi: clicca su un tasto e premi quello nuovo (Esc per annullare).</div>
+          ${TOUCH ? '' : `<div class="sub">Comandi: clicca su un tasto e premi quello nuovo (Esc per annullare).</div>
           <div class="binds">${rows}</div>
-          <div class="sub fixed">Fissi: <b>Click</b> colpisci · <b>Tasto destro</b> para · <b>Esc</b> pausa · <b>frecce</b> muoviti</div>
+          <div class="sub fixed">Fissi: <b>Click</b> colpisci · <b>Tasto destro</b> para · <b>Esc</b> pausa · <b>frecce</b> muoviti</div>`}
           <div class="msg">${msg}</div>
           <div class="buttons row">
-            <button data-a="reset">Ripristina comandi</button>
+            ${TOUCH ? '' : '<button data-a="reset">Ripristina comandi</button>'}
             <button class="primary" data-a="back">Indietro</button>
           </div>
         </div>
@@ -288,8 +302,8 @@ export function setupFlow(g: Game) {
     );
   };
 
-  document.addEventListener('pointerlockchange', () => {
-    if (document.pointerLockElement) {
+  g.input.onLock.push((locked) => {
+    if (locked) {
       g.audio.resume();
       if (g.mode !== 'end') hide();
       return;
