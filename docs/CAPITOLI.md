@@ -33,7 +33,7 @@ quadretti, righe, il margine rosso, la copertina.
 | 1 ✅ | Un martedì qualunque | San Scarabocchio, giorno | Esplorazione, dialoghi, missioni secondarie |
 | 2 ✅ | Il Parallelepipedo | Il club, notte (gesso) | Furtività leggera, risse con parata, ballo a tempo |
 | 3 ✅ | Il Banco dei Pegni | Quadropoli, città a quadretti | **Indagine**: indizi, testimoni, accusa finale |
-| 4 | Il Mercato Nero | Sotto Quadropoli | **Armi da fuoco**: prima sparatoria |
+| 4 ✅ | Il Mercato Nero | Sotto Quadropoli | **Armi da fuoco**: poligono, coperture, ondate, boss |
 | 5 | L'appuntamento | Il ristorante "Da Pastello" | **Solo dialoghi**: piacere a Martina o è game over |
 | 6 | Consegna a domicilio | Le strade di Quadropoli | **Guida**: la macchina (senza motore) di Luca |
 
@@ -42,14 +42,20 @@ Il banco però è stato svaligiato stanotte. Stecco fa il detective: raccoglie i
 testimoni (che mentono in modo ridicolo) e alla fine accusa qualcuno. Se sbagli accusa, il
 colpevole scappa e la strada si allunga. Il colpevole ha già rivenduto il tappo al Mercato Nero.
 
-**4. Il Mercato Nero.** Un mercato sotterraneo di cose disegnate male e vendute bene. Il tappo è
-all'asta. Qualcosa va storto e parte la prima sparatoria: pistola a inchiostro, coperture e
-munizioni. All'asta il tappo l'ha comprato una certa Martina.
+**4. Il Mercato Nero.** Un mercato sotterraneo di cose disegnate male e vendute bene (ombre
+usate, parole di seconda mano, colori "veri" in bianco e nero). Il buttafuori non fa entrare chi è
+disarmato: pistola a inchiostro e tiro a segno dal Calamaio (mai colpire la nonna). All'asta il
+tappo va a un'offerta telefonica e parte per la posta pneumatica; poi i Pastelli a Cera fanno
+irruzione: tre ondate con coperture, barili d'inchiostro e il Pastellone, che si ferma a
+temperarsi. Dal registro e da una telefonata: il tappo l'ha comprato Martina, che dà appuntamento
+da Pastello (il ristorante dei Pastelli a Cera).
 
 **5. L'appuntamento.** Martina colleziona tappi e non lo vende. Però accetta un appuntamento.
 Tutto il capitolo è la cena: bisogna piacerle con le risposte giuste.
 - Le risposte dipendono da cosa hai: monete (il conto!), oggetti raccolti, salute, scelte fatte
-  nei capitoli precedenti.
+  nei capitoli precedenti. Oggetti già in gioco: fiore, poesia, tre sospiri, guanti del mimo
+  (cap. 3), profumo "Quaderno Nuovo" e la parola "scusa" (cap. 4). Flag utili: `noShadow`
+  (hai dato via la tua ombra), `martinaCall` (come è andata la telefonata).
 - Troppe risposte sbagliate e se ne va: game over, si ripete la cena.
 - Martina è sveglia e ironica: non le piacciono le frasi fatte, le piace chi è sincero (e un po'
   scemo).

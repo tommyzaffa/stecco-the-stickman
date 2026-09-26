@@ -51,6 +51,7 @@ export class NPC {
   get headY() {
     if (!(this.body instanceof Stickman)) return 0.8;
     if (this.body.ko) return 0.45; // sdraiato (KO o addormentato)
+    if (this.body.action === 'cover') return 1.25 * this.body.body.scale.y; // accovacciato
     return this.body.seated ? 1.5 : 1.93 * this.body.body.scale.y;
   }
 

@@ -267,12 +267,12 @@ export class Sound {
     this.noise(0.06, 0.06, { type: 'lowpass', freq: 600 });
   }
 
-  swing(weapon: 'fist' | 'ruler') {
+  swing(weapon: 'fist' | 'ruler' | 'pistol') {
     if (weapon === 'fist') this.noise(0.16, 0.09, { type: 'bandpass', freq: 1800, to: 450, q: 2.2 });
     else this.noise(0.2, 0.1, { type: 'bandpass', freq: 3200, to: 800, q: 3 });
   }
 
-  hit(weapon: 'fist' | 'ruler') {
+  hit(weapon: 'fist' | 'ruler' | 'pistol') {
     this.tone(170, 0.14, { to: 55, vol: 0.35 });
     this.noise(0.09, 0.16, { type: 'bandpass', freq: 1300, q: 0.8 });
     // il righello "vibra" come sul bordo del banco di scuola
@@ -306,6 +306,81 @@ export class Sound {
   opening() {
     this.tone(330, 0.25, { type: 'triangle', to: 880, vol: 0.08 });
     this.tone(1760, 0.08, { vol: 0.03, delay: 0.2 });
+  }
+
+  // --- armi da fuoco ---
+  // pistola a inchiostro: "SPLOSH" secco con coda grave
+  gunshot() {
+    this.noise(0.12, 0.35, { type: 'lowpass', freq: 2400, to: 300 });
+    this.tone(140, 0.18, { to: 45, vol: 0.4 });
+    this.noise(0.05, 0.12, { type: 'highpass', freq: 3000 });
+  }
+
+  // pistola a cera dei Pastelli: "PLOC" più acuto e buffo
+  enemyShot(pos: THREE.Vector3) {
+    const s = this.spatial(pos, 45);
+    if (s.vol < 0.01) return;
+    this.tone(520, 0.08, { to: 180, type: 'square', vol: 0.12 * s.vol, pan: s.pan, filter: { type: 'lowpass', freq: 2000 } });
+    this.noise(0.08, 0.2 * s.vol, { type: 'bandpass', freq: 1200, q: 0.8 }, { pan: s.pan });
+  }
+
+  // colpo che ti passa vicino
+  whiz() {
+    this.noise(0.18, 0.08, { type: 'bandpass', freq: 4000, to: 1200, q: 4 });
+  }
+
+  empty() {
+    this.tone(1800, 0.02, { type: 'square', vol: 0.04 });
+  }
+
+  reload() {
+    this.tone(900, 0.04, { type: 'square', vol: 0.05, filter: { type: 'lowpass', freq: 3000 } });
+    this.tone(600, 0.05, { type: 'square', vol: 0.05, delay: 0.5, filter: { type: 'lowpass', freq: 3000 } });
+    this.noise(0.08, 0.06, { type: 'bandpass', freq: 2000, q: 2 }, { delay: 0.9 });
+  }
+
+  // raccogli cartucce: clic-clac
+  ammo() {
+    this.tone(1400, 0.03, { type: 'square', vol: 0.05, filter: { type: 'lowpass', freq: 3500 } });
+    this.tone(900, 0.04, { type: 'square', vol: 0.05, delay: 0.07, filter: { type: 'lowpass', freq: 3500 } });
+  }
+
+  // colpo andato a segno: "tic" per il mirino
+  hitMark() {
+    this.tone(2200, 0.04, { type: 'triangle', vol: 0.06 });
+  }
+
+  // barile d'inchiostro che esplode
+  barrel(pos: THREE.Vector3) {
+    const s = this.spatial(pos, 50);
+    this.tone(90, 0.5, { to: 35, vol: 0.45 * Math.max(0.3, s.vol), pan: s.pan });
+    this.noise(0.6, 0.35 * Math.max(0.3, s.vol), { type: 'lowpass', freq: 1800, to: 200 }, { pan: s.pan });
+    this.noise(0.3, 0.15, { type: 'bandpass', freq: 600, q: 0.7 }, { delay: 0.15, pan: s.pan });
+  }
+
+  // campanello dell'asta / martelletto del banditore
+  gavel() {
+    this.tone(260, 0.06, { type: 'square', vol: 0.12, filter: { type: 'lowpass', freq: 1200 } });
+    this.noise(0.05, 0.15, { type: 'bandpass', freq: 900, q: 1.5 });
+  }
+
+  // posta pneumatica: FIUUUU
+  tube() {
+    this.noise(0.9, 0.12, { type: 'bandpass', freq: 400, to: 3500, q: 3 });
+    this.tone(300, 0.8, { to: 1600, type: 'sine', vol: 0.04, delay: 0.1 });
+  }
+
+  // il Pastellone si tempera: grrr-grrr
+  sharpen(pos: THREE.Vector3) {
+    const s = this.spatial(pos, 30);
+    if (s.vol < 0.01) return;
+    for (let i = 0; i < 4; i++) this.noise(0.14, 0.12 * s.vol, { type: 'bandpass', freq: 700 + i * 60, q: 4 }, { delay: i * 0.22, pan: s.pan });
+  }
+
+  splat(pos: THREE.Vector3) {
+    const s = this.spatial(pos, 30);
+    if (s.vol < 0.02) return;
+    this.noise(0.1, 0.12 * s.vol, { type: 'lowpass', freq: 900 }, { pan: s.pan });
   }
 
   // nuovo indizio: due note da "detective" e uno scarabocchio sul taccuino

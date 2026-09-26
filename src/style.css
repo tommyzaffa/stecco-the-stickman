@@ -98,6 +98,34 @@ b.blue { color: var(--blue); }
   position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px;
   border: 2px solid var(--ink); border-radius: 50% 45% 55% 50%; opacity: .6;
 }
+.crosshair.hit::before, .crosshair.hit::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 26px; height: 2.5px; background: var(--ink);
+  animation: hitmark .25s ease-out forwards;
+}
+.crosshair.hit::before { --r: 45deg; }
+.crosshair.hit::after { --r: -45deg; }
+.crosshair.head::before, .crosshair.head::after { background: var(--red); width: 34px; }
+@keyframes hitmark {
+  from { transform: translate(-50%, -50%) rotate(var(--r)) scaleX(1.3); opacity: 1; }
+  to { transform: translate(-50%, -50%) rotate(var(--r)) scaleX(.8); opacity: 0; }
+}
+
+/* --- munizioni --------------------------------------------------------------- */
+.ammo { position: absolute; right: 22px; bottom: 22px; padding: 8px 16px 10px; min-width: 150px; text-align: right; }
+.ammo .n { font-size: 20px; }
+.ammo .n b { font-family: var(--marker); font-size: 34px; }
+.ammo .n span { color: var(--blue); font-size: 18px; margin-left: 4px; }
+.ammo .drops { display: flex; gap: 4px; justify-content: flex-end; margin-top: 3px; }
+.ammo .drops i {
+  width: 9px; height: 13px; border: 1.8px solid var(--ink); border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+}
+.ammo .drops i.on { background: var(--blue); }
+.ammo .h { font-size: 16px; margin-top: 2px; color: var(--red); }
+.ammo.empty { border-color: var(--red); animation: blink .8s infinite; }
+.ink-splats { position: absolute; inset: 0; overflow: hidden; }
+.ink-splat { position: absolute; width: 22vmin; height: 22vmin; margin: -11vmin 0 0 -11vmin; transform: rotate(var(--rot)); transition: opacity 1.2s; opacity: .8; }
+.ink-splat svg { width: 100%; height: 100%; fill: var(--c); }
+.ink-splat.out { opacity: 0; }
 
 /* --- marker nel mondo ------------------------------------------------------ */
 .markers > div { position: absolute; left: 0; top: 0; will-change: transform; }

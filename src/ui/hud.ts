@@ -67,6 +67,9 @@ export class Hud {
   private arrow: HTMLElement;
   private lastCoins = -1;
   private lastStats = '';
+  private ammoEl: HTMLElement;
+  private lastAmmo = '';
+  private splatsEl: HTMLElement;
 
   constructor() {
     this.root = el('div', '', document.body);
@@ -89,6 +92,9 @@ export class Hud {
     this.toasts = el('div', 'toasts', this.root);
     this.promptEl = el('div', 'prompt', this.root);
     this.crosshair = el('div', 'crosshair', this.root);
+    this.ammoEl = el('div', 'ammo paper', this.root);
+    this.ammoEl.style.display = 'none';
+    this.splatsEl = el('div', 'ink-splats', this.root);
 
     const layer = el('div', 'markers', this.root);
     this.layer = layer;
@@ -134,6 +140,48 @@ export class Hud {
     this.level.textContent = `Livello ${s.level}`;
     this.xpFill.style.width = `${(100 * s.xp) / s.xpNext}%`;
     this.weapon.textContent = `Arma: ${s.weapon}`;
+  }
+
+  // munizioni (solo con la pistola in mano)
+  ammo(a: { clip: number; size: number; ammo: number; reloading: boolean } | null) {
+    const key = a ? `${a.clip}|${a.size}|${a.ammo}|${a.reloading}` : '';
+    if (key === this.lastAmmo) return;
+    this.lastAmmo = key;
+    this.ammoEl.style.display = a ? '' : 'none';
+    if (!a) return;
+    const drops = Array.from({ length: a.size }, (_, i) => `<i class="${i < a.clip ? 'on' : ''}"></i>`).join('');
+    const hint = a.reloading ? 'ricarico...' : a.clip === 0 ? (a.ammo > 0 ? `${keyName('reload')} ricarica` : 'vuota!') : '';
+    this.ammoEl.classList.toggle('empty', a.clip === 0 && !a.reloading);
+    this.ammoEl.innerHTML = `<div class="n"><b>${a.clip}</b>/${a.size} <span>+${a.ammo}</span></div><div class="drops">${drops}</div>${hint ? `<div class="h">${hint}</div>` : ''}`;
+  }
+
+  // colpo andato a segno: il mirino fa una crocetta (rossa se in testa)
+  hitMark(head = false) {
+    const c = this.crosshair;
+    c.classList.remove('hit', 'head');
+    void c.offsetWidth;
+    c.classList.add('hit');
+    if (head) c.classList.add('head');
+  }
+
+  // ti hanno colpito: una macchia di cera sul bordo dello schermo
+  inkSplat(color: string) {
+    const e = el('div', 'ink-splat', this.splatsEl);
+    const side = Math.random();
+    const x = side < 0.5 ? (Math.random() < 0.5 ? 2 : 78) + Math.random() * 18 : 10 + Math.random() * 80;
+    const y = side < 0.5 ? 10 + Math.random() * 70 : (Math.random() < 0.5 ? 0 : 70) + Math.random() * 20;
+    e.style.left = `${x}vw`;
+    e.style.top = `${y}vh`;
+    e.style.setProperty('--c', color);
+    e.style.setProperty('--rot', `${Math.random() * 360}deg`);
+    const pts = Array.from({ length: 12 }, (_, i) => {
+      const a = (i / 12) * Math.PI * 2;
+      const r = 30 + Math.random() * 18;
+      return `${50 + Math.cos(a) * r},${50 + Math.sin(a) * r}`;
+    }).join(' ');
+    e.innerHTML = `<svg viewBox="0 0 100 100"><polygon points="${pts}" /><circle cx="${8 + Math.random() * 10}" cy="${20 + Math.random() * 60}" r="5" /><circle cx="${85 + Math.random() * 8}" cy="${20 + Math.random() * 60}" r="4" /></svg>`;
+    setTimeout(() => e.classList.add('out'), 900);
+    setTimeout(() => e.remove(), 2200);
   }
 
   setObjectives(list: { text: string; kind: MarkerKind; title?: string }[]) {

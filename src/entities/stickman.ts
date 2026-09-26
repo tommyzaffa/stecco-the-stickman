@@ -7,10 +7,11 @@ import { headTexture, shadowTexture } from '../render/textures';
 // ogni posa è calcolata con qualche seno e coseno.
 // ---------------------------------------------------------------------------
 
-export type Hat = 'none' | 'cap' | 'top' | 'beanie' | 'bun' | 'police' | 'party' | 'beret' | 'hair';
+export type Hat = 'none' | 'cap' | 'top' | 'beanie' | 'bun' | 'police' | 'party' | 'beret' | 'hair' | 'crayon';
 export type Action =
   | 'none' | 'wave' | 'talk' | 'push' | 'phone' | 'paint' | 'speech' | 'cane' | 'crossed' | 'think'
-  | 'dance' | 'drink' | 'guard' | 'windup' | 'strike' | 'dj' | 'dizzy';
+  | 'dance' | 'drink' | 'guard' | 'windup' | 'strike' | 'dj' | 'dizzy'
+  | 'aim' | 'cover' | 'gavel' | 'sharpen';
 
 export interface StickmanOpts {
   hat?: Hat;
@@ -80,7 +81,11 @@ export class Stickman {
   private hurt = 0;
   private cur: Record<string, number> = {};
 
+  private waxColor?: string;
+  shadow!: THREE.Mesh; // l'ombra tratteggiata per terra (c'è chi la perde)
+
   constructor(opts: StickmanOpts = {}) {
+    this.waxColor = opts.highlighter;
     const th = themed();
     inkMat = th.ink;
     const hl = opts.highlighter ? highlightMat(opts.highlighter) : null;
@@ -174,6 +179,7 @@ export class Stickman {
     sh.rotation.x = -Math.PI / 2;
     sh.position.y = 0.02;
     this.root.add(sh);
+    this.shadow = sh;
 
     const s = opts.scale ?? 1;
     this.body.scale.setScalar(s);
@@ -251,6 +257,17 @@ export class Stickman {
         const b = add(new THREE.CylinderGeometry(0.2, 0.18, 0.06, 12), 0.04, 0, 0);
         b.rotation.z = -0.25;
         break;
+      }
+      case 'crayon': {
+        // Pastelli a Cera: la testa finisce a punta, del loro colore (pieno, non evidenziato)
+        const wax = new THREE.MeshBasicMaterial({ color: this.waxColor ?? THEME.inkHex });
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 10), wax);
+        tip.position.y = 0.08;
+        g.add(tip);
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.155, 0.05, 10), inkMat);
+        band.position.y = -0.06;
+        g.add(band);
+        return;
       }
       case 'hair':
         for (let i = -2; i <= 2; i++) {
@@ -462,6 +479,52 @@ export class Stickman {
         tg.hipsY = HIP_Y - 0.08;
         break;
       }
+      case 'aim':
+        // braccio teso con la pistola, l'altro a sostenerlo
+        tg.armRX = -1.5;
+        tg.armRZ = 0.05;
+        tg.elbowRX = -0.05;
+        tg.armLX = -1.25;
+        tg.armLZ = -0.45;
+        tg.elbowLX = -0.6;
+        tg.torsoX = 0.08;
+        tg.legLX = -0.2;
+        tg.legRX = 0.25;
+        break;
+      case 'cover': {
+        // accovacciato dietro una copertura
+        const s = Math.sin(t * 3) * 0.03;
+        tg.hipsY = 0.47 + s;
+        tg.legLX = tg.legRX = -1.25;
+        tg.kneeLX = tg.kneeRX = 2.25;
+        tg.legLZ = 0.15;
+        tg.legRZ = -0.15;
+        tg.torsoX = 0.42;
+        tg.armRX = -0.9;
+        tg.elbowRX = -1.2;
+        tg.armLX = -0.7;
+        tg.elbowLX = -1.4;
+        break;
+      }
+      case 'gavel': {
+        // banditore: martelletto su e giù
+        const k = Math.max(0, Math.sin(t * 4));
+        tg.armRX = -1.1 - k * 0.9;
+        tg.elbowRX = -0.9 + k * 0.5;
+        tg.armLX = -0.4;
+        tg.elbowLX = -0.8;
+        break;
+      }
+      case 'sharpen': {
+        // si tempera la punta: gira su se stesso con le braccia sopra la testa
+        tg.armLZ = 2.4 + Math.sin(t * 14) * 0.2;
+        tg.armRZ = -2.4 - Math.sin(t * 14) * 0.2;
+        tg.elbowLX = tg.elbowRX = -0.5;
+        tg.torsoZ = Math.sin(t * 7) * 0.12;
+        tg.kneeLX = tg.kneeRX = 0.3;
+        tg.hipsY = HIP_Y - 0.06;
+        break;
+      }
       case 'strike':
         tg.armLX = -0.8;
         tg.elbowLX = -1.9;
@@ -513,7 +576,7 @@ export class Stickman {
       tg.torsoZ += Math.sin(t * 30) * h * 0.1;
     }
 
-    const fast = this.action === 'strike' || this.action === 'windup' || moving;
+    const fast = this.action === 'strike' || this.action === 'windup' || this.action === 'aim' || this.action === 'cover' || moving;
     const k = 1 - Math.exp(-dt * (this.action === 'strike' ? 30 : fast ? 18 : 9));
     for (const key in tg) {
       const c = this.cur[key] ?? tg[key];

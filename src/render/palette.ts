@@ -31,6 +31,19 @@ export const NIGHT: Theme = { paper: '#1b1a21', ink: '#ebe6d8' };
 // Quadropoli: carta a quadretti, un po' più fredda, inchiostro blu scuro
 export const QUADRETTI: Theme = { paper: '#f2f3f0', ink: '#1d2233', grid: { size: 1, color: '#9fb8d6' } };
 
+// Mercato Nero: carta da pacchi. Tutto quello che si vende qui sotto è incartato.
+export const PACCHI: Theme = { paper: '#d8c29d', ink: '#2a2119' };
+
+// Colori dei Pastelli a Cera (la gang rivale): pieni, un po' sporchi, da astuccio delle elementari
+export const CERA = {
+  rosso: '#d9412b',
+  blu: '#2f62d9',
+  verde: '#2f9e44',
+  arancione: '#e8791e',
+  viola: '#8a3fc8',
+  marrone: '#8a5a2b',
+};
+
 export function setTheme(t: Theme) {
   THEME.paperHex = t.paper;
   THEME.inkHex = t.ink;

@@ -37,8 +37,9 @@ const controls = () => `
     <div><b>${keyName('run')}</b> corri</div><div><b>${keyName('jump')}</b> salta</div>
     <div><b>${keyName('interact')}</b> parla / interagisci</div><div><b>Click</b> colpisci</div>
     <div><b>Tasto destro</b> para</div><div><b>${keyName('crouch')}</b> accovacciati</div>
-    <div><b>${keyName('journal')}</b> diario</div><div><b>${keyName('weapon1')} / ${keyName('weapon2')}</b> cambia arma</div>
-    <div><b>${keyName('music')}</b> musica on/off</div><div><b>Esc</b> pausa</div>
+    <div><b>${keyName('journal')}</b> diario</div><div><b>${keyName('weapon1')} / ${keyName('weapon2')} / ${keyName('weapon3')}</b> cambia arma</div>
+    <div><b>${keyName('reload')}</b> ricarica</div><div><b>${keyName('music')}</b> musica on/off</div>
+    <div><b>Esc</b> pausa</div>
   </div>`;
 
 // Omino che saluta, per il menu principale

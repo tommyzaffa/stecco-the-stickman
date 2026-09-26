@@ -1,6 +1,7 @@
 export type ItemId =
   | 'pacco' | 'righello' | 'libro' | 'tappo' | 'sottobicchiere' | 'calzino' | 'chiave'
-  | 'gomma' | 'guanti' | 'fiore' | 'poesia' | 'sospiri';
+  | 'gomma' | 'guanti' | 'fiore' | 'poesia' | 'sospiri'
+  | 'pistola' | 'profumo' | 'ombra' | 'scusa';
 
 export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolean }> = {
   pacco: {
@@ -51,5 +52,22 @@ export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolea
   sospiri: {
     name: 'Tre sospiri',
     desc: 'In un barattolo, dal banco dei pegni. Per le occasioni romantiche.',
+  },
+  pistola: {
+    name: 'Pistola a inchiostro',
+    desc: "Dell'armeria Calamaio. Spara gocce d'inchiostro blu. Macchia tutto. Anche la coscienza.",
+    weapon: true,
+  },
+  profumo: {
+    name: "Profumo d'inchiostro",
+    desc: 'Dal Mercato Nero. Sa di quaderno nuovo. Per le occasioni importanti.',
+  },
+  ombra: {
+    name: "Un'ombra usata",
+    desc: 'Tratteggiata, ancora in buono stato. Non è tua.',
+  },
+  scusa: {
+    name: '"Scusa" (parola usata)',
+    desc: 'Dalla bancarella delle parole usate. Praticamente nuova: nessuno la usa mai. Potrebbe servire.',
   },
 };

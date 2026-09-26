@@ -317,3 +317,130 @@ export function moonTexture() {
   }
   return toTexture(c);
 }
+
+// Macchia d'inchiostro (dove arriva un colpo)
+export function splatTexture(color: string, seed: number) {
+  const rr = makeRng(seed);
+  const { c, ctx } = canvas(128, 128);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  const n = 14;
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    const r = 30 + rr() * 22 + (i % 3 === 0 ? rr() * 18 : 0);
+    const x = 64 + Math.cos(a) * r, y = 64 + Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  for (let i = 0; i < 6; i++) {
+    const a = rr() * Math.PI * 2, d = 50 + rr() * 10;
+    ctx.beginPath();
+    ctx.arc(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 3 + rr() * 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  return toTexture(c);
+}
+
+// Cartuccia d'inchiostro (munizioni) e merendina (salute): oggetti da raccogliere
+export function pickupTexture(kind: 'ammo' | 'heal') {
+  const { c, ctx } = canvas(128, 128);
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#1e1d24';
+  if (kind === 'ammo') {
+    ctx.fillStyle = '#3a4bd8';
+    ctx.fillRect(42, 30, 44, 72);
+    ctx.strokeRect(42, 30, 44, 72);
+    ctx.fillStyle = '#fbf8ee';
+    ctx.fillRect(52, 14, 24, 18);
+    ctx.strokeRect(52, 14, 24, 18);
+    ctx.fillStyle = '#fbf8ee';
+    ctx.font = `bold 22px ${HAND_FONT}`;
+    ctx.textAlign = 'center';
+    ctx.fillText('INK', 64, 74);
+  } else {
+    ctx.fillStyle = '#ffd66b';
+    ctx.beginPath();
+    ctx.ellipse(64, 66, 46, 26, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#1e1d24';
+    ctx.font = `bold 26px ${HAND_FONT}`;
+    ctx.textAlign = 'center';
+    ctx.fillText('+', 64, 76);
+  }
+  return toTexture(c);
+}
+
+// Sagoma del tiro a segno: un omino con i cerchi sul petto, oppure una nonna (da non colpire!)
+export function targetTexture(kind: 'bad' | 'nonna') {
+  const { c, ctx } = canvas(128, 256);
+  ctx.fillStyle = '#f4ecd8';
+  ctx.strokeStyle = '#2a2119';
+  ctx.lineWidth = 6;
+  // cartone ritagliato
+  ctx.beginPath();
+  ctx.moveTo(24, 250);
+  ctx.lineTo(30, 96);
+  ctx.quadraticCurveTo(64, 78, 98, 96);
+  ctx.lineTo(104, 250);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(64, 52, 36, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  if (kind === 'bad') {
+    // cattivo con la bandana e il bersaglio
+    ctx.fillStyle = '#2a2119';
+    ctx.fillRect(30, 40, 68, 12);
+    for (const [r, col] of [[34, '#d6333a'], [24, '#f4ecd8'], [14, '#d6333a'], [5, '#f4ecd8']] as const) {
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(64, 160, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  } else {
+    // nonna: crocchia, occhialini, borsetta e un grande NO
+    ctx.beginPath();
+    ctx.arc(64, 14, 13, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(50, 52, 9, 0, Math.PI * 2);
+    ctx.arc(78, 52, 9, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeRect(40, 180, 30, 24);
+    ctx.fillStyle = '#2f5bd3';
+    ctx.font = `bold 44px ${MARKER_FONT}`;
+    ctx.textAlign = 'center';
+    ctx.fillText('NO!', 64, 150);
+  }
+  return toTexture(c);
+}
+
+// Ombra da vendere (o da stendere): la sagoma scura di un omino
+export function silhouetteTexture(color = '#2a2119') {
+  const { c, ctx } = canvas(128, 256);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.arc(64, 40, 26, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(64, 66);
+  ctx.lineTo(64, 150);
+  ctx.moveTo(64, 150);
+  ctx.lineTo(36, 240);
+  ctx.moveTo(64, 150);
+  ctx.lineTo(92, 240);
+  ctx.moveTo(64, 86);
+  ctx.lineTo(24, 128);
+  ctx.moveTo(64, 86);
+  ctx.lineTo(104, 128);
+  ctx.stroke();
+  return toTexture(c);
+}

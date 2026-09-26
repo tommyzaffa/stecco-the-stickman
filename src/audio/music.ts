@@ -348,5 +348,98 @@ export const INDAGINE: Track = {
   },
 };
 
-export const TRACKS = { paese: PAESE, club: disco(false), sbiadisco: disco(true), indagine: INDAGINE };
+// "Mercato": habanera losca per il Mercato Nero. Basso col ritmo di tango, chitarra pizzicata
+// e ogni tanto un clarinetto (lead) che sembra voler vendere qualcosa.
+const MERCATO_CHORDS = [
+  { root: 38, chord: [62, 65, 69] }, // Dm
+  { root: 45, chord: [61, 64, 67] }, // A7
+  { root: 38, chord: [62, 65, 69] }, // Dm
+  { root: 43, chord: [62, 67, 70] }, // Gm
+  { root: 46, chord: [62, 65, 70] }, // Bb
+  { root: 43, chord: [62, 67, 70] }, // Gm
+  { root: 45, chord: [61, 64, 69] }, // A
+  { root: 45, chord: [61, 64, 67] }, // A7
+];
+const CLARINETTO: number[][] = [
+  [74, _, 73, 74, 77, _, 76, 74],
+  [73, _, _, 69, 70, _, 69, _],
+  [74, _, 77, _, 81, _, 79, 77],
+  [79, _, _, 0, 74, _, 70, _],
+  [70, _, 74, _, 77, _, 76, 74],
+  [74, _, 70, _, 67, _, 70, _],
+  [69, _, 73, _, 76, _, 73, _],
+  [73, _, _, _, 0, 0, 0, 0],
+];
+export const MERCATO: Track = {
+  bpm: 92,
+  stepsPerBeat: 2,
+  play(m, step, t) {
+    const bar = Math.floor(step / 8) % 8;
+    const slot = step % 8;
+    const section = Math.floor(step / 64) % 2; // la seconda volta c'è il clarinetto
+    const c = MERCATO_CHORDS[bar];
+    // habanera: TA - - ta TA - TA -
+    if (slot === 0) m.bass(mtof(c.root), t, 0.4, 0.14);
+    if (slot === 3) m.bass(mtof(c.root + 7), t, 0.15, 0.1);
+    if (slot === 4) m.bass(mtof(c.root + 12), t, 0.3, 0.11);
+    if (slot === 6) m.bass(mtof(c.root + 7), t, 0.25, 0.1);
+    // chitarra: accordi pizzicati sul levare
+    if (slot === 2 || slot === 5 || slot === 7) for (const n of c.chord) m.pluck(mtof(n), t + Math.random() * 0.02, 0.022, 0.3);
+    // nacchere di carta
+    if (slot === 0 || slot === 3 || slot === 4) m.hit(t, 0.03, 3200, 'bandpass', 0.04, 2);
+    if (slot === 7 && bar % 2 === 1) for (let i = 0; i < 3; i++) m.hit(t + i * 0.055, 0.02, 3600, 'bandpass', 0.03, 2);
+    if (section === 1) {
+      const row = CLARINETTO[bar];
+      const n = row[slot];
+      if (n > 0) {
+        let len = 1;
+        while (slot + len < 8 && row[slot + len] === _) len++;
+        m.lead(mtof(n - 12), t, len * (60 / 92 / 2) * 0.9, 0.03);
+      }
+    }
+  },
+};
+
+// "Sparatoria": western all'italiana, galoppo e fischio solista (ironico, ovviamente)
+const WEST_ROOTS = [45, 45, 43, 43, 41, 41, 40, 40]; // Am Am G G F F E E
+const WEST_CHORDS: Record<number, number[]> = { 45: [57, 60, 64], 43: [55, 59, 62], 41: [53, 57, 60], 40: [56, 59, 64] };
+const FISCHIO: number[][] = [
+  [81, _, _, _, 76, _, 81, _],
+  [79, _, _, _, _, _, 0, 0],
+  [79, _, _, _, 74, _, 79, _],
+  [77, _, _, _, _, _, 0, 0],
+  [77, _, 76, _, 74, _, 72, _],
+  [74, _, _, _, 71, _, 0, 0],
+  [71, _, 72, _, 74, _, 76, _],
+  [68, _, _, _, _, _, 0, 0],
+];
+export const SPARATORIA: Track = {
+  bpm: 150,
+  stepsPerBeat: 2,
+  play(m, step, t) {
+    const bar = Math.floor(step / 8) % 8;
+    const slot = step % 8;
+    const section = Math.floor(step / 64) % 2;
+    const root = WEST_ROOTS[bar];
+    // galoppo: TA-ta-ta TA-ta-ta
+    if (slot % 4 === 0) m.kick(t, 0.13, 100, 45, 0.12);
+    if (slot % 4 === 1 || slot % 4 === 2) m.hit(t, 0.03, 1800, 'bandpass', 0.05, 1.2);
+    if (slot % 2 === 0) m.sawBass(mtof(root - 12 + (slot === 4 ? 7 : 0)), t, 0.16, 0.09);
+    // chitarra "twang" in levare
+    if (slot === 3 || slot === 7) m.stab(WEST_CHORDS[root], t, 0.018, 0.2);
+    // frusta ogni due battute
+    if (slot === 6 && bar % 2 === 1) m.hit(t, 0.06, 5000, 'highpass', 0.08, 0.8);
+    if (section === 1) {
+      const row = FISCHIO[bar];
+      const n = row[slot];
+      if (n > 0) {
+        let len = 1;
+        while (slot + len < 8 && row[slot + len] === _) len++;
+        m.whistle(mtof(n), t, len * (60 / 150 / 2) * 0.95, 0.05);
+      }
+    }
+  },
+};
+
+export const TRACKS = { paese: PAESE, club: disco(false), sbiadisco: disco(true), indagine: INDAGINE, mercato: MERCATO, sparatoria: SPARATORIA };
 export type TrackName = keyof typeof TRACKS;

@@ -32,9 +32,24 @@ export interface FighterOpts {
   parries?: [number, number];
   // per quanti secondi resta scoperto dopo l'ultima parata
   openTime?: number;
+  // armi da fuoco (dal capitolo 4): chi spara non para, si ripara dietro le casse
+  ranged?: RangedOpts;
 }
 
-type State = 'idle' | 'chase' | 'windup' | 'strike' | 'recover' | 'stagger' | 'open' | 'ko';
+// Chi spara: si nasconde dietro una copertura, si alza, prende la mira (linea colorata
+// ben visibile: è il segnale per abbassarsi) e spara. Poi si riabbassa.
+export interface RangedOpts {
+  accuracy: number; // probabilità di colpire un bersaglio fermo e scoperto
+  dmg: number;
+  aim: number; // secondi di mira (quanto resta visibile la linea)
+  color: string; // colore della cera (colpi e linea di mira)
+  burst?: number; // colpi per ogni volta che si alza
+  hide?: [number, number]; // secondi nascosto tra una raffica e l'altra
+  sharpenEvery?: number; // (Pastellone) dopo tanti colpi si spunta e deve temperarsi: è il momento buono
+  armor?: number; // moltiplicatore del danno quando non si sta temperando
+}
+
+type State = 'idle' | 'chase' | 'windup' | 'strike' | 'recover' | 'stagger' | 'open' | 'ko' | 'move' | 'hide' | 'aim' | 'sharpen';
 
 const POW = ['POW!', 'SBAM!', 'STOC!', 'PAF!', 'TUNF!', 'ZOK!'];
 
@@ -54,6 +69,10 @@ export class Fighter {
   opts: FighterOpts;
   parriesLeft = 1;
   strafe = Math.random() > 0.5 ? 1 : -1;
+  ranged?: RangedOpts;
+  cover: THREE.Vector3 | null = null; // dove ripararsi (lo decide il capitolo)
+  shots = 0;
+  burstLeft = 0;
 
   constructor(o: FighterOpts = {}) {
     this.opts = o;
@@ -64,6 +83,7 @@ export class Fighter {
     this.windup = o.windup ?? 0.6;
     this.cooldown = o.cooldown ?? 1.0;
     this.vision = o.vision;
+    this.ranged = o.ranged;
     this.rollParries();
   }
 
@@ -81,9 +101,13 @@ export class Fighter {
     this.state = 'idle';
     this.hostile = false;
     this.suspicion = 0;
+    this.shots = 0;
     this.rollParries();
   }
 }
+
+const rand = (a: number, b: number) => a + Math.random() * (b - a);
+const SPLAT_WORDS = ['SPLAT!', 'SPLOTCH!', 'SPLASH!', 'CIAF!'];
 
 const _v = new THREE.Vector3();
 
@@ -92,6 +116,7 @@ export class Combat {
   restricted: (p: THREE.Vector3) => boolean = () => false;
   // punti di passaggio (porte): se un avversario non ti vede, passa da qui per raggiungerti
   nav: THREE.Vector3[] = [];
+  maxAimers = 2; // quanti nemici possono prendere la mira nello stesso momento
   private lastAlert = -10;
 
   constructor(private g: Game) {}
@@ -115,7 +140,8 @@ export class Combat {
     if (!f || f.ko) return;
     if (!f.hostile) {
       f.hostile = true;
-      f.state = 'chase';
+      f.state = f.ranged ? (f.cover ? 'move' : 'hide') : 'chase';
+      f.t = f.ranged ? rand(0.3, 1.2) : 0;
       npc.controlled = true;
       if (npc.body instanceof Stickman) npc.body.seated = false;
       if (f.opts.alertLine) npc.say(f.opts.alertLine, 2.5);
@@ -148,6 +174,12 @@ export class Combat {
     if (f.ko) return;
     const g = this.g;
     const head = npc.pos.clone().setY(1.6);
+    // chi ha la pistola in mano non sa parare i pugni
+    if (f.ranged) {
+      g.hud.popWord(head, g.player.camera, POW[Math.floor(Math.random() * POW.length)]);
+      this.damage(npc, dmg);
+      return;
+    }
     if (f.state !== 'open') {
       // parato
       g.hud.popWord(head, g.player.camera, 'PARATO!');
@@ -165,27 +197,75 @@ export class Combat {
       }
       return;
     }
-    f.hp -= dmg;
     g.hud.popWord(head, g.player.camera, POW[Math.floor(Math.random() * POW.length)]);
+    this.damage(npc, dmg);
+  }
+
+  // Colpo di pistola: niente parate, l'inchiostro arriva e basta
+  shot(npc: NPC, dmg: number, headshot = false) {
+    const f = npc.fighter!;
+    if (f.ko) return;
+    const g = this.g;
+    const r = f.ranged;
+    let d = dmg;
+    if (r?.armor && f.state !== 'sharpen') d = Math.round(d * r.armor);
+    const top = npc.pos.clone().setY(npc.topY + 0.1);
+    g.hud.popWord(top, g.player.camera, headshot ? 'IN TESTA!' : r?.armor && f.state !== 'sharpen' ? 'TOC!' : SPLAT_WORDS[Math.floor(Math.random() * SPLAT_WORDS.length)]);
+    this.provoke(npc, f.hostile ? 0 : 10);
+    // chi stava prendendo la mira si scompone (il Pastellone no: è troppo grosso)
+    if (r && f.state === 'aim' && !r.sharpenEvery) {
+      f.state = 'stagger';
+      f.t = 0.4;
+    }
+    this.damage(npc, d, 0.08);
+  }
+
+  // Esplosione (barile d'inchiostro): niente armature, niente parate
+  blast(npc: NPC, dmg: number) {
+    const f = npc.fighter!;
+    if (f.ko) return;
+    this.provoke(npc);
+    if (f.state === 'aim') {
+      f.state = 'stagger';
+      f.t = 0.6;
+    }
+    this.damage(npc, dmg, 0.5);
+  }
+
+  private damage(npc: NPC, dmg: number, push = 0.15) {
+    const f = npc.fighter!;
+    const g = this.g;
+    f.hp -= dmg;
     _v.subVectors(npc.pos, g.player.pos).setY(0).normalize();
-    npc.pos.addScaledVector(_v, 0.15);
+    npc.pos.addScaledVector(_v, push);
     g.world.colliders.resolve(npc.pos, 0.3);
     if (npc.body instanceof Stickman) npc.body.punchReaction();
     if (f.hp <= 0) {
-      f.state = 'ko';
-      f.hostile = false;
-      npc.controlled = true;
-      npc.ctrlSpeed = 0;
-      if (npc.body instanceof Stickman) npc.body.ko = true;
-      if (f.opts.koLine) npc.say(f.opts.koLine, 3);
-      else npc.say(['Zzz...', 'Ho visto le stelline disegnate...', 'Mamma...', 'Ok. Ok. Hai vinto.'][Math.floor(Math.random() * 4)], 3);
-      g.audio.ko();
-      g.addXp(15);
-      g.onKo(npc);
+      this.knockOut(npc);
       return;
     }
     const lines = f.opts.hurtLines ?? ['Ahia!', 'Ugh!', 'Questa me la paghi!', 'Ehi!'];
     if (Math.random() < 0.4) npc.say(lines[Math.floor(Math.random() * lines.length)], 1.8);
+  }
+
+  knockOut(npc: NPC) {
+    const f = npc.fighter!;
+    const g = this.g;
+    f.hp = 0;
+    f.state = 'ko';
+    f.hostile = false;
+    npc.controlled = true;
+    npc.ctrlSpeed = 0;
+    g.guns.aim(npc, 0);
+    if (npc.body instanceof Stickman) {
+      npc.body.ko = true;
+      npc.body.action = 'none';
+    }
+    if (f.opts.koLine) npc.say(f.opts.koLine, 3);
+    else npc.say(['Zzz...', 'Ho visto le stelline disegnate...', 'Mamma...', 'Ok. Ok. Hai vinto.'][Math.floor(Math.random() * 4)], 3);
+    g.audio.ko();
+    g.addXp(15);
+    g.onKo(npc);
   }
 
   private someoneOpen() {
@@ -217,6 +297,7 @@ export class Combat {
     const p = g.player.pos;
     const list = this.fighters;
     let tokens = list.filter((n) => n.fighter!.state === 'windup' || n.fighter!.state === 'strike').length;
+    const aimers = { count: list.filter((n) => n.fighter!.state === 'aim').length };
     const open = list.some((n) => n.fighter!.state === 'open');
     const inRestricted = this.restricted(p);
 
@@ -251,6 +332,10 @@ export class Combat {
 
       // --- ostile ---
       n.controlled = true;
+      if (f.ranged) {
+        this.updateRanged(n, f, dt, d, aimers);
+        continue;
+      }
       const body = n.body instanceof Stickman ? n.body : null;
       let speed = 0;
       switch (f.state) {
@@ -340,6 +425,103 @@ export class Combat {
         }
       }
     }
+  }
+
+  private updateRanged(n: NPC, f: Fighter, dt: number, d: number, aimers: { count: number }) {
+    const g = this.g;
+    const p = g.player.pos;
+    const r = f.ranged!;
+    const body = n.body instanceof Stickman ? n.body : null;
+    const col = g.world.colliders;
+    // ti vede? (solo i muri veri contano: da dietro una cassa si spara lo stesso, anche se ci si prende)
+    const clear = () => !col.blocked(n.pos.x, n.pos.z, p.x, p.z, false, 0.2);
+    let speed = 0;
+    switch (f.state) {
+      case 'move': {
+        if (body) body.action = 'none';
+        const tgt = f.cover ?? this.chaseTarget(n);
+        const tx = tgt.x - n.pos.x, tz = tgt.z - n.pos.z;
+        const td = Math.hypot(tx, tz);
+        if (f.cover && td < 0.3) {
+          f.state = 'hide';
+          f.t = rand(...(r.hide ?? [1.2, 2.4]));
+          break;
+        }
+        // senza copertura: cammina finché non ti vede
+        if (!f.cover && clear() && d < 24) {
+          f.state = 'hide';
+          f.t = 0.3;
+          break;
+        }
+        this.face(n, tgt.x, tgt.z, dt, 8);
+        speed = this.move(n, tx / (td || 1), tz / (td || 1), f.speed, dt);
+        break;
+      }
+      case 'hide':
+        if (body) body.action = f.cover ? 'cover' : 'guard';
+        this.face(n, p.x, p.z, dt, 4);
+        // allo scoperto, avanza verso di te (il Pastellone fa così)
+        if (!f.cover && d > 9) speed = this.move(n, (p.x - n.pos.x) / d, (p.z - n.pos.z) / d, f.speed * 0.8, dt);
+        f.t -= dt;
+        if (f.t <= 0) {
+          if (!clear()) {
+            // da qui non ti vede: lascia la copertura e ti viene a cercare
+            f.cover = null;
+            f.state = 'move';
+          } else if (aimers.count < this.maxAimers && g.mode === 'play') {
+            f.state = 'aim';
+            f.t = r.aim;
+            f.burstLeft = r.burst ?? 1;
+            aimers.count++;
+          } else f.t = rand(0.3, 0.8);
+        }
+        break;
+      case 'aim':
+        if (body) body.action = 'aim';
+        this.face(n, p.x, p.z, dt, 10);
+        f.t -= dt;
+        g.guns.aim(n, Math.min(1, 1 - f.t / r.aim), r.color);
+        if (f.t <= 0) {
+          g.guns.enemyShoot(n, r.accuracy, r.dmg, r.color);
+          f.shots++;
+          f.burstLeft--;
+          if (r.sharpenEvery && f.shots % r.sharpenEvery === 0) {
+            // spuntato: deve temperarsi, ed è scoperto
+            f.state = 'sharpen';
+            f.t = 3.2;
+            g.hud.popWord(n.pos.clone().setY(n.topY + 0.3), g.player.camera, 'SPUNTATO!');
+            g.audio.sharpen(n.pos);
+            g.audio.opening();
+          } else if (f.burstLeft > 0) f.t = 0.2;
+          else {
+            f.state = 'hide';
+            f.t = rand(...(r.hide ?? [1.2, 2.4]));
+          }
+        }
+        break;
+      case 'sharpen':
+        if (body) body.action = 'sharpen';
+        f.t -= dt;
+        if (f.t <= 0) {
+          f.state = 'hide';
+          f.t = 0.6;
+          n.say(['Appuntito!', 'Di nuovo a punta!', 'Ora sì che si ragiona.'][Math.floor(Math.random() * 3)], 2);
+        }
+        break;
+      case 'stagger':
+        if (body) body.action = 'none';
+        f.t -= dt;
+        if (f.t <= 0) {
+          f.state = 'hide';
+          f.t = rand(0.6, 1.2);
+        }
+        break;
+      default:
+        f.state = 'hide';
+        f.t = 0.5;
+    }
+    if (f.state !== 'aim') g.guns.aim(n, 0);
+    n.ctrlSpeed = speed;
   }
 
   private move(n: NPC, dx: number, dz: number, speed: number, dt: number) {

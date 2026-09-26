@@ -17,7 +17,8 @@ meta-ironia sul fatto di essere disegnati (niente mani, niente tasche, niente co
 - Sistema di dialoghi a nodi con scelte, missioni a passi, inventario, esperienza e livelli.
 - Risse con parata e contrattacchi, guardie con campo visivo e linea di vista, minigioco di ballo.
 - Un capitolo = un luogo e una meccanica diversi: San Scarabocchio di giorno (inchiostro), il club
-  di notte (gesso, furtività e risse), Quadropoli a quadretti (indagine con indizi e accusa).
+  di notte (gesso, furtività e risse), Quadropoli a quadretti (indagine con indizi e accusa),
+  il Mercato Nero su carta da pacchi (tiro a segno e sparatoria a ondate con coperture).
 - Audio sintetizzato con Web Audio: voci "a bip" diverse per ogni personaggio, suoni ambientali
   spaziali, musica procedurale.
 
@@ -41,16 +42,17 @@ I tasti si possono cambiare da **Impostazioni** nel menu principale.
 | Shift | correre |
 | Spazio | saltare |
 | E | parlare / interagire |
-| Click | colpire |
+| Click | colpire / sparare |
 | Tasto destro | parare |
 | C | accovacciarsi |
+| R | ricaricare |
 | Q | diario |
-| 1 / 2 | cambiare arma |
+| 1 / 2 / 3 | cambiare arma |
 | M | musica on/off |
 
 ## Stato
 
-Capitoli 1, 2 e 3 completi. Il piano dei capitoli è in [docs/CAPITOLI.md](docs/CAPITOLI.md).
+Capitoli 1, 2, 3 e 4 completi. Il piano dei capitoli è in [docs/CAPITOLI.md](docs/CAPITOLI.md).
 
 Dal menu principale, "Seleziona capitolo" permette di ripartire da un capitolo sbloccato
 (o sbloccarlo con la password mostrata a fine del capitolo precedente).

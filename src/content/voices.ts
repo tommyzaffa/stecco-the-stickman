@@ -55,3 +55,31 @@ Object.assign(VOICES, {
   poeta: { base: 170, type: 'sine', spread: 8, every: 2, vol: 0.07, vibrato: 8 },
   fioraio: { base: 330, type: 'triangle', spread: 5, every: 2 },
 });
+
+// Capitolo 4
+Object.assign(VOICES, {
+  tornello: { base: 95, type: 'sawtooth', spread: 2, every: 3, vol: 0.07 },
+  calamaio: { base: 150, type: 'triangle', spread: 5, every: 2, vibrato: 5 },
+  banditore: { base: 210, type: 'square', spread: 10, every: 1, vol: 0.045 },
+  pneumatica: { base: 340, type: 'sine', spread: 4, every: 2, vol: 0.06 },
+  collezionista: { base: 170, type: 'triangle', spread: 3, every: 3 },
+  pelliccia: { base: 320, type: 'triangle', spread: 6, every: 2, vibrato: 12 },
+  salutatore: { base: 260, type: 'square', spread: 8, every: 2 },
+  riflesso: { base: 190, type: 'sine', spread: 6, every: 2, vol: 0.07 },
+  controluce: { base: 175, type: 'triangle', spread: 3, every: 2 },
+  vocabolo: { base: 140, type: 'square', spread: 7, every: 2 },
+  tarocco: { base: 230, type: 'sawtooth', spread: 8, every: 2, vol: 0.05 },
+  grigia: { base: 350, type: 'square', spread: 5, every: 2, vol: 0.045 },
+  boccetta: { base: 300, type: 'sine', spread: 7, every: 2, vol: 0.07, vibrato: 7 },
+  bossolo: { base: 200, type: 'square', spread: 4, every: 2 },
+  smarriti: { base: 120, type: 'sine', spread: 2, every: 3, vol: 0.05 },
+  cliente1: { base: 160, type: 'triangle', spread: 3, every: 3 },
+  cliente2: { base: 185, type: 'triangle', spread: 4, every: 2 },
+  martina: { base: 310, type: 'triangle', spread: 6, every: 2, vibrato: 4 },
+  martinaM: { base: 310, type: 'triangle', spread: 6, every: 2, vibrato: 4 },
+  pRosso: { base: 270, type: 'sawtooth', spread: 9, every: 1, vol: 0.05 },
+  pastellone: { base: 85, type: 'sawtooth', spread: 4, every: 3, vol: 0.08 },
+});
+for (const id of ['pBlu', 'pVerde', 'pArancione', 'pMarrone', 'pNero', 'pCeleste', 'pOcra', 'pRosso2', 'pVerde2']) {
+  VOICES[id] = { base: 230 + Math.random() * 80, type: 'sawtooth', spread: 9, every: 1, vol: 0.045 };
+}

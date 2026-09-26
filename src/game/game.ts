@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PAPER, setTheme } from '../render/palette';
 import { PaperPost } from '../render/postfx';
 import { setLineResolution } from '../render/sketch';
-import { coinTexture } from '../render/textures';
+import { coinTexture, pickupTexture } from '../render/textures';
 import { Input } from '../input';
 import { Player } from '../player';
 import { Hud, type IconKind, type MarkerKind } from '../ui/hud';
@@ -12,6 +12,7 @@ import { Stickman, StickDog, type Action, type StickmanOpts } from '../entities/
 import { DialogueRunner, type Dialogue } from './dialogue';
 import type { QuestDef } from './quests';
 import { Combat, type FighterOpts } from './combat';
+import { Guns, CLIP_SIZE, PISTOL_DMG } from './guns';
 import { ITEMS, type ItemId } from '../content/items';
 import { VOICES } from '../content/voices';
 import { Sound } from '../audio/audio';
@@ -51,10 +52,14 @@ export interface NpcSpec {
   punchLines?: string[];
   fighter?: FighterOpts; // se presente, il PNG può combattere
   hidden?: boolean;
+  onShot?: (g: Game, npc: NPC) => void; // colpito dalla pistola (chi non combatte)
+  shotLines?: string[];
 }
 
+type PickupKind = 'coin' | 'ammo' | 'heal';
 interface Pickup {
   sprite: THREE.Sprite;
+  kind: PickupKind;
   value: number;
   taken: boolean;
   msg?: string;
@@ -66,6 +71,8 @@ export interface GameState {
   xp: number;
   level: number;
   coins: number;
+  clip: number; // colpi nel caricatore
+  ammo: number; // colpi di riserva
   items: ItemId[];
   flags: Set<string>;
   quests: Record<string, number>;
@@ -80,6 +87,8 @@ const freshState = (): GameState => ({
   xp: 0,
   level: 1,
   coins: 0,
+  clip: 0,
+  ammo: 0,
   items: [],
   flags: new Set(),
   quests: {},
@@ -93,6 +102,14 @@ const GENERIC_PUNCH = [
   'Non ho le costole, ma mi hai fatto male lo stesso.',
   'Ehi! Sono fatto di linee, non di gomma!',
   'Violenza gratuita. Tipico dei videogiochi.',
+];
+
+const GENERIC_SHOT = [
+  'Mi hai macchiato!',
+  'Ehi! Questa camicia era bianca! Come tutto il resto!',
+  'Inchiostro?! Ora sembro una firma!',
+  'Ahia! Ma sei matto?',
+  'Blu?! Io sono in bianco e nero, mi hai rovinato!',
 ];
 
 const LEVEL_LINES = [
@@ -118,6 +135,7 @@ export class Game {
   chapterDef!: Chapter;
   dialogue: DialogueRunner;
   combat: Combat;
+  guns: Guns;
 
   npcs: NPC[] = [];
   specs = new Map<string, NpcSpec>();
@@ -139,6 +157,10 @@ export class Game {
   private damageFx = 0;
   private fainting = false;
   private coinMat: THREE.SpriteMaterial;
+  private pickupMats: Partial<Record<PickupKind, THREE.SpriteMaterial>> = {};
+  private fireCd = 0;
+  private reloadId = 0;
+  private lastNoAmmo = -10;
   onUpdate: ((g: Game, dt: number) => void)[] = [];
   // callback dei capitoli
   onKo: (npc: NPC) => void = () => {};
@@ -163,6 +185,7 @@ export class Game {
     this.post = new PaperPost(this.renderer, this.scene, this.player.camera);
     this.dialogue = new DialogueRunner(this);
     this.combat = new Combat(this);
+    this.guns = new Guns(this);
 
     const cm = new THREE.SpriteMaterial({ map: coinTexture(), alphaTest: 0.5 });
     cm.alphaToCoverage = true;
@@ -205,6 +228,9 @@ export class Game {
     fog.color.copy(PAPER);
     [fog.near, fog.far] = this.world.fog;
     this.player.applyTheme();
+    // l'arma in mano deve essere una che si possiede (saltando tra i capitoli lo stato cambia)
+    const w = this.player.weapon;
+    if ((w === 'pistol' && !this.has('pistola')) || (w === 'ruler' && !this.has('righello'))) this.player.setWeapon('fist');
     this.quests = ch.quests;
     this.chapterTime = 0;
     const sp = this.world.anchors.spawn;
@@ -227,6 +253,10 @@ export class Game {
     if (this.dialogue.isOpen) this.dialogue.close();
     for (const n of this.npcs) this.scene.remove(n.body.root);
     for (const p of this.pickups) this.scene.remove(p.sprite);
+    this.guns.clear();
+    this.guns.ceiling = Infinity;
+    this.combat.maxAimers = 2;
+    this.hud.ammo(null);
     this.scene.remove(this.world.group);
     this.world.dispose();
     this.npcs = [];
@@ -239,6 +269,7 @@ export class Game {
     this.onFaint = null;
     this.clues = {};
     this.combat.restricted = () => false;
+    this.combat.nav = [];
     this.audio.clearEmitters();
     this.audio.stopMusic();
     this.player.setCrouch(false);
@@ -372,7 +403,24 @@ export class Game {
     s.scale.setScalar(0.5);
     s.position.set(x, y, z);
     this.scene.add(s);
-    this.pickups.push({ sprite: s, value: 5, taken: false, msg });
+    this.pickups.push({ sprite: s, kind: 'coin', value: 5, taken: false, msg });
+  }
+
+  // cartucce d'inchiostro o merendine da raccogliere
+  addPickup(kind: 'ammo' | 'heal', x: number, z: number, value: number, y = 0.6) {
+    let m = this.pickupMats[kind];
+    if (!m) {
+      m = new THREE.SpriteMaterial({ map: pickupTexture(kind), alphaTest: 0.5 });
+      m.alphaToCoverage = true;
+      this.pickupMats[kind] = m;
+    }
+    const s = new THREE.Sprite(m);
+    s.scale.setScalar(0.6);
+    s.position.set(x, y, z);
+    this.scene.add(s);
+    const p: Pickup = { sprite: s, kind, value, taken: false };
+    this.pickups.push(p);
+    return p;
   }
 
   talk(d: Dialogue, npc: NPC | null = null, onEnd?: () => void) {
@@ -433,8 +481,84 @@ export class Game {
 
   // danno dei colpi del giocatore: cresce col livello, ma con un tetto
   get playerDamage() {
-    const base = this.player.weapon === 'ruler' ? 30 : 20;
+    const base = this.player.weapon === 'ruler' ? 30 : this.player.weapon === 'pistol' ? PISTOL_DMG : 20;
     return Math.round(base * (1 + 0.08 * Math.min(this.state.level - 1, 8)));
+  }
+
+  // --- pistola ---
+  get clipSize() {
+    return this.is('caricatoreGrande') ? 12 : CLIP_SIZE;
+  }
+
+  addAmmo(n: number, silent = false) {
+    this.state.ammo += n;
+    if (!silent) this.toast(`+${n} cartucce d'inchiostro`, 'reward', 1800);
+    this.audio.ammo();
+  }
+
+  private fire() {
+    const s = this.state, p = this.player;
+    if (this.fireCd > 0 || p.reloadT > 0) return;
+    if (s.clip <= 0) {
+      this.audio.empty();
+      this.fireCd = 0.3;
+      if (s.ammo > 0) this.reload();
+      else if (this.time - this.lastNoAmmo > 3) {
+        this.lastNoAmmo = this.time;
+        this.toast('Niente inchiostro. Cerca delle cartucce (o usa i pugni).', 'bad', 2500);
+      }
+      return;
+    }
+    s.clip--;
+    this.fireCd = 0.2;
+    p.kick();
+    this.guns.playerShoot();
+    if (s.clip === 0 && s.ammo > 0) this.after(0.3, () => this.reload());
+  }
+
+  reload() {
+    const s = this.state, p = this.player;
+    if (p.weapon !== 'pistol' || p.reloadT > 0 || s.clip >= this.clipSize || s.ammo <= 0) return;
+    const id = ++this.reloadId;
+    p.startReload(1.1);
+    this.audio.reload();
+    this.after(1.1, () => {
+      if (id !== this.reloadId || p.weapon !== 'pistol') return;
+      const n = Math.min(this.clipSize - s.clip, s.ammo);
+      s.clip += n;
+      s.ammo -= n;
+    });
+  }
+
+  // colpo di pistola su una persona
+  shootNpc(n: NPC, point: THREE.Vector3) {
+    const spec = this.specs.get(n.id);
+    const head = point.y > n.topY - 0.36 && !(n.body instanceof Stickman && n.body.ko);
+    this.hud.hitMark(head);
+    this.audio.hitMark();
+    this.audio.splat(point);
+    if (n.fighter) {
+      if (this.dialogue.isOpen) this.dialogue.close();
+      this.combat.shot(n, Math.round(this.playerDamage * (head ? 1.6 : 1)), head);
+      this.flag(`shot_${n.id}`);
+      return;
+    }
+    if (n.body instanceof Stickman) n.body.punchReaction();
+    if (spec?.onShot) spec.onShot(this, n);
+    else {
+      const lines = spec?.shotLines ?? GENERIC_SHOT;
+      n.say(lines[Math.floor(Math.random() * lines.length)], 2.5);
+    }
+    this.flag(`shot_${n.id}`);
+  }
+
+  // colpo di un nemico andato a segno (la parata non serve contro l'inchiostro)
+  shootPlayer(dmg: number, from: NPC, color: string) {
+    if (this.fainting) return;
+    const push = this.player.pos.clone().sub(from.pos).setY(0).normalize();
+    this.player.knock.addScaledVector(push, 1.5);
+    this.hud.inkSplat(color);
+    this.hurt(dmg);
   }
 
   heal(n: number) {
@@ -473,7 +597,8 @@ export class Game {
   give(id: ItemId) {
     if (!this.state.items.includes(id)) this.state.items.push(id);
     const it = ITEMS[id];
-    this.toast(`Nuovo oggetto: <b>${it.name}</b>${it.weapon ? `<br><small>premi ${keyName('weapon2')} per equipaggiarlo</small>` : ''}`, 'reward', 4200);
+    const key = keyName(id === 'pistola' ? 'weapon3' : 'weapon2');
+    this.toast(`Nuovo oggetto: <b>${it.name}</b>${it.weapon ? `<br><small>premi ${key} per equipaggiarlo</small>` : ''}`, 'reward', 4200);
     this.audio.item();
   }
 
@@ -601,14 +726,24 @@ export class Game {
       } else {
         if (inp.wasPressed('interact') && this.focus) this.focus.use(this);
         if (inp.wasPressed('journal') || inp.pressed.has('Tab')) this.hud.showDiario(this.diarioHtml());
-        if (inp.clicked && !this.player.blocking && this.player.attack()) this.audio.swing(this.player.weapon);
+        if (inp.clicked && !this.player.blocking) {
+          if (this.player.weapon === 'pistol') this.fire();
+          else if (this.player.attack()) this.audio.swing(this.player.weapon);
+        }
+        if (inp.wasPressed('reload')) this.reload();
         if (inp.wasPressed('music')) this.toast(this.audio.toggleMusic() ? 'Musica: accesa' : 'Musica: spenta', 'info', 1800);
         if (inp.wasPressed('crouch')) this.player.setCrouch(!this.player.crouching);
         if (inp.wasPressed('weapon1')) this.player.setWeapon('fist');
         if (inp.wasPressed('weapon2') && this.has('righello')) this.player.setWeapon('ruler');
+        if (inp.wasPressed('weapon3') && this.has('pistola') && this.player.weapon !== 'pistol') {
+          this.player.setWeapon('pistol');
+          this.reloadId++;
+          if (this.state.clip === 0) this.reload();
+        }
       }
     }
 
+    this.fireCd = Math.max(0, this.fireCd - dt);
     const ev = this.player.update(dt, inp, this.world.colliders, canMove);
     if (ev.hit) this.resolveHit();
     const indoor = this.world.isIndoor(this.player.pos);
@@ -641,20 +776,26 @@ export class Game {
     }
     // durante i dialoghi e i minigiochi la rissa è in pausa: non si prendono pugni mentre si parla
     if (playing && !this.dialogue.isOpen && !this.minigame) this.combat.update(dt);
+    this.guns.update(dt);
 
-    // monete per terra
+    // monete, cartucce e merendine per terra
     for (const p of this.pickups) {
       if (p.taken) continue;
       p.sprite.position.y += Math.sin(this.time * 3 + p.sprite.position.x) * 0.002;
-      p.sprite.scale.x = 0.5 * Math.max(0.12, Math.abs(Math.cos(this.time * 2.5 + p.sprite.position.z)));
+      if (p.kind === 'coin') p.sprite.scale.x = 0.5 * Math.max(0.12, Math.abs(Math.cos(this.time * 2.5 + p.sprite.position.z)));
       const d = Math.hypot(pp.x - p.sprite.position.x, pp.z - p.sprite.position.z);
       if (d < 1.1 && playing) {
+        // la salute piena non si spreca
+        if (p.kind === 'heal' && this.state.hp >= this.state.maxHp) continue;
         p.taken = true;
         this.scene.remove(p.sprite);
-        this.addCoins(p.value);
+        if (p.kind === 'coin') this.addCoins(p.value);
+        else if (p.kind === 'ammo') this.addAmmo(p.value);
+        else this.heal(p.value);
         if (p.msg) this.toast(p.msg, 'info', 4500);
       }
     }
+    this.pickups = this.pickups.filter((p) => !p.taken);
 
     for (const f of this.onUpdate) f(this, dt);
 
@@ -740,6 +881,7 @@ export class Game {
 
   private updateHud() {
     const s = this.state;
+    const w = this.player.weapon;
     this.hud.setStats({
       hp: s.hp,
       maxHp: s.maxHp,
@@ -747,8 +889,10 @@ export class Game {
       level: s.level,
       xp: s.xp,
       xpNext: this.xpNext,
-      weapon: (this.player.weapon === 'ruler' ? 'Righello (30 cm)' : 'Pugni stilizzati') + (this.player.crouching ? ' · accovacciato' : ''),
+      weapon: (w === 'ruler' ? 'Righello (30 cm)' : w === 'pistol' ? 'Pistola a inchiostro' : 'Pugni stilizzati') + (this.player.crouching ? ' · accovacciato' : ''),
     });
+    this.hud.ammo(w === 'pistol' && this.mode !== 'title' ? { clip: s.clip, size: this.clipSize, ammo: s.ammo, reloading: this.player.reloadT > 0 } : null);
+    if (w === 'pistol') this.player.setInk(s.clip / this.clipSize);
 
     const objs: { text: string; kind: MarkerKind; title?: string }[] = [];
     const cam = this.player.camera;

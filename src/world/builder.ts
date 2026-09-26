@@ -113,6 +113,28 @@ export class WorldBuilder {
     return m;
   };
 
+  // scritta su un muro (graffiti, scritte col pennarello): solo testo, niente cartello
+  wallText = (text: string, x: number, y: number, z: number, w: number, h: number, facing: Facing, color?: string) => {
+    const tex = textTexture(text, { w: 512, h: Math.round((512 * h) / w), font: MARKER_FONT, color });
+    const m = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }),
+    );
+    m.position.set(x, y, z);
+    m.rotation.y = FACING_ROT[facing];
+    this.group.add(m);
+    return m;
+  };
+
+  // soffitto (al chiuso): un piano tratteggiato che guarda in basso
+  ceiling = (x0: number, z0: number, x1: number, z1: number, h: number) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), this.fill);
+    m.rotation.x = Math.PI / 2;
+    m.position.set((x0 + x1) / 2, h, (z0 + z1) / 2);
+    this.group.add(m);
+    return m;
+  };
+
   ground = (size = 400) => {
     const g = new THREE.PlaneGeometry(size, size);
     g.rotateX(-Math.PI / 2);
@@ -324,6 +346,7 @@ export class WorldBuilder {
     if (collide) {
       const r = this.col.box(x, z, w, d);
       if (low) r.low = true;
+      r.h = y + h; // per i colpi: sopra si passa
       return r;
     }
     return null;

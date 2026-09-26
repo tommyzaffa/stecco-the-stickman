@@ -24,16 +24,20 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
     e riempimenti; `makeHatchMaterial` = carta + tratteggio sulle facce in ombra.
   - `postfx.ts`: post-processing (line boil a 8 fps, grana carta, vignetta, flash danno).
   - `palette.ts`: colori e **tema** (`DAY` inchiostro su carta, `NIGHT` gesso su carta nera,
-    `QUADRETTI` carta a quadretti: la griglia la disegna lo shader del tratteggio).
+    `QUADRETTI` carta a quadretti: la griglia la disegna lo shader del tratteggio,
+    `PACCHI` carta da pacchi). `CERA` = colori dei Pastelli a Cera.
     Il tema va impostato prima di costruire un capitolo (lo fa `Game.loadChapter`).
-- `src/world/` — `builder.ts` (`WorldBuilder`: muri, porte, edifici, cartelli, neon, alberi...;
-  `finish()` restituisce un `World`), `collision.ts` (collisioni 2D su XZ + linea di vista;
-  gli ostacoli `low` nascondono solo chi è accovacciato).
+- `src/world/` — `builder.ts` (`WorldBuilder`: muri, porte, edifici, cartelli, neon, alberi,
+  `ceiling` per gli interni, `wallText` per le scritte sui muri...; `finish()` restituisce un
+  `World`), `collision.ts` (collisioni 2D su XZ + linea di vista; gli ostacoli `low` nascondono
+  solo chi è accovacciato; `Rect.h` = altezza, sopra passano i colpi).
 - `src/entities/` — `Stickman` (scheletro + pose/azioni, KO), `StickDog`, `NPC` (comportamenti:
   stand/sit/patrol/circle/follow; `controlled` quando lo guida il combattimento).
 - `src/game/` — `Game` (stato, API per i contenuti, ciclo di gioco, salvataggi), `DialogueRunner`,
   `combat.ts` (risse e furtività: `Fighter`, guardie con campo visivo, porte come nodi di
-  navigazione), `flow.ts` (titolo, pausa, fine capitolo), `quests.ts` (tipi missioni).
+  navigazione; `FighterOpts.ranged` = nemici che sparano), `guns.ts` (armi da fuoco: raggi,
+  scie, macchie, linee di mira, bersagli `Target`), `flow.ts` (titolo, pausa, fine capitolo),
+  `quests.ts` (tipi missioni).
 - `src/chapters/` — **un capitolo per cartella** (`c1`, `c2`, ...): `world.ts` (il luogo),
   `characters.ts` (PNG e dialoghi), `quests.ts`, `story.ts` (logica e scene), `index.ts`
   (definizione `Chapter`). Registrati in `src/chapters/index.ts`.
@@ -41,7 +45,7 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 - `src/ui/hud.ts` — HUD in HTML/CSS sopra il canvas (`src/style.css`).
 - `src/audio/` — audio tutto sintetizzato con Web Audio (nessun file): `audio.ts` effetti, voci a
   bip, sorgenti nel mondo (`addEmitter`), filtro "musica ovattata" (`setMusicMuffle`);
-  `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`, `indagine`).
+  `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`, `indagine`, `mercato`, `sparatoria`).
   L'AudioContext si sblocca solo con un click (schermata del titolo).
 
 ## Sistemi riusabili
@@ -52,6 +56,12 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   `riprova` rimette le cose a posto (es. capitolo 3: tre accuse sbagliate).
 - `NpcSpec.talkRadius` per chi si parla da lontano (es. il testimone sul balcone).
 - `WorldBuilder.daySky('mountains' | 'skyline')` per il cielo di giorno.
+- **Armi da fuoco** (capitolo 4): oggetto `pistola`, tasto `weapon3`, `reload`; `GameState.clip/ammo`,
+  `g.clipSize` (flag `caricatoreGrande` = 12). `g.addPickup('ammo' | 'heal', x, z, valore)`.
+  Nemici che sparano: `fighter.ranged` (si riparano, si alzano, mirano con una linea colorata
+  visibile, sparano); `fighter.cover` = dove ripararsi. Chi spara non para i pugni. Accovacciato
+  dietro un ostacolo basso non ti colpiscono quasi mai. `g.guns.targets` per sagome e barili.
+  `g.guns.ceiling` = soffitto per i colpi al chiuso. `NpcSpec.onShot/shotLines` per i civili colpiti.
 
 ## Capitoli e salvataggi
 
@@ -83,7 +93,8 @@ Progetto da portfolio (nessuno scopo di lucro), **20 capitoli da ~10 minuti**. S
 capitolo alla volta, chiudendolo del tutto** (grafica, dialoghi, suoni) prima di passare al
 successivo. **Ogni capitolo porta una meccanica nuova** (indagine, sparatoria, appuntamento a
 dialoghi, guida, furtività su più piani...): mai due capitoli che si giocano uguali.
-Completati: capitolo 1 (San Scarabocchio), 2 (Il Parallelepipedo), 3 (Il Banco dei Pegni, Quadropoli).
+Completati: capitolo 1 (San Scarabocchio), 2 (Il Parallelepipedo), 3 (Il Banco dei Pegni, Quadropoli),
+4 (Il Mercato Nero: poligono, asta, sparatoria a ondate con il Pastellone).
 Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 
 ## Convenzioni per i contenuti
@@ -104,4 +115,5 @@ Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 Quando il pannello è nascosto `requestAnimationFrame` non gira: per testare da script chiamare
 `game.update(1/60)` a mano (con `game.input.locked = true`). `window.game` è esposto per il debug.
 Il minigioco di ballo usa l'orologio dell'audio se la musica suona: per testarlo da script
-sospendere l'AudioContext così usa il tempo di gioco.
+sospendere l'AudioContext così usa il tempo di gioco. Gli screenshot a volte mostrano il frame
+precedente: farne due. I `setTimeout` dei messaggi (toast) vanno in tempo reale, non di gioco.

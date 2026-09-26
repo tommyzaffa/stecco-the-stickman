@@ -1,7 +1,7 @@
 import type * as THREE from 'three';
 
 // Collisioni 2D sul piano XZ: il mondo è piatto, basta e avanza.
-export interface Rect { x0: number; z0: number; x1: number; z1: number; noSight?: boolean; low?: boolean }
+export interface Rect { x0: number; z0: number; x1: number; z1: number; noSight?: boolean; low?: boolean; h?: number }
 export interface Circle { x: number; z: number; r: number }
 
 export class Colliders {
@@ -27,7 +27,14 @@ export class Colliders {
   }
 
   circle(x: number, z: number, r: number) {
-    this.circles.push({ x, z, r });
+    const c = { x, z, r };
+    this.circles.push(c);
+    return c;
+  }
+
+  removeCircle(c: Circle) {
+    const i = this.circles.indexOf(c);
+    if (i >= 0) this.circles.splice(i, 1);
   }
 
   // true se il segmento A→B attraversa un ostacolo (muri, mobili). Usato per la vista delle guardie.

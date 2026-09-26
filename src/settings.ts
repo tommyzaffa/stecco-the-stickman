@@ -7,7 +7,7 @@ export type Action =
   | 'forward' | 'back' | 'left' | 'right'
   | 'run' | 'jump' | 'crouch'
   | 'interact' | 'journal' | 'music'
-  | 'weapon1' | 'weapon2';
+  | 'weapon1' | 'weapon2' | 'weapon3' | 'reload';
 
 export const ACTIONS: { id: Action; label: string }[] = [
   { id: 'forward', label: 'Avanti' },
@@ -22,6 +22,8 @@ export const ACTIONS: { id: Action; label: string }[] = [
   { id: 'music', label: 'Musica on/off' },
   { id: 'weapon1', label: 'Arma 1 (pugni)' },
   { id: 'weapon2', label: 'Arma 2' },
+  { id: 'weapon3', label: 'Arma 3' },
+  { id: 'reload', label: 'Ricarica' },
 ];
 
 const DEFAULT_KEYS: Record<Action, string> = {
@@ -37,6 +39,8 @@ const DEFAULT_KEYS: Record<Action, string> = {
   music: 'KeyM',
   weapon1: 'Digit1',
   weapon2: 'Digit2',
+  weapon3: 'Digit3',
+  reload: 'KeyR',
 };
 
 export interface Settings {
