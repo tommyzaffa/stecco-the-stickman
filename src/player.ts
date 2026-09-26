@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Input } from './input';
 import type { Colliders } from './world/collision';
 import { THEME } from './render/palette';
+import { SETTINGS } from './settings';
 import { headTexture, rulerTexture } from './render/textures';
 
 export type Weapon = 'fist' | 'ruler';
@@ -132,7 +133,7 @@ export class Player {
     const wasAir = this.pos.y > 0.001;
     const fallSpeed = this.vy;
     if (canMove) {
-      const sens = 0.0022;
+      const sens = 0.0022 * SETTINGS.sensitivity;
       this.yaw -= input.mouseDX * sens;
       this.pitch -= input.mouseDY * sens;
       this.pitch = Math.max(-1.45, Math.min(1.45, this.pitch));
@@ -140,14 +141,14 @@ export class Player {
 
     let mx = 0, mz = 0;
     if (canMove) {
-      if (input.down.has('KeyW') || input.down.has('ArrowUp')) mz -= 1;
-      if (input.down.has('KeyS') || input.down.has('ArrowDown')) mz += 1;
-      if (input.down.has('KeyA') || input.down.has('ArrowLeft')) mx -= 1;
-      if (input.down.has('KeyD') || input.down.has('ArrowRight')) mx += 1;
+      if (input.isDown('forward') || input.down.has('ArrowUp')) mz -= 1;
+      if (input.isDown('back') || input.down.has('ArrowDown')) mz += 1;
+      if (input.isDown('left') || input.down.has('ArrowLeft')) mx -= 1;
+      if (input.isDown('right') || input.down.has('ArrowRight')) mx += 1;
     }
     const len = Math.hypot(mx, mz);
     this.blocking = canMove && input.rightDown;
-    const running = (input.down.has('ShiftLeft') || input.down.has('ShiftRight')) && !this.crouching && !this.blocking;
+    const running = input.isDown('run') && !this.crouching && !this.blocking;
     const sp = (running ? RUN : WALK) * (this.crouching ? 0.5 : 1) * (this.blocking ? 0.55 : 1);
     let vx = 0, vz = 0;
     if (len > 0) {
@@ -161,7 +162,7 @@ export class Player {
     this.pos.z += (vz + this.knock.z) * dt;
     this.knock.multiplyScalar(Math.max(0, 1 - dt * 6));
 
-    if (canMove && input.pressed.has('Space') && this.pos.y <= 0.001 && !this.crouching) {
+    if (canMove && input.wasPressed('jump') && this.pos.y <= 0.001 && !this.crouching) {
       this.vy = JUMP;
       jumped = true;
     }

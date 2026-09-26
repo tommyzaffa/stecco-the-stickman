@@ -84,7 +84,7 @@ export class Stickman {
     const th = themed();
     inkMat = th.ink;
     const hl = opts.highlighter ? highlightMat(opts.highlighter) : null;
-    const limb = (parent: THREE.Object3D, len: number, up = false) => {
+    const limb = (parent: THREE.Object3D, len: number, up = false, joint = true) => {
       const m = new THREE.Mesh(up ? LIMB_UP : LIMB_DOWN, inkMat);
       m.scale.set(R, len, R);
       parent.add(m);
@@ -94,6 +94,7 @@ export class Stickman {
         g.renderOrder = 2;
         parent.add(g);
       }
+      if (!joint) return;
       const j = new THREE.Mesh(JOINT, inkMat);
       j.scale.setScalar(R * 1.05);
       j.position.y = up ? len : -len;
@@ -110,7 +111,8 @@ export class Stickman {
     limb(this.torso, TORSO, true);
     this.torso.add(this.neck);
     this.neck.position.y = TORSO;
-    limb(this.neck, HEAD_OFF - HEAD_R * 0.8, true);
+    // il collo arriva al bordo del cerchio della testa, non dentro (sembrava una barba)
+    limb(this.neck, HEAD_OFF - HEAD_R, true, false);
 
     let tex: THREE.Texture;
     if (opts.highlighter) {
@@ -570,7 +572,7 @@ export class StickDog {
     neck.position.set(0, 0, 0.25);
     body.add(neck);
     const n = new THREE.Mesh(LIMB_UP, inkMat);
-    n.scale.set(R * 0.8, 0.2, R * 0.8);
+    n.scale.set(R * 0.8, 0.12, R * 0.8); // fino al bordo della testa, non dentro
     neck.add(n);
     neck.rotation.x = 0.6;
     const headMat = new THREE.SpriteMaterial({ map: themed().head, alphaTest: 0.5 });

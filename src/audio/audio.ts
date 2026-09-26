@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Music, TRACKS, type TrackName } from './music';
+import { SETTINGS } from '../settings';
 
 // ---------------------------------------------------------------------------
 // Audio sintetizzato con Web Audio: nessun file, come per la grafica.
@@ -87,6 +88,7 @@ export class Sound {
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
 
     this.setupWind();
+    this.applyVolumes();
     this.music = new Music(ctx, this.musicFilter);
     if (this.wantTrack) this.music.start(TRACKS[this.wantTrack]);
   }
@@ -108,8 +110,17 @@ export class Sound {
 
   toggleMusic() {
     this.musicOn = !this.musicOn;
-    if (this.ctx) this.musicBus.gain.setTargetAtTime(this.musicOn ? 0.32 : 0, this.ctx.currentTime, 0.2);
+    this.applyVolumes();
     return this.musicOn;
+  }
+
+  // volumi dalle impostazioni (musica, effetti)
+  applyVolumes() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.musicBus.gain.setTargetAtTime(this.musicOn ? 0.32 * SETTINGS.music : 0, t, 0.1);
+    this.sfx.gain.setTargetAtTime(0.9 * SETTINGS.sfx, t, 0.1);
+    this.amb.gain.setTargetAtTime(0.55 * SETTINGS.sfx, t, 0.1);
   }
 
   playMusic(name: TrackName) {

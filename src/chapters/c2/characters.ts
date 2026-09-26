@@ -5,6 +5,7 @@ import { HL } from '../../render/palette';
 import { BRIBE, ENTRY_FEE } from './quests';
 import { openDoor, ZONES } from './world';
 import { startDanceOff } from './dance';
+import { keyName } from '../../settings';
 
 // ---------------------------------------------------------------------------
 // Il popolo della notte: chi sta in fila, chi balla, chi custodisce il niente.
@@ -95,7 +96,7 @@ export function createCharacters(g: Game) {
           say: [
             'Hai quattro strade.',
             'Uno: il DJ. Quando suona "Sbiadisco", Rosa non resiste e va a ballare. Ma il DJ ha qualche problema, vai a sentire.',
-            'Due: Ornella, al guardaroba, ha le chiavi della porta di servizio nei bagni. Da lì un corridoio porta dritto all\'ufficio. C\'è una guardia, però: stai basso, premi C.',
+            () => `Due: Ornella, al guardaroba, ha le chiavi della porta di servizio nei bagni. Da lì un corridoio porta dritto all'ufficio. C'è una guardia, però: stai basso, premi ${keyName('crouch')}.`,
             `Tre: Rosa accetta "mance". Tipo ${BRIBE} monete.`,
             'Quattro: le dai un pugno.',
             '> E la quattro?',
@@ -472,7 +473,7 @@ export function createCharacters(g: Game) {
         },
         regole: {
           say: [
-            '* Comparirà un tasto (W, A, S o D). Premilo quando il cerchio rosso si chiude sul tasto, a tempo col battito.',
+            () => `* Comparirà un tasto (${['forward', 'left', 'back', 'right'].map((a) => keyName(a as 'forward')).join(', ')}). Premilo quando il cerchio rosso si chiude sul tasto, a tempo col battito.`,
             '* Dieci passi. Ne servono almeno sette giusti.',
           ],
           choices: [

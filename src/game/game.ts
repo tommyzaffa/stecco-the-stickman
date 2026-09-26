@@ -16,6 +16,7 @@ import { ITEMS, type ItemId } from '../content/items';
 import { VOICES } from '../content/voices';
 import { Sound } from '../audio/audio';
 import type { Chapter } from '../chapters/types';
+import { keyName } from '../settings';
 
 export interface Interactable {
   pos: THREE.Vector3;
@@ -213,6 +214,12 @@ export class Game {
     this.setCheckpoint(sp, this.world.anchors.spawnLook ?? sp, 'Ti rialzi. Più o meno intero');
     ch.setup(this);
     this.save();
+  }
+
+  // Torna al menu: scarica il capitolo e non disegna più niente finché non se ne carica un altro
+  closeChapter() {
+    this.unloadChapter();
+    (this as { world?: World }).world = undefined;
   }
 
   private unloadChapter() {
@@ -466,7 +473,7 @@ export class Game {
   give(id: ItemId) {
     if (!this.state.items.includes(id)) this.state.items.push(id);
     const it = ITEMS[id];
-    this.toast(`Nuovo oggetto: <b>${it.name}</b>${it.weapon ? '<br><small>premi 2 per equipaggiarlo</small>' : ''}`, 'reward', 4200);
+    this.toast(`Nuovo oggetto: <b>${it.name}</b>${it.weapon ? `<br><small>premi ${keyName('weapon2')} per equipaggiarlo</small>` : ''}`, 'reward', 4200);
     this.audio.item();
   }
 
@@ -560,6 +567,10 @@ export class Game {
   // Ciclo di gioco
   // =========================================================================
   update(dt: number) {
+    if (!this.world) {
+      this.input.endFrame();
+      return;
+    }
     this.time += dt;
     const inp = this.input;
     const playing = this.mode !== 'title' && inp.locked && !this.fainting;
@@ -575,26 +586,26 @@ export class Game {
       if (this.dialogue.isOpen) {
         canMove = false;
         this.dialogue.update(dt);
-        if (inp.pressed.has('KeyE') || inp.pressed.has('Space') || inp.pressed.has('Enter') || inp.clicked) this.dialogue.advance();
+        if (inp.wasPressed('interact') || inp.pressed.has('Space') || inp.pressed.has('Enter') || inp.clicked) this.dialogue.advance();
         for (let i = 0; i < 9; i++) if (inp.pressed.has(`Digit${i + 1}`)) this.dialogue.choose(i);
-        if (inp.pressed.has('KeyW') || inp.pressed.has('ArrowUp')) this.dialogue.moveSel(-1);
-        if (inp.pressed.has('KeyS') || inp.pressed.has('ArrowDown')) this.dialogue.moveSel(1);
+        if (inp.wasPressed('forward') || inp.pressed.has('ArrowUp')) this.dialogue.moveSel(-1);
+        if (inp.wasPressed('back') || inp.pressed.has('ArrowDown')) this.dialogue.moveSel(1);
         const n = this.dialogue.npc;
         if (n) this.player.easeLook(new THREE.Vector3(n.pos.x, n.headY - 0.15, n.pos.z), dt);
       } else if (this.hud.diarioOpen) {
         canMove = false;
-        if (inp.pressed.has('KeyQ') || inp.pressed.has('Tab') || inp.pressed.has('KeyE')) this.hud.showDiario(null);
+        if (inp.wasPressed('journal') || inp.pressed.has('Tab') || inp.wasPressed('interact')) this.hud.showDiario(null);
       } else if (this.minigame) {
         canMove = false;
         this.minigame(dt);
       } else {
-        if (inp.pressed.has('KeyE') && this.focus) this.focus.use(this);
-        if (inp.pressed.has('KeyQ') || inp.pressed.has('Tab')) this.hud.showDiario(this.diarioHtml());
+        if (inp.wasPressed('interact') && this.focus) this.focus.use(this);
+        if (inp.wasPressed('journal') || inp.pressed.has('Tab')) this.hud.showDiario(this.diarioHtml());
         if (inp.clicked && !this.player.blocking && this.player.attack()) this.audio.swing(this.player.weapon);
-        if (inp.pressed.has('KeyM')) this.toast(this.audio.toggleMusic() ? 'Musica: accesa' : 'Musica: spenta', 'info', 1800);
-        if (inp.pressed.has('KeyC')) this.player.setCrouch(!this.player.crouching);
-        if (inp.pressed.has('Digit1')) this.player.setWeapon('fist');
-        if (inp.pressed.has('Digit2') && this.has('righello')) this.player.setWeapon('ruler');
+        if (inp.wasPressed('music')) this.toast(this.audio.toggleMusic() ? 'Musica: accesa' : 'Musica: spenta', 'info', 1800);
+        if (inp.wasPressed('crouch')) this.player.setCrouch(!this.player.crouching);
+        if (inp.wasPressed('weapon1')) this.player.setWeapon('fist');
+        if (inp.wasPressed('weapon2') && this.has('righello')) this.player.setWeapon('ruler');
       }
     }
 
@@ -814,6 +825,6 @@ export class Game {
         <div><h3>Inventario</h3><ul>${items}</ul>
         <h3>Tu</h3><ul><li>Livello ${s.level} · ${s.xp}/${this.xpNext} XP</li><li>Salute ${Math.round(s.hp)}/${s.maxHp}</li><li>${s.coins} monete</li></ul></div>
       </div>
-      <div class="hint">Q per chiudere</div>`;
+      <div class="hint">${keyName('journal')} per chiudere</div>`;
   }
 }

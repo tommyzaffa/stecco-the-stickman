@@ -1,4 +1,7 @@
+import { SETTINGS, type Action } from './settings';
+
 // Tastiera + mouse. "pressed" vale solo per il frame in cui il tasto è stato premuto.
+// Le azioni (avanti, salta, parla...) passano dai tasti scelti nelle impostazioni.
 export class Input {
   down = new Set<string>();
   pressed = new Set<string>();
@@ -7,9 +10,18 @@ export class Input {
   clicked = false;
   rightDown = false;
   locked = false;
+  // se impostato, il prossimo tasto premuto va qui (per riassegnare i comandi)
+  captureKey: ((code: string) => void) | null = null;
 
   constructor(private canvas: HTMLCanvasElement) {
     window.addEventListener('keydown', (e) => {
+      if (this.captureKey) {
+        e.preventDefault();
+        const cb = this.captureKey;
+        this.captureKey = null;
+        cb(e.code);
+        return;
+      }
       if (e.code === 'Tab' || e.code === 'Space') e.preventDefault();
       if (!e.repeat) this.pressed.add(e.code);
       this.down.add(e.code);
@@ -36,6 +48,14 @@ export class Input {
         this.rightDown = false;
       }
     });
+  }
+
+  isDown(a: Action) {
+    return this.down.has(SETTINGS.keys[a]);
+  }
+
+  wasPressed(a: Action) {
+    return this.pressed.has(SETTINGS.keys[a]);
   }
 
   lock() {

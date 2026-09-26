@@ -1,18 +1,16 @@
 import * as THREE from 'three';
 import type { Game } from '../../game/game';
 import type { NPC } from '../../entities/npc';
+import { SETTINGS, keyName } from '../../settings';
 
 // ---------------------------------------------------------------------------
 // Sfida di ballo: compare un tasto (W A S D), un cerchio rosso si stringe e va
 // premuto quando si chiude, a tempo col battito della musica del club.
 // ---------------------------------------------------------------------------
 
-const KEYS: [string, string][] = [
-  ['KeyW', 'W'],
-  ['KeyA', 'A'],
-  ['KeyS', 'S'],
-  ['KeyD', 'D'],
-];
+// i quattro tasti di movimento (quelli scelti nelle impostazioni)
+const keys = (): [string, string][] =>
+  (['forward', 'left', 'back', 'right'] as const).map((a) => [SETTINGS.keys[a], keyName(a)]);
 const STEPS = 10;
 const NEED = 7;
 const WINDOW = 0.2; // secondi di tolleranza
@@ -31,6 +29,7 @@ export function startDanceOff(g: Game, rival: NPC, onEnd: (won: boolean) => void
   } else {
     t0 = clock() + 4 * beat;
   }
+  const KEYS = keys();
   const seq = Array.from({ length: STEPS }, () => KEYS[Math.floor(Math.random() * 4)]);
   const times = seq.map((_, i) => t0 + i * 2 * beat);
 

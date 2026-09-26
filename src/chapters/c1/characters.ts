@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Game } from '../../game/game';
 import type { Choice } from '../../game/dialogue';
 import { Stickman } from '../../entities/stickman';
+import { keyName } from '../../settings';
 import { COINS_NEEDED } from './quests';
 import { HIGHLIGHT_YELLOW_HEX, INK } from '../../render/palette';
 
@@ -95,7 +96,7 @@ export function createCharacters(g: Game) {
             g.addXp(20);
             g.setStep('c1', g.state.coins >= COINS_NEEDED ? 4 : 3);
             g.after(3, () =>
-              g.toast('Suggerimento: chi ha un <b class="blue">!</b> sopra la testa ha bisogno di aiuto. Premi <b>Q</b> per il diario.', 'info', 8000),
+              g.toast(`Suggerimento: chi ha un <b class="blue">!</b> sopra la testa ha bisogno di aiuto. Premi <b>${keyName('journal')}</b> per il diario.`, 'info', 8000),
             );
           },
         },
@@ -528,7 +529,7 @@ export function createCharacters(g: Game) {
             'Tieni, per il disturbo. Quindici monete.',
             'E prendi questo righello. Era di mio marito. Lo usava per misurare la sua pazienza.',
             'Trenta centimetri. Mai uno di più.',
-            'Con quello puoi darle di santa ragione a chi se lo merita. Premi 2 per impugnarlo, caro.',
+            () => `Con quello puoi darle di santa ragione a chi se lo merita. Premi ${keyName('weapon2')} per impugnarlo, caro.`,
           ],
         },
         after: {

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { keyName } from '../settings';
 
 // HUD in HTML sopra il canvas: più facile da stilizzare "a mano" che in WebGL.
 
@@ -145,9 +146,9 @@ export class Hud {
   prompt(text: string | null) {
     const disp = text ? '' : 'none';
     if (this.promptEl.style.display !== disp) this.promptEl.style.display = disp;
-    if (text && this.promptEl.dataset.t !== text) {
-      this.promptEl.dataset.t = text;
-      this.promptEl.innerHTML = `<b>E</b> ${text}`;
+    if (text && this.promptEl.dataset.t !== text + keyName('interact')) {
+      this.promptEl.dataset.t = text + keyName('interact');
+      this.promptEl.innerHTML = `<b>${keyName('interact')}</b> ${text}`;
     }
   }
 
@@ -177,10 +178,10 @@ export class Hud {
       const html = choices.map((c, i) => `<div class="choice ${i === sel ? 'sel' : ''}"><b>${i + 1}</b> ${c}</div>`).join('');
       this.dlgChoices.innerHTML = html;
       this.dlgChoices.style.display = '';
-      this.dlgHint.textContent = 'tasti numerici oppure W/S + E per scegliere';
+      this.dlgHint.textContent = `tasti numerici oppure ${keyName('forward')}/${keyName('back')} + ${keyName('interact')} per scegliere`;
     } else {
       this.dlgChoices.style.display = 'none';
-      this.dlgHint.textContent = 'E / Spazio / Click per continuare';
+      this.dlgHint.textContent = `${keyName('interact')} / Spazio / Click per continuare`;
     }
   }
 

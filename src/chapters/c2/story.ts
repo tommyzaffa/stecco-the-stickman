@@ -5,6 +5,7 @@ import type { Behavior } from '../../entities/npc';
 import { Stickman } from '../../entities/stickman';
 import { ZONES, NAV, openDoor } from './world';
 import { openRope, rosaDances } from './characters';
+import { keyName } from '../../settings';
 
 // Capitolo 2: fila → dentro → ufficio (tre strade) → tappo sbagliato → rissa → fuga → vicolo.
 
@@ -122,7 +123,7 @@ export function setupStory(g: Game) {
     }
     openDoor(g.world, 'staffDoor');
     g.audio.door();
-    g.toast('Porta aperta. Oltre c\'è il corridoio di servizio: resta accovacciato (C) e sfrutta le casse.', 'info', 6000);
+    g.toast(`Porta aperta. Oltre c'è il corridoio di servizio: resta accovacciato (${keyName('crouch')}) e sfrutta le casse.`, 'info', 6000);
   });
 
   obj(A.backExit, () => (g.world.props.backExit.visible ? 'Uscita di emergenza' : null), (g) =>

@@ -1,4 +1,5 @@
 import type { Game } from '../../game/game';
+import { keyName } from '../../settings';
 import { COINS_NEEDED } from './quests';
 
 // Capitolo 1: risveglio → città → Marco → monete → finale.
@@ -68,5 +69,5 @@ export function setupStory(g: Game) {
 export function startChapter1(g: Game) {
   if (g.quest('c1') === -1) g.startQuest('c1');
   g.after(0.6, () => g.chapter('CAPITOLO 1', 'Un martedì qualunque'));
-  g.after(4.5, () => g.toast('Premi <b>E</b> quando vedi qualcosa di interessante. O qualcuno.', 'info', 6000));
+  g.after(4.5, () => g.toast(`Premi <b>${keyName('interact')}</b> quando vedi qualcosa di interessante. O qualcuno.`, 'info', 6000));
 }

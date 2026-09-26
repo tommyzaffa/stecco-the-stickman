@@ -56,10 +56,15 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 ## Capitoli e salvataggi
 
 - Si salva in `localStorage` all'inizio di ogni capitolo (stato del giocatore + capitolo).
-- Menu "Capitoli" nel titolo: un capitolo si sblocca finendo il precedente o con la sua
+- All'avvio si apre il **menu principale** (`flow.ts`): Continua / Nuova partita / Seleziona
+  capitolo / Impostazioni. Nessun capitolo è caricato finché non si inizia (`Game.closeChapter`).
+- **Impostazioni** (`src/settings.ts`): tasti riassegnabili, sensibilità del mouse, volumi.
+  Nel codice non usare mai codici tasto fissi per le azioni: `input.isDown('jump')`,
+  `input.wasPressed('interact')`, e nei testi `keyName('interact')`.
+- Menu "Seleziona capitolo": un capitolo si sblocca finendo il precedente o con la sua
   `password` (mostrata a fine del capitolo prima). Saltando a un capitolo si parte con il suo
   `startState`: **solo lo stretto necessario** (es. capitolo 2: 50 monete, niente di più).
-- `?cap=N` nell'indirizzo fa partire dal capitolo N (scorciatoia per i test).
+- `?cap=N` nell'indirizzo aggiunge al menu il pulsante "Test: capitolo N" (scorciatoia per i test).
 - Gli id delle missioni sono globali (lo stato di tutte le missioni resta): la missione
   principale del capitolo N si chiama `cN`. `QUEST_DONE = 999`.
 - Quando un capitolo viene scaricato, tutto il suo contenuto sparisce (PNG, oggetti, suoni,

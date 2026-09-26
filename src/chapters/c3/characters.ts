@@ -4,6 +4,7 @@ import type { Choice, DNode, Dialogue } from '../../game/dialogue';
 import { Stickman } from '../../entities/stickman';
 import { INK } from '../../render/palette';
 import { CLUES, CLUES_NEEDED } from './quests';
+import { keyName } from '../../settings';
 
 // ---------------------------------------------------------------------------
 // Quadropoli: un furto, un ispettore che scrive verbali, tanti testimoni e un colpevole.
@@ -148,7 +149,7 @@ export function createCharacters(g: Game) {
         if (g.quest('c3') < 2) {
           g.setStep('c3', 2);
           g.after(2.5, () =>
-            g.toast('Cerca gli indizi: guarda bene intorno al banco (anche dietro) e parla con tutti. Il taccuino è nel diario (<b>Q</b>).', 'info', 8000),
+            g.toast(`Cerca gli indizi: guarda bene intorno al banco (anche dietro) e parla con tutti. Il taccuino è nel diario (<b>${keyName('journal')}</b>).`, 'info', 8000),
           );
         }
       },

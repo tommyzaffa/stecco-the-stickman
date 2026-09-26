@@ -32,6 +32,8 @@ Poi apri http://localhost:5317.
 
 ## Comandi
 
+I tasti si possono cambiare da **Impostazioni** nel menu principale.
+
 | Tasto | Azione |
 |---|---|
 | WASD | muoversi |
@@ -50,4 +52,5 @@ Poi apri http://localhost:5317.
 
 Capitoli 1, 2 e 3 completi. Il piano dei capitoli è in [docs/CAPITOLI.md](docs/CAPITOLI.md).
 
-Per saltare direttamente a un capitolo: `http://localhost:5317/?cap=2`.
+Dal menu principale, "Seleziona capitolo" permette di ripartire da un capitolo sbloccato
+(o sbloccarlo con la password mostrata a fine del capitolo precedente).

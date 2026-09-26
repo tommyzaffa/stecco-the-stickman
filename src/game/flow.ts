@@ -1,7 +1,14 @@
 import { Game } from './game';
 import { CHAPTERS } from '../chapters';
+import { ACTIONS, SETTINGS, bindKey, codeLabel, keyName, resetKeys, saveSettings } from '../settings';
+
+// ---------------------------------------------------------------------------
+// Schermate fuori dal gioco: menu principale, capitoli, impostazioni, pausa,
+// game over, fine capitolo. E il passaggio tra capitoli.
+// ---------------------------------------------------------------------------
 
 const UNLOCK_KEY = 'stilizzato.unlocked.v1';
+const TOTAL_CHAPTERS = 20;
 
 export function unlockedChapters(): Set<number> {
   const s = new Set<number>([1]);
@@ -23,48 +30,52 @@ export function unlockChapter(n: number) {
   }
 }
 
-// Schermate fuori dal gioco: titolo, pausa, fine capitolo. E il passaggio tra capitoli.
-
-const CONTROLS = `
+// Riepilogo dei comandi con i tasti scelti nelle impostazioni
+const controls = () => `
   <div class="controls">
-    <div><b>WASD</b> muoviti</div><div><b>Mouse</b> guardati intorno</div>
-    <div><b>Shift</b> corri</div><div><b>Spazio</b> salta</div>
-    <div><b>E</b> parla / interagisci</div><div><b>Click</b> colpisci</div>
-    <div><b>Tasto destro</b> para</div><div><b>C</b> accovacciati</div>
-    <div><b>Q</b> diario</div><div><b>1 / 2</b> cambia arma</div>
-    <div><b>M</b> musica on/off</div><div><b>Esc</b> pausa</div>
+    <div><b>${keyName('forward')}${keyName('left')}${keyName('back')}${keyName('right')}</b> muoviti</div><div><b>Mouse</b> guardati intorno</div>
+    <div><b>${keyName('run')}</b> corri</div><div><b>${keyName('jump')}</b> salta</div>
+    <div><b>${keyName('interact')}</b> parla / interagisci</div><div><b>Click</b> colpisci</div>
+    <div><b>Tasto destro</b> para</div><div><b>${keyName('crouch')}</b> accovacciati</div>
+    <div><b>${keyName('journal')}</b> diario</div><div><b>${keyName('weapon1')} / ${keyName('weapon2')}</b> cambia arma</div>
+    <div><b>${keyName('music')}</b> musica on/off</div><div><b>Esc</b> pausa</div>
   </div>`;
+
+// Omino che saluta, per il menu principale
+const WAVING_STICKMAN = `
+  <svg class="menu-stickman" viewBox="0 0 120 200" aria-hidden="true">
+    <circle cx="60" cy="38" r="22" />
+    <circle cx="52" cy="35" r="2.6" class="dot" /><circle cx="68" cy="35" r="2.6" class="dot" />
+    <path d="M60 60 L61 120" /><path d="M61 120 L42 182" /><path d="M61 120 L80 182" />
+    <path d="M60 76 L34 108" />
+    <g class="wave"><path d="M60 76 L90 58 L104 30" /></g>
+  </svg>`;
+
+type Btn = HTMLButtonElement;
 
 export function setupFlow(g: Game) {
   const screen = g.hud.screen;
-  const show = (html: string, onClick: ((e: MouseEvent) => void) | null) => {
+  const show = (html: string, onClick: ((e: MouseEvent) => void) | null, kind: 'menu' | 'overlay' = 'overlay') => {
     screen.innerHTML = html;
+    screen.className = `screen ${kind}`;
     screen.style.display = 'flex';
     screen.onclick = onClick;
+    g.hud.root.classList.toggle('in-menu', kind === 'menu');
   };
   const hide = () => {
     screen.style.display = 'none';
     screen.onclick = null;
+    g.hud.root.classList.remove('in-menu');
   };
+  const action = (e: MouseEvent) => (e.target as HTMLElement).closest('button') as Btn | null;
 
-  // Da dove si parte: ?cap=N nell'indirizzo, altrimenti il salvataggio, altrimenti il capitolo 1.
+  // ?cap=N nell'indirizzo: scorciatoia per i test (compare come primo pulsante del menu)
   const capParam = Number(new URLSearchParams(location.search).get('cap'));
-  const save = Game.loadSave();
-  let startNum = 1;
-  if (capParam && CHAPTERS[capParam - 1]) {
-    g.resetState(CHAPTERS[capParam - 1].startState);
-    startNum = capParam;
-  } else if (save && CHAPTERS[save.chapter - 1]) {
-    g.state = save.state;
-    startNum = save.chapter;
-  } else {
-    g.resetState();
-  }
-  g.loadChapter(CHAPTERS[startNum - 1]);
 
   const begin = () => {
     unlockChapter(g.chapterNum); // un capitolo che hai giocato resta sbloccato nel menu
     g.audio.init(); // i browser sbloccano l'audio solo dopo un click
+    g.audio.resume();
     g.mode = 'play';
     g.fade(true);
     g.after(0.1, () => g.fade(false));
@@ -73,7 +84,6 @@ export function setupFlow(g: Game) {
     g.input.lock();
   };
 
-  // --- titolo e menu dei capitoli ------------------------------------------------
   const startChapter = (num: number, fresh: boolean) => {
     const c = CHAPTERS[num - 1];
     if (fresh) g.resetState(c.startState);
@@ -81,40 +91,56 @@ export function setupFlow(g: Game) {
     begin();
   };
 
-  const showTitle = () => {
-    const ch = CHAPTERS[startNum - 1];
-    const resuming = startNum > 1 || (save !== null && save.chapter === startNum && capParam === 0 && Object.keys(save.state.quests).length > 0);
+  // =========================================================================
+  // MENU PRINCIPALE
+  // =========================================================================
+  const mainMenu = () => {
+    g.mode = 'title';
+    g.input.unlock();
+    g.closeChapter();
+    const save = Game.loadSave();
+    const saved = save && CHAPTERS[save.chapter - 1];
     show(
-      `<div class="card paper">
-        <div class="title">STILIZZATO</div>
-        <div class="sub">un gioco disegnato a matita</div>
-        ${CONTROLS}
-        <div class="buttons">
-          ${
-            resuming
-              ? `<button class="primary" data-a="go">Continua<small>Capitolo ${ch.num}: ${ch.title}</small></button>
-                 <button data-a="new">Nuova partita</button>`
-              : `<button class="primary" data-a="go">Inizia</button>`
-          }
-          <button data-a="chapters">Capitoli</button>
+      `<div class="menu-page">
+        ${WAVING_STICKMAN}
+        <div class="menu-main">
+          <div class="title big">STILIZZATO</div>
+          <div class="sub">un gioco disegnato a matita</div>
+          <div class="buttons menu-buttons">
+            ${capParam && CHAPTERS[capParam - 1] ? `<button class="primary" data-a="test">Test: capitolo ${capParam}<small>parte con lo stretto necessario</small></button>` : ''}
+            ${saved ? `<button class="${capParam ? '' : 'primary'}" data-a="continue">Continua<small>Capitolo ${saved.num}: ${saved.title}</small></button>` : ''}
+            <button class="${saved || capParam ? '' : 'primary'}" data-a="new">${saved ? 'Nuova partita' : 'Inizia partita'}</button>
+            <button data-a="chapters">Seleziona capitolo</button>
+            <button data-a="settings">Impostazioni</button>
+          </div>
+          <div class="menu-foot">Capitoli disegnati: ${CHAPTERS.length} su ${TOTAL_CHAPTERS}</div>
         </div>
       </div>`,
       (e) => {
-        const a = (e.target as HTMLElement).closest('button')?.dataset.a;
+        const b = action(e);
+        const a = b?.dataset.a;
         if (!a) return;
-        if (a === 'chapters') return showChapters();
+        if (a === 'test') return startChapter(capParam, true);
+        if (a === 'continue' && save) {
+          g.state = save.state;
+          g.loadChapter(CHAPTERS[save.chapter - 1]);
+          return begin();
+        }
         if (a === 'new') {
-          if (!confirm('Ricominciare dal capitolo 1? I progressi salvati verranno persi.')) return;
+          if (saved && !confirm('Ricominciare dal capitolo 1? Il salvataggio verrà sostituito.')) return;
           return startChapter(1, true);
         }
-        begin();
+        if (a === 'chapters') return chaptersMenu();
+        if (a === 'settings') return settingsMenu(mainMenu);
       },
+      'menu',
     );
   };
 
-  // Scegli da che capitolo partire. I capitoli si sbloccano finendo il precedente,
-  // oppure con la password che compare alla fine del capitolo prima.
-  const showChapters = (msg = '') => {
+  // =========================================================================
+  // CAPITOLI: si sbloccano finendo il precedente o con la password
+  // =========================================================================
+  const chaptersMenu = (msg = '') => {
     const open = unlockedChapters();
     const rows = CHAPTERS.map((c) =>
       open.has(c.num)
@@ -122,71 +148,157 @@ export function setupFlow(g: Game) {
         : `<button class="locked" disabled>🔒 Capitolo ${c.num}<small>bloccato</small></button>`,
     ).join('');
     show(
-      `<div class="card paper chapters">
-        <div class="title small">Capitoli</div>
-        <div class="sub">Se salti un capitolo, parti con lo stretto necessario.</div>
-        <div class="buttons">${rows}</div>
-        <div class="password">
-          <input type="text" placeholder="password" maxlength="24" autocomplete="off" spellcheck="false" />
-          <button data-a="pwd">Sblocca</button>
+      `<div class="menu-page">
+        <div class="menu-main wide">
+          <div class="title small">Seleziona capitolo</div>
+          <div class="sub">Se salti un capitolo, parti con lo stretto necessario.</div>
+          <div class="buttons chapter-grid">${rows}</div>
+          <div class="password">
+            <input type="text" placeholder="password" maxlength="24" autocomplete="off" spellcheck="false" />
+            <button data-a="pwd">Sblocca</button>
+          </div>
+          <div class="msg">${msg}</div>
+          <div class="buttons"><button data-a="back">Indietro</button></div>
         </div>
-        <div class="msg">${msg}</div>
-        <div class="buttons"><button data-a="back">Indietro</button></div>
       </div>`,
       (e) => {
-        const b = (e.target as HTMLElement).closest('button');
+        const b = action(e);
         const a = b?.dataset.a;
         if (!a) return;
-        if (a === 'back') return showTitle();
+        if (a === 'back') return mainMenu();
         if (a === 'ch') {
           const n = Number(b!.dataset.n);
-          if (n !== 1 && !confirm(`Iniziare dal capitolo ${n}? I progressi salvati verranno sostituiti.`)) return;
+          if (Game.loadSave() && !confirm(`Iniziare dal capitolo ${n}? Il salvataggio verrà sostituito.`)) return;
           return startChapter(n, true);
         }
         if (a === 'pwd') {
           const val = (screen.querySelector('.password input') as HTMLInputElement).value.trim().toUpperCase();
           const c = CHAPTERS.find((c) => c.password && c.password === val);
-          if (!c) return showChapters('Password sbagliata. O scritta male. O disegnata male.');
+          if (!c) return chaptersMenu('Password sbagliata. O scritta male. O disegnata male.');
           unlockChapter(c.num);
-          return showChapters(`Capitolo ${c.num} sbloccato!`);
+          return chaptersMenu(`Capitolo ${c.num} sbloccato!`);
         }
       },
+      'menu',
     );
     const input = screen.querySelector('.password input') as HTMLInputElement;
     input.addEventListener('keydown', (ev) => {
       ev.stopPropagation(); // non far arrivare i tasti al gioco
-      if (ev.key === 'Enter') (screen.querySelector('[data-a="pwd"]') as HTMLButtonElement).click();
+      if (ev.key === 'Enter') (screen.querySelector('[data-a="pwd"]') as Btn).click();
     });
   };
 
-  showTitle();
+  // =========================================================================
+  // IMPOSTAZIONI: comandi, sensibilità, volumi
+  // =========================================================================
+  const settingsMenu = (back: () => void, kind: 'menu' | 'overlay' = 'menu', msg = '') => {
+    const rows = ACTIONS.map(
+      (a) => `<div class="bind"><span>${a.label}</span><button data-a="bind" data-id="${a.id}">${codeLabel(SETTINGS.keys[a.id])}</button></div>`,
+    ).join('');
+    const slider = (id: string, label: string, min: number, max: number, step: number, val: number) =>
+      `<label class="slider"><span>${label}</span><input type="range" data-id="${id}" min="${min}" max="${max}" step="${step}" value="${val}" /><b>${Math.round(val * 100)}%</b></label>`;
+    show(
+      `<div class="menu-page">
+        <div class="menu-main wide settings">
+          <div class="title small">Impostazioni</div>
+          <div class="sliders">
+            ${slider('sensitivity', 'Sensibilità del mouse', 0.3, 2.5, 0.05, SETTINGS.sensitivity)}
+            ${slider('music', 'Volume musica', 0, 1, 0.05, SETTINGS.music)}
+            ${slider('sfx', 'Volume effetti e voci', 0, 1, 0.05, SETTINGS.sfx)}
+          </div>
+          <div class="sub">Comandi: clicca su un tasto e premi quello nuovo (Esc per annullare).</div>
+          <div class="binds">${rows}</div>
+          <div class="sub fixed">Fissi: <b>Click</b> colpisci · <b>Tasto destro</b> para · <b>Esc</b> pausa · <b>frecce</b> muoviti</div>
+          <div class="msg">${msg}</div>
+          <div class="buttons row">
+            <button data-a="reset">Ripristina comandi</button>
+            <button class="primary" data-a="back">Indietro</button>
+          </div>
+        </div>
+      </div>`,
+      (e) => {
+        const b = action(e);
+        const a = b?.dataset.a;
+        if (!a) return;
+        if (a === 'back') {
+          g.input.captureKey = null;
+          return back();
+        }
+        if (a === 'reset') {
+          resetKeys();
+          return settingsMenu(back, kind, 'Comandi ripristinati.');
+        }
+        if (a === 'bind') {
+          const id = b!.dataset.id as (typeof ACTIONS)[number]['id'];
+          screen.querySelectorAll('[data-a="bind"]').forEach((x) => x.classList.remove('waiting'));
+          b!.classList.add('waiting');
+          b!.textContent = 'premi un tasto…';
+          g.input.captureKey = (code) => {
+            if (code === 'Escape') return settingsMenu(back, kind);
+            bindKey(id, code);
+            settingsMenu(back, kind, `${ACTIONS.find((x) => x.id === id)!.label}: ${codeLabel(code)}`);
+          };
+        }
+      },
+      kind,
+    );
+    screen.querySelectorAll<HTMLInputElement>('input[type="range"]').forEach((inp) =>
+      inp.addEventListener('input', () => {
+        const v = Number(inp.value);
+        const id = inp.dataset.id as 'sensitivity' | 'music' | 'sfx';
+        SETTINGS[id] = v;
+        (inp.nextElementSibling as HTMLElement).textContent = `${Math.round(v * 100)}%`;
+        saveSettings();
+        g.audio.applyVolumes();
+      }),
+    );
+  };
 
-  // --- pausa --------------------------------------------------------------------
+  // =========================================================================
+  // PAUSA
+  // =========================================================================
+  const pauseMenu = () => {
+    g.audio.suspend();
+    show(
+      `<div class="card paper">
+        <div class="title small">Pausa</div>
+        <div class="sub">anche gli omini stilizzati hanno bisogno di una pausa</div>
+        ${controls()}
+        <div class="buttons">
+          <button class="primary" data-a="resume">Riprendi</button>
+          <button data-a="settings">Impostazioni</button>
+          <button data-a="menu">Menu principale</button>
+        </div>
+      </div>`,
+      (e) => {
+        const a = action(e)?.dataset.a;
+        if (!a) return;
+        if (a === 'resume') {
+          g.audio.resume();
+          hide();
+          g.input.lock();
+        } else if (a === 'settings') {
+          settingsMenu(pauseMenu, 'overlay');
+        } else if (a === 'menu') {
+          if (!confirm("Tornare al menu? Quando continuerai, ripartirai dall'inizio di questo capitolo.")) return;
+          mainMenu();
+        }
+      },
+    );
+  };
+
   document.addEventListener('pointerlockchange', () => {
     if (document.pointerLockElement) {
       g.audio.resume();
       if (g.mode !== 'end') hide();
       return;
     }
-    if (g.mode === 'play' && screen.style.display !== 'flex') {
-      g.audio.suspend();
-      show(
-        `<div class="card paper">
-          <div class="title small">Pausa</div>
-          <div class="sub">anche gli omini stilizzati hanno bisogno di una pausa</div>
-          ${CONTROLS}
-          <div class="go">clicca per continuare</div>
-        </div>`,
-        () => {
-          g.audio.resume();
-          g.input.lock();
-          hide();
-        },
-      );
-    }
+    if (g.mode === 'play' && screen.style.display !== 'flex') pauseMenu();
   });
 
-  // --- game over ---------------------------------------------------------------------
+  // =========================================================================
+  // GAME OVER
+  // =========================================================================
   g.onGameOver = (title, text, retry) => {
     g.input.unlock();
     show(
@@ -196,7 +308,7 @@ export function setupFlow(g: Game) {
         <div class="buttons"><button class="primary" data-a="retry">Riprova</button></div>
       </div>`,
       (e) => {
-        if ((e.target as HTMLElement).closest('button')?.dataset.a !== 'retry') return;
+        if (action(e)?.dataset.a !== 'retry') return;
         retry();
         g.mode = 'play';
         hide();
@@ -205,7 +317,9 @@ export function setupFlow(g: Game) {
     );
   };
 
-  // --- fine capitolo ---------------------------------------------------------------
+  // =========================================================================
+  // FINE CAPITOLO
+  // =========================================================================
   g.onChapterComplete = (g, next) => {
     unlockChapter(next);
     g.input.unlock();
@@ -232,14 +346,17 @@ export function setupFlow(g: Game) {
               : `<div class="sub">Il capitolo ${next} non è ancora stato disegnato.</div>`
           }
           <button data-a="stay">Continua a esplorare qui</button>
+          <button data-a="menu">Menu principale</button>
         </div>
       </div>`,
       (e) => {
-        const a = (e.target as HTMLElement).closest('button')?.dataset.a;
+        const a = action(e)?.dataset.a;
         if (!a) return;
         if (a === 'next' && nextCh) {
           g.loadChapter(nextCh);
           begin();
+        } else if (a === 'menu') {
+          mainMenu();
         } else {
           g.mode = 'play';
           hide();
@@ -248,4 +365,6 @@ export function setupFlow(g: Game) {
       },
     );
   };
+
+  mainMenu();
 }
