@@ -10,8 +10,11 @@ import { Stickman } from '../entities/stickman';
 //  - finché non è ostile segue il suo comportamento normale (fermo, pattuglia...)
 //  - se è una guardia (vision) e il giocatore entra in una zona vietata, lo può notare
 //  - da ostile insegue, carica il colpo (ben visibile), colpisce, recupera
-//  - al massimo due avversari caricano il colpo nello stesso momento: le risse
-//    restano leggibili anche contro tanti nemici
+//
+// Il ritmo della rissa: gli avversari PARANO SEMPRE. Per colpirli bisogna aspettare che
+// attacchino, parare il loro colpo (tasto destro) e colpire finché sono scoperti.
+// Alcuni vanno parati più volte prima di scoprirsi (numero casuale in `parries`).
+// Attacca un avversario alla volta, e nessuno attacca mentre un altro è scoperto.
 // ---------------------------------------------------------------------------
 
 export interface FighterOpts {
@@ -25,9 +28,13 @@ export interface FighterOpts {
   hurtLines?: string[];
   alertLine?: string;
   koLine?: string;
+  // quante parate servono prima che si scopra: [minimo, massimo], estratto a caso ogni volta
+  parries?: [number, number];
+  // per quanti secondi resta scoperto dopo l'ultima parata
+  openTime?: number;
 }
 
-type State = 'idle' | 'chase' | 'windup' | 'strike' | 'recover' | 'stagger' | 'ko';
+type State = 'idle' | 'chase' | 'windup' | 'strike' | 'recover' | 'stagger' | 'open' | 'ko';
 
 const POW = ['POW!', 'SBAM!', 'STOC!', 'PAF!', 'TUNF!', 'ZOK!'];
 
@@ -45,9 +52,7 @@ export class Fighter {
   hostile = false;
   suspicion = 0;
   opts: FighterOpts;
-  // "resistenza": dopo tre colpi di fila l'avversario non si fa più interrompere e contrattacca
-  recentHits: number[] = [];
-  armored = false;
+  parriesLeft = 1;
   strafe = Math.random() > 0.5 ? 1 : -1;
 
   constructor(o: FighterOpts = {}) {
@@ -59,6 +64,12 @@ export class Fighter {
     this.windup = o.windup ?? 0.6;
     this.cooldown = o.cooldown ?? 1.0;
     this.vision = o.vision;
+    this.rollParries();
+  }
+
+  rollParries() {
+    const [a, b] = this.opts.parries ?? [1, 2];
+    this.parriesLeft = a + Math.floor(Math.random() * (b - a + 1));
   }
 
   get ko() {
@@ -70,8 +81,7 @@ export class Fighter {
     this.state = 'idle';
     this.hostile = false;
     this.suspicion = 0;
-    this.armored = false;
-    this.recentHits = [];
+    this.rollParries();
   }
 }
 
@@ -132,17 +142,35 @@ export class Combat {
     }
   }
 
-  // Colpo del giocatore su un avversario
+  // Colpo del giocatore su un avversario: va a segno solo se è scoperto
   hit(npc: NPC, dmg: number) {
     const f = npc.fighter!;
     if (f.ko) return;
-    f.hp -= dmg;
     const g = this.g;
-    g.hud.popWord(npc.pos.clone().setY(1.6), g.player.camera, POW[Math.floor(Math.random() * POW.length)]);
-    // spinta all'indietro
+    const head = npc.pos.clone().setY(1.6);
+    if (f.state !== 'open') {
+      // parato
+      g.hud.popWord(head, g.player.camera, 'PARATO!');
+      g.audio.block();
+      if (npc.body instanceof Stickman) npc.body.blockReaction();
+      this.provoke(npc, f.hostile ? 0 : 10);
+      if (!g.is('tutParry')) {
+        g.flag('tutParry');
+        g.toast('Gli Evidenziatori <b>parano sempre</b>.<br>Aspetta che attacchino, <b>para col tasto destro</b>, poi colpisci finché sono scoperti.', 'info', 9000);
+      }
+      // chi insiste a colpire la guardia alzata si prende una risposta
+      if ((f.state === 'chase' || f.state === 'idle') && Math.random() < 0.5 && !this.someoneOpen()) {
+        f.state = 'windup';
+        f.t = f.windup * 0.85;
+      }
+      return;
+    }
+    f.hp -= dmg;
+    g.hud.popWord(head, g.player.camera, POW[Math.floor(Math.random() * POW.length)]);
     _v.subVectors(npc.pos, g.player.pos).setY(0).normalize();
-    npc.pos.addScaledVector(_v, 0.35);
+    npc.pos.addScaledVector(_v, 0.15);
     g.world.colliders.resolve(npc.pos, 0.3);
+    if (npc.body instanceof Stickman) npc.body.punchReaction();
     if (f.hp <= 0) {
       f.state = 'ko';
       f.hostile = false;
@@ -156,25 +184,32 @@ export class Combat {
       g.onKo(npc);
       return;
     }
-    const wasHostile = f.hostile;
-    this.provoke(npc, wasHostile ? 0 : 10);
-    f.recentHits = f.recentHits.filter((t) => g.time - t < 1.6);
-    f.recentHits.push(g.time);
-    if (f.armored) {
-      // sta già contrattaccando: incassa senza fermarsi
-    } else if (f.recentHits.length >= 3) {
-      f.recentHits = [];
-      f.armored = true;
-      f.state = 'windup';
-      f.t = 0.38;
-      npc.say(['BASTA!', 'Adesso tocca a me!', 'Ora basta!'][Math.floor(Math.random() * 3)], 1.2);
-    } else {
-      f.state = 'stagger';
-      f.t = 0.35;
-    }
-    if (npc.body instanceof Stickman) npc.body.punchReaction();
     const lines = f.opts.hurtLines ?? ['Ahia!', 'Ugh!', 'Questa me la paghi!', 'Ehi!'];
     if (Math.random() < 0.4) npc.say(lines[Math.floor(Math.random() * lines.length)], 1.8);
+  }
+
+  private someoneOpen() {
+    return this.fighters.some((n) => n.fighter!.state === 'open');
+  }
+
+  // Il colpo di un avversario arriva: parato o incassato
+  private strikeLands(n: NPC, f: Fighter) {
+    const g = this.g;
+    const res = g.damagePlayer(f.dmg, n);
+    if (res !== 'parried') return;
+    f.parriesLeft--;
+    if (f.parriesLeft <= 0) {
+      // scoperto: finestra per colpire
+      f.state = 'open';
+      f.t = f.opts.openTime ?? 1.6;
+      g.hud.popWord(n.pos.clone().setY(1.9), g.player.camera, 'SCOPERTO!');
+      g.audio.opening();
+    } else {
+      // para ancora: riprova subito
+      f.state = 'recover';
+      f.t = 0.35;
+      if (Math.random() < 0.6) n.say(['Ancora!', 'Non basta!', 'Di nuovo!', 'Hmpf.'][Math.floor(Math.random() * 4)], 1.2);
+    }
   }
 
   update(dt: number) {
@@ -182,6 +217,7 @@ export class Combat {
     const p = g.player.pos;
     const list = this.fighters;
     let tokens = list.filter((n) => n.fighter!.state === 'windup' || n.fighter!.state === 'strike').length;
+    const open = list.some((n) => n.fighter!.state === 'open');
     const inRestricted = this.restricted(p);
 
     for (const n of list) {
@@ -227,11 +263,12 @@ export class Combat {
             const tx = tgt.x - n.pos.x, tz = tgt.z - n.pos.z;
             const td = Math.hypot(tx, tz) || 1;
             speed = this.move(n, tx / td, tz / td, f.speed, dt);
-          } else if (tokens < 2 && g.mode === 'play') {
+          } else if (tokens < 1 && !open && g.mode === 'play' && f.t <= 0) {
             f.state = 'windup';
             f.t = f.windup;
             tokens++;
           } else {
+            f.t -= dt;
             // aspetta il suo turno girandoti intorno
             speed = this.move(n, (-dz / d) * f.strafe, (dx / d) * f.strafe, f.speed * 0.35, dt);
           }
@@ -243,14 +280,13 @@ export class Combat {
           f.t -= dt;
           if (f.t <= 0) {
             f.state = 'strike';
-            f.armored = false;
             f.t = 0.18;
             if (body) body.action = 'strike';
             g.audio.swing('fist');
             // il colpo arriva se sei ancora a portata e davanti
             const fwdX = Math.sin(n.body.root.rotation.y), fwdZ = Math.cos(n.body.root.rotation.y);
             const facing = (dx * fwdX + dz * fwdZ) / (d || 1);
-            if (d < f.reach + 0.45 && facing > 0.5 && !g.dialogue.isOpen) g.damagePlayer(f.dmg, n);
+            if (d < f.reach + 0.45 && facing > 0.5 && !g.dialogue.isOpen) this.strikeLands(n, f);
           }
           break;
         case 'strike':
@@ -260,12 +296,25 @@ export class Combat {
             f.t = f.cooldown * (0.8 + Math.random() * 0.5);
           }
           break;
+        case 'open':
+          // scoperto e stordito: non si muove, non para
+          if (body) body.action = 'dizzy';
+          f.t -= dt;
+          if (f.t <= 0) {
+            f.state = 'recover';
+            f.t = 0.5;
+            f.rollParries();
+          }
+          break;
         case 'recover':
           if (body) body.action = 'guard';
           this.face(n, p.x, p.z, dt, 6);
           if (d < 1.2) speed = this.move(n, -dx / d, -dz / d, f.speed * 0.5, dt);
           f.t -= dt;
-          if (f.t <= 0) f.state = 'chase';
+          if (f.t <= 0) {
+            f.state = 'chase';
+            f.t = 0.25 + Math.random() * 0.5; // piccola pausa prima del prossimo attacco
+          }
           break;
         case 'stagger':
           f.t -= dt;

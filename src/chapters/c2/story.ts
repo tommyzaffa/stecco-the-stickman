@@ -37,10 +37,10 @@ const FLUO_TALK: Dialogue = {
       ],
     },
     spiega: {
-      say: ['@Evidenziatore Giallo| Spiegalo ai miei pugni.', '* Tieni premuto il tasto destro per parare. Colpisci subito dopo il loro attacco.'],
+      say: ['@Evidenziatore Giallo| Spiegalo ai miei pugni.', '* Loro parano sempre. Aspetta che attacchino, para col tasto destro, poi colpisci finché sono scoperti.'],
     },
     pugni: {
-      say: ['Almeno ha stile. Poco. Grigio. Ma ha stile.', '* Tieni premuto il tasto destro per parare. Colpisci subito dopo il loro attacco.'],
+      say: ['Almeno ha stile. Poco. Grigio. Ma ha stile.', '* Loro parano sempre. Aspetta che attacchino, para col tasto destro, poi colpisci finché sono scoperti.'],
     },
   },
 };
@@ -99,7 +99,12 @@ export function setupStory(g: Game) {
     g.toast('Un calzino. Nessuno qui ha i piedi. Il mistero si infittisce.', 'info', 4500);
   });
 
-  obj(A.rope, () => (g.world.props.rope.visible ? 'Passa sotto il cordone' : null), (g) => {
+  obj(A.rope, () => (g.world.props.rope.visible ? (g.player.pos.z > 7.6 ? 'Passa sotto il cordone (torna in sala)' : 'Passa sotto il cordone') : null), (g) => {
+    // dalla zona VIP verso la sala: chi esce non è un problema di Rosa
+    if (g.player.pos.z > 7.6) {
+      g.player.pos.set(8, 0, 5.8);
+      return;
+    }
     const rosa = g.npc('rosa');
     const onDuty = !rosa.fighter!.ko && !g.is('sbiadisco') && !rosa.fighter!.hostile;
     if (onDuty && rosa.pos.distanceTo(A.rosa) < 3) {

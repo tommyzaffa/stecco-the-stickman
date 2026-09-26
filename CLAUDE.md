@@ -46,7 +46,10 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 ## Capitoli e salvataggi
 
 - Si salva in `localStorage` all'inizio di ogni capitolo (stato del giocatore + capitolo).
-- `?cap=N` nell'indirizzo fa partire dal capitolo N con lo `startState` del capitolo (per test).
+- Menu "Capitoli" nel titolo: un capitolo si sblocca finendo il precedente o con la sua
+  `password` (mostrata a fine del capitolo prima). Saltando a un capitolo si parte con il suo
+  `startState`: **solo lo stretto necessario** (es. capitolo 2: 50 monete, niente di più).
+- `?cap=N` nell'indirizzo fa partire dal capitolo N (scorciatoia per i test).
 - Gli id delle missioni sono globali (lo stato di tutte le missioni resta): la missione
   principale del capitolo N si chiama `cN`. `QUEST_DONE = 999`.
 - Quando un capitolo viene scaricato, tutto il suo contenuto sparisce (PNG, oggetti, suoni,
@@ -61,8 +64,10 @@ scrive direttamente a schermo. Non togliere questi limiti senza misurare: su un 
 
 ## Obiettivo e metodo di lavoro
 
-Progetto da portfolio (nessuno scopo di lucro), obiettivo 15-20 capitoli. Si lavora **un capitolo
-alla volta, chiudendolo del tutto** (grafica, dialoghi, suoni) prima di passare al successivo.
+Progetto da portfolio (nessuno scopo di lucro), **20 capitoli da ~10 minuti**. Si lavora **un
+capitolo alla volta, chiudendolo del tutto** (grafica, dialoghi, suoni) prima di passare al
+successivo. **Ogni capitolo porta una meccanica nuova** (indagine, sparatoria, appuntamento a
+dialoghi, guida, furtività su più piani...): mai due capitoli che si giocano uguali.
 Capitolo 1 (San Scarabocchio) e capitolo 2 (Il Parallelepipedo) = completati.
 Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 
@@ -74,7 +79,10 @@ Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 - Stato missioni: `g.quest(id)` → -1 non iniziata, 0..n-1 passo attivo, n = completata.
 - Il protagonista si chiama "Stecco". La città ha 47 abitanti, 3 dimensioni, 0 colori.
 - Umorismo: meta-ironia sull'essere disegnati (niente mani, niente tasche, niente colori),
-  burocrazia, vita di paese.
+  burocrazia, vita di paese. **Le gag sulle date e sugli anni ("dal 2014", "dal 1998") sono
+  state abusate: al massimo una per capitolo.**
+- Risse: gli avversari parano sempre; si colpisce solo dopo aver parato un loro attacco, finché
+  sono scoperti. `parries: [min, max]` nel `FighterOpts` decide quante parate servono.
 
 ## Test nel browser integrato
 

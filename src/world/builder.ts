@@ -73,6 +73,17 @@ export class WorldBuilder {
     m.position.set(x, y, z);
     m.rotation.y = FACING_ROT[facing];
     this.group.add(m);
+    // retro del cartello: carta bianca con il bordo (altrimenti da dietro sparirebbe)
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: THEME.paperHex }));
+    back.rotation.y = FACING_ROT[facing] + Math.PI;
+    back.position.copy(m.position);
+    back.translateZ(0.01); // leggermente dietro al fronte
+    this.group.add(back);
+    this.D.push(x, y, z, FACING_ROT[facing]);
+    // il bordo sta un filo dietro il fronte: così non si confonde con la superficie del retro
+    const bz = -0.02;
+    this.D.poly([[-w / 2, -h / 2, bz], [w / 2, -h / 2, bz], [w / 2, h / 2, bz], [-w / 2, h / 2, bz]], true, { over: 0.03 });
+    this.D.pop();
     return m;
   };
 

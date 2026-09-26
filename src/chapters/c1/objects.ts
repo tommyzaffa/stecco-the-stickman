@@ -65,7 +65,7 @@ export function createObjects(g: Game) {
         },
   );
 
-  obj(A.tv, 'Guarda la TV', narr(['La TV trasmette una linea orizzontale.', 'Da tre anni.', 'Non riesci a smettere di guardarla. È il programma migliore della settimana.']));
+  obj(A.tv, 'Guarda la TV', narr(['La TV trasmette una linea orizzontale.', 'Ogni tanto si inclina un po\'. Colpo di scena.', 'Non riesci a smettere di guardarla. È il programma migliore della settimana.']));
   obj(A.mirror, 'Guardati allo specchio', narr(['Ti guardi allo specchio.', 'Un cerchio. Qualche linea.', 'Bellissimo. Come sempre.']));
   obj(A.plant, 'Annaffia la pianta', narr(["Una pianta disegnata. Non ha bisogno d'acqua.", 'La annaffi lo stesso, per affetto.', 'Lei non ricambia. È una pianta.']));
   obj(A.bed, (g) => (g.quest('c1') >= 1 ? 'Torna a letto' : null), narr(['Potresti tornare a dormire.', 'Ma poi il gioco durerebbe trenta secondi. Non è il caso.']));

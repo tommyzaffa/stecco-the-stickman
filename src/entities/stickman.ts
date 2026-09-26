@@ -10,7 +10,7 @@ import { headTexture, shadowTexture } from '../render/textures';
 export type Hat = 'none' | 'cap' | 'top' | 'beanie' | 'bun' | 'police' | 'party' | 'beret' | 'hair';
 export type Action =
   | 'none' | 'wave' | 'talk' | 'push' | 'phone' | 'paint' | 'speech' | 'cane' | 'crossed' | 'think'
-  | 'dance' | 'drink' | 'guard' | 'windup' | 'strike' | 'dj';
+  | 'dance' | 'drink' | 'guard' | 'windup' | 'strike' | 'dj' | 'dizzy';
 
 export interface StickmanOpts {
   hat?: Hat;
@@ -264,6 +264,11 @@ export class Stickman {
     this.hurt = 1;
   }
 
+  private blockT = 0;
+  blockReaction() {
+    this.blockT = 1;
+  }
+
   faceTowards(x: number, z: number, dt: number, rate = 6) {
     const want = Math.atan2(x - this.root.position.x, z - this.root.position.z);
     let d = want - this.root.rotation.y;
@@ -278,7 +283,8 @@ export class Stickman {
     const moving = speed > 0.1 && !this.seated;
     const run = Math.min(1, Math.max(0, (speed - 2.5) / 3));
     const amp = moving ? 0.8 + run * 0.5 : 0;
-    if (moving) this.phase += dt * (3.2 + speed * 1.1);
+    // la frequenza dei passi segue la velocità, altrimenti i piedi "scivolano" (effetto moonwalk)
+    if (moving) this.phase += dt * (1.2 + speed * 2.6);
     const ph = this.phase;
 
     const tg: Record<string, number> = {
@@ -441,6 +447,19 @@ export class Stickman {
         tg.torsoX = -0.1;
         tg.torsoZ = -0.12;
         break;
+      case 'dizzy': {
+        // stordito: braccia molli, gira su se stesso col busto
+        const w = t * 5;
+        tg.armLX = tg.armRX = 0.1;
+        tg.armLZ = 0.35 + Math.sin(w) * 0.2;
+        tg.armRZ = -0.35 + Math.sin(w + 1) * 0.2;
+        tg.elbowLX = tg.elbowRX = -0.1;
+        tg.torsoX = Math.sin(w) * 0.18;
+        tg.torsoZ = Math.cos(w) * 0.18;
+        tg.kneeLX = tg.kneeRX = 0.35;
+        tg.hipsY = HIP_Y - 0.08;
+        break;
+      }
       case 'strike':
         tg.armLX = -0.8;
         tg.elbowLX = -1.9;
@@ -470,6 +489,17 @@ export class Stickman {
       tg.hipsY = HIP_Y;
     } else {
       this.koT = Math.max(0, this.koT - dt * 3);
+    }
+
+    if (this.blockT > 0) {
+      // braccia incrociate davanti alla faccia
+      this.blockT = Math.max(0, this.blockT - dt * 3);
+      const b = this.blockT;
+      tg.armLX = -1.3 * b + tg.armLX * (1 - b);
+      tg.armRX = -1.3 * b + tg.armRX * (1 - b);
+      tg.elbowLX = -1.9 * b + tg.elbowLX * (1 - b);
+      tg.elbowRX = -1.9 * b + tg.elbowRX * (1 - b);
+      tg.torsoX -= b * 0.15;
     }
 
     if (this.hurt > 0) {

@@ -236,3 +236,19 @@ b.blue { color: var(--blue); }
 .dance .key.ok { background: #d9f7c7; }
 .dance .key.bad { background: #f7c7c7; }
 .dance .info { font-size: 26px; margin-top: 14px; background: var(--paper-2); border: 2px solid var(--ink); border-radius: var(--sketch-radius); padding: 4px 16px; }
+
+/* --- menu dei capitoli -------------------------------------------------------- */
+.card.chapters { max-height: 92vh; overflow: auto; }
+.card.chapters .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.card.chapters .buttons:last-child { display: flex; }
+.card.chapters button { min-width: 0; font-size: 19px; padding: 5px 12px; }
+.card button.locked { opacity: .45; cursor: not-allowed; transform: none; }
+.card .password { display: flex; gap: 8px; justify-content: center; margin: 14px 0 4px; }
+.card .password input {
+  font-family: var(--marker); font-size: 20px; text-transform: uppercase; text-align: center; width: 220px;
+  background: var(--paper-2); border: 2.5px solid var(--ink); border-radius: var(--sketch-radius); padding: 4px 10px; color: var(--ink);
+}
+.card .password button { min-width: 0; }
+.card .msg { min-height: 24px; font-size: 19px; color: var(--red); }
+.card .pwd-show { font-size: 20px; margin: 6px 0 12px; }
+.card .pwd-show b { font-family: var(--marker); color: var(--red); letter-spacing: 2px; }

@@ -117,7 +117,7 @@ export function createCharacters(g: Game) {
               const tips: string[] = [];
               if (!g.questDone('cane')) tips.push('Nonna Pina ha perso di nuovo il cane. Paga bene. Paga, almeno.');
               if (!g.questDone('consegna')) tips.push('Aldo del Negozio di Cose cerca sempre qualcuno per le consegne.');
-              if (!g.questDone('bus')) tips.push('Gianni, alla fermata del bus. Aspetta da undici anni: avrà messo da parte qualcosa.');
+              if (!g.questDone('bus')) tips.push('Gianni, alla fermata del bus. Aspetta da così tanto che avrà messo da parte qualcosa.');
               if (!g.questDone('filosofo')) tips.push('Il Filosofo nel parco paga chi lo ascolta. Poco, ma paga.');
               tips.push('E guarda per terra! Vicoli, cortili, fontane. La gente perde monete ovunque.');
               return pick(tips);
@@ -178,7 +178,7 @@ export function createCharacters(g: Game) {
     pos: [-18, 9.45],
     face: [-18, 0],
     look: { mustache: true, hat: 'hair' },
-    barks: () => ['Caffè! Caffè disegnato!', 'Trent\'anni, lo stesso bicchiere...', 'Oggi offre la casa. No, scherzo.'],
+    barks: () => ['Caffè! Caffè disegnato!', 'Questo bicchiere non si asciuga mai...', 'Oggi offre la casa. No, scherzo.'],
     dialogue: {
       name: 'Gino',
       start: 'start',
@@ -201,7 +201,7 @@ export function createCharacters(g: Game) {
         },
         vita: {
           say: [
-            "Trent'anni che asciugo lo stesso bicchiere.",
+            "Asciugo lo stesso bicchiere da quando mi hanno disegnato.",
             '> E non si asciuga?',
             "Mai. Credo che l'abbiano disegnato bagnato.",
             'È una metafora della vita. O un errore di chi mi ha disegnato. Non ho ancora deciso.',
@@ -242,7 +242,7 @@ export function createCharacters(g: Game) {
             "E infatti lo dico a tutti. Ma tu sei l'unico che si è fermato.",
             'Devo consegnare un pacco al Dottor Soldini, in banca. Ma non posso lasciare il negozio.',
             '> Perché?',
-            'Potrebbe entrare un cliente. Non succede dal 2009, ma se succede e io non ci sono? Tragedia.',
+            'Potrebbe entrare un cliente. Non è mai successo, ma se succede proprio mentre non ci sono? Tragedia.',
           ],
           choices: aldoMenu,
         },
@@ -423,7 +423,7 @@ export function createCharacters(g: Game) {
           say: [
             'Nessuno!',
             'A parte la gang degli Evidenziatori, il bilancio in rosso, la mancanza di colori, di tasche, di dita...',
-            "...l'autobus che non passa, il bar che chiude alle sette, la posta chiusa dal 2003...",
+            "...l'autobus che non passa, il bar che chiude alle sette, la posta in sciopero perenne...",
             'Nessuno! Città modello.',
           ],
           next: 'menu',
@@ -484,7 +484,7 @@ export function createCharacters(g: Game) {
             '> Così descrive tutti i cani del mondo.',
             'Ma lui è speciale. Risponde al nome Pallino.',
             'A volte. Mai, in realtà.',
-            "L'ho perso vicino al parco. Stamattina. O ieri. O nel 1998. Chi si ricorda.",
+            "L'ho perso vicino al parco. Stamattina. O ieri. Alla mia età i giorni sono tratteggiati.",
           ],
           choices: pinaAsk,
         },
@@ -532,7 +532,7 @@ export function createCharacters(g: Game) {
           ],
         },
         after: {
-          say: ['Pallino Secondo sta benissimo. Ha già morso il postino.', '> Ma la posta è chiusa dal 2003.', 'Appunto. Non so chi abbia morso. Meglio non chiedere.'],
+          say: ['Pallino Secondo sta benissimo. Ha già morso il postino.', '> Ma la posta è chiusa.', 'Appunto. Non so chi abbia morso. Meglio non chiedere.'],
         },
       },
     },
@@ -602,7 +602,7 @@ export function createCharacters(g: Game) {
         ? ['Libero! LIBERO!', 'Che bello camminare! Ho delle ginocchia!']
         : g.is('gianniLied')
           ? ['Quattro minuti...', 'Tre minuti e mezzo...', 'Ormai ci siamo!']
-          : ['Dove sarà il 12...', 'Undici anni. Ma oggi me lo sento.', 'Brum brum? No, era un piccione.'],
+          : ['Dove sarà il 12...', 'Oggi me lo sento. Lo sento nelle linee.', 'Brum brum? No, era un piccione.'],
     dialogue: {
       name: 'Gianni',
       start: (g) => {
@@ -646,7 +646,7 @@ export function createCharacters(g: Game) {
             'E io lo perdo!',
             '> ...Sì.',
             'È la cosa più bella che abbia mai sentito.',
-            "Undici anni! Sono libero! Vado a fare una passeggiata! Ho delle gambe! Me n'ero dimenticato!",
+            "Sono libero! Vado a fare una passeggiata! Ho delle gambe! Me n'ero dimenticato!",
           ],
           next: 'truthPay',
         },
@@ -659,7 +659,7 @@ export function createCharacters(g: Game) {
           },
           say: ['Tieni, i soldi del biglietto. Non mi servono più.'],
         },
-        lie: { say: ['Lo sapevo! Me lo sentivo!', 'Cinque minuti... dopo undici anni... è quasi niente!'], next: 'liePay' },
+        lie: { say: ['Lo sapevo! Me lo sentivo!', 'Cinque minuti! Dopo tutto questo aspettare, è quasi niente!'], next: 'liePay' },
         liePay: {
           do: (g) => {
             g.flag('gianniLied');
@@ -755,7 +755,7 @@ export function createCharacters(g: Game) {
           ],
         },
         after: {
-          say: ['Torna quando avrai nuovi dubbi. Io sarò qui.', '> Sempre?', "Sempre. Mi hanno disegnato seduto. Non riesco ad alzarmi da trent'anni."],
+          say: ['Torna quando avrai nuovi dubbi. Io sarò qui.', '> Sempre?', "Sempre. Mi hanno disegnato seduto. Non ho mai provato ad alzarmi, ma ho i miei sospetti."],
         },
       },
     },
@@ -863,9 +863,9 @@ export function createCharacters(g: Game) {
           say: [
             'Scusa, sono al telefono.',
             '> Con chi?',
-            'Con mia madre. Da quattro anni.',
-            '> Quattro anni?!',
-            'Non ha ancora finito la frase. Sta dicendo "ai miei tempi..." da febbraio.',
+            'Con mia madre.',
+            '> E cosa dice?',
+            'Ha iniziato con "ai miei tempi..." e poi ha fatto una pausa. Sto ancora aspettando il resto.',
           ],
           choices: [
             { t: 'Salutamela.', next: 'saluta' },

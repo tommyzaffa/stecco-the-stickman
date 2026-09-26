@@ -3,7 +3,7 @@ import type { Choice } from '../../game/dialogue';
 import { Stickman } from '../../entities/stickman';
 import { HL } from '../../render/palette';
 import { BRIBE, ENTRY_FEE } from './quests';
-import { openDoor } from './world';
+import { openDoor, ZONES } from './world';
 import { startDanceOff } from './dance';
 
 // ---------------------------------------------------------------------------
@@ -220,7 +220,7 @@ export function createCharacters(g: Game) {
   });
 
   const queueLines = [
-    'Sono in fila dal 2019.',
+    'Sono in fila da così tanto che la fila mi ha dato un soprannome.',
     'Dicono che dentro sia rettangolare.',
     'Io non entro. Mi piace la fila. È una comunità.',
     'Ho portato il pranzo. E la cena.',
@@ -276,7 +276,7 @@ export function createCharacters(g: Game) {
     face: [0, -22],
     look: { hat: 'bun' },
     icon: (g) => (g.quest('guardaroba') === -1 ? 'side' : g.questActive('guardaroba') && (g.has('libro') || g.has('calzino')) ? 'turnin' : null),
-    barks: () => ['Guardaroba! Qualcuno? Niente?', 'Dodici anni. Neanche un cappotto.', 'Custodisco il vuoto. Il vuoto non dà mance.'],
+    barks: () => ['Guardaroba! Qualcuno? Niente?', 'Neanche un cappotto. Mai.', 'Custodisco il vuoto. Il vuoto non dà mance.'],
     dialogue: {
       name: 'Ornella',
       start: (g) => (g.quest('guardaroba') === -1 ? 'intro' : g.questDone('guardaroba') ? 'dopo' : 'attesa'),
@@ -286,7 +286,7 @@ export function createCharacters(g: Game) {
             'Benvenuto! Cosa lascia al guardaroba? Cappotto? Borsa? Ombrello?',
             '> Non ho niente.',
             'Nessuno ha niente. Nessuno ha MAI niente.',
-            'Sono dodici anni che custodisco il vuoto. Il vuoto è puntuale, ma non ringrazia.',
+            'Da quando ho aperto custodisco il vuoto. Il vuoto è puntuale, ma non ringrazia.',
             'Portami qualcosa da custodire. Qualsiasi cosa. Anche piccola. Anche brutta.',
           ],
           choices: [
@@ -318,7 +318,7 @@ export function createCharacters(g: Game) {
             g.completeQuest('guardaroba');
           },
           say: [
-            'Ecco il tuo scontrino: numero uno. Il primo in dodici anni.',
+            'Ecco il tuo scontrino: numero uno. Il primo della storia.',
             'E questa... è la chiave della porta di servizio, nei bagni. Non dovrei dartela.',
             'Ma nemmeno tu dovresti avere un calzino. Siamo pari.',
           ],
@@ -451,7 +451,7 @@ export function createCharacters(g: Game) {
     action: 'dance',
     faceWhenNear: false,
     icon: (g) => (!g.questDone('ballo') ? 'side' : null),
-    barks: (g) => (g.questDone('ballo') ? ['Rey è ancora sconvolto.', 'Rey si ritira. Da domani.'] : ['Nessuno batte Rey!', 'Rey balla dal 1987.', 'Chi osa sfidare Rey?']),
+    barks: (g) => (g.questDone('ballo') ? ['Rey è ancora sconvolto.', 'Rey si ritira. Da domani.'] : ['Nessuno batte Rey!', 'Rey non ha mai perso. Rey non ha mai sudato.', 'Chi osa sfidare Rey?']),
     dialogue: {
       name: 'Rey',
       start: (g) => (g.questDone('ballo') ? 'dopo' : g.quest('ballo') === -1 ? 'intro' : 'ancora'),
@@ -459,7 +459,7 @@ export function createCharacters(g: Game) {
         intro: {
           say: [
             'Rey ti ha visto guardare la pista.',
-            'Rey balla dal 1987. Nessuno batte Rey.',
+            'Rey ballava prima che inventassero il ritmo. Nessuno batte Rey.',
             '> Perché parli di te in terza persona?',
             'Perché Rey è troppo grande per una persona sola.',
             'Sfida Rey. Rey ti mostrerà dei passi: tu li rifai a tempo di musica. Se sbagli, Rey ride.',
@@ -587,7 +587,7 @@ export function createCharacters(g: Game) {
           say: [
             'Giovanotto, lei balla?',
             '> Non molto.',
-            'Peccato. Rey ha bisogno di qualcuno che lo batta. Da anni. Per il bene di tutti.',
+            'Peccato. Rey ha bisogno di qualcuno che lo batta. Per il bene di tutti.',
           ],
         },
       },
@@ -665,11 +665,17 @@ export function createCharacters(g: Game) {
     face: [8, -10],
     look: { highlighter: HL.pink, hat: 'hair' },
     action: 'crossed',
-    fighter: { hp: 90, dmg: 12, alertLine: 'Hai fatto un errore. Rosa.', hurtLines: ['Mi hai sbavato!', 'Il rosa non si tocca!'], koLine: 'Mi... sto... sbiadendo...' },
+    fighter: { hp: 90, dmg: 12, parries: [1, 3], alertLine: 'Hai fatto un errore. Rosa.', hurtLines: ['Mi hai sbavato!', 'Il rosa non si tocca!'], koLine: 'Mi... sto... sbiadendo...' },
     barks: (g) => (g.is('sbiadisco') ? ['SBIADISCOOO!', 'Non posso smettere! È il mio pezzo!'] : ['Zona VIP. Tu non sei VIP.', 'Circolare. Anche i cerchi.', 'Rosa vede tutto.']),
     dialogue: {
       name: 'Evidenziatore Rosa',
-      start: (g) => (g.is('sbiadisco') ? 'balla' : g.is('rosaBribed') ? 'pagato' : 'start'),
+      start: (g) => {
+        if (g.is('sbiadisco')) return 'balla';
+        // sei già oltre il cordone: non ha senso chiederle di farti passare
+        const p = g.player.pos;
+        if (ZONES.vip(p) || ZONES.corridor(p) || ZONES.office(p)) return g.is('rosaBribed') ? 'pagato' : 'dentro';
+        return g.is('rosaBribed') ? 'pagato' : 'start';
+      },
       nodes: {
         start: { say: ['Zona VIP. Nome?'], choices: rosaMenu },
         menu: { say: ['Altro?'], choices: rosaMenu },
@@ -685,6 +691,15 @@ export function createCharacters(g: Game) {
           say: ['* Rosa conta le monete senza guardarle. Professionale.', 'Non ti ho visto. Letteralmente: sei grigio, ti confondi col muro.'],
         },
         pagato: { say: ['Io non ti conosco. Tu non conosci me. Vai.'] },
+        dentro: {
+          say: [
+            'Aspetta. Tu sei dentro.',
+            'Come sei entrato?',
+            '> Dai bagni.',
+            'Dai bagni. Certo. Nessuno controlla mai i bagni.',
+            'Senti: io non ti ho visto, tu non mi hai visto. Il capo non mi paga abbastanza per i bagni.',
+          ],
+        },
         balla: { say: ['NON ORA! C\'È SBIADISCO!'] },
       },
     },
@@ -701,6 +716,7 @@ export function createCharacters(g: Game) {
     fighter: {
       hp: 75,
       dmg: 11,
+      parries: [1, 2],
       vision: { range: 9, fov: 100 },
       alertLine: 'EHI! TU! Qui è solo personale!',
       hurtLines: ['Ahi! Ho perso il conto!', 'Uno... due... ahia!'],
@@ -748,7 +764,7 @@ export function createCharacters(g: Game) {
     hidden: true,
     punchLines: ['Non toccare il mio giallo!', 'Sai quanto costa un ritocco?!'],
   });
-  const goon = (id: string, name: string, x: number, color: string, lines: string[]) =>
+  const goon = (id: string, name: string, x: number, color: string, lines: string[], parries: [number, number] = [1, 2]) =>
     g.addNpc({
       id,
       name,
@@ -757,12 +773,12 @@ export function createCharacters(g: Game) {
       look: { highlighter: color, hat: 'cap' },
       faceWhenNear: false,
       hidden: true,
-      fighter: { hp: 85, dmg: 10, speed: 3.8, hurtLines: lines },
+      fighter: { hp: 85, dmg: 10, speed: 3.8, hurtLines: lines, parries },
     });
-  goon('giallo', 'Evidenziatore Giallo', 12.1, HL.yellow, ['Te l\'avevo detto!', 'Ti ho evidenziato!', 'Mi hai sbavato il tratto!']);
-  goon('viola', 'Evidenziatore Viola', 13.9, '#b58cff', ['Ahia!', 'Il viola non perdona!']);
-  goon('fucsia', 'Rinforzo Fucsia', 8, '#ff4fd8', ['Ahi!', 'Arrivano i rinforzi! Cioè io.']);
-  goon('lime', 'Rinforzo Lime', 10.5, '#b6ff3a', ['Ouch!', 'Sono un rinforzo, non un bersaglio!']);
+  goon('giallo', 'Evidenziatore Giallo', 12.1, HL.yellow, ['Te l\'avevo detto!', 'Ti ho evidenziato!', 'Mi hai sbavato il tratto!'], [2, 3]);
+  goon('viola', 'Evidenziatore Viola', 13.9, '#b58cff', ['Ahia!', 'Il viola non perdona!'], [1, 3]);
+  goon('fucsia', 'Rinforzo Fucsia', 8, '#ff4fd8', ['Ahi!', 'Arrivano i rinforzi! Cioè io.'], [1, 1]);
+  goon('lime', 'Rinforzo Lime', 10.5, '#b6ff3a', ['Ouch!', 'Sono un rinforzo, non un bersaglio!'], [1, 1]);
   for (const id of ['fucsia', 'lime']) {
     const f = g.npc(id).fighter!;
     f.hp = f.maxHp = 55;

@@ -69,10 +69,12 @@ export class NPC {
     const dx = x - this.pos.x, dz = z - this.pos.z;
     const d = Math.hypot(dx, dz);
     if (d < 0.05) return 0;
+    // prima ci si gira, poi ci si sposta: se si arriva esattamente sul punto la direzione
+    // diventerebbe nulla e il corpo si girerebbe verso nord (effetto "moonwalk")
+    this.body instanceof Stickman ? this.body.faceTowards(x, z, dt, 8) : this.faceDog(x, z, dt);
     const step = Math.min(d, speed * dt);
     this.pos.x += (dx / d) * step;
     this.pos.z += (dz / d) * step;
-    this.body instanceof Stickman ? this.body.faceTowards(x, z, dt, 8) : this.faceDog(x, z, dt);
     return speed;
   }
 
@@ -125,8 +127,9 @@ export class NPC {
         }
         case 'circle': {
           this.angle += (b.speed / b.r) * dt;
-          const x = b.cx + Math.cos(this.angle) * b.r, z = b.cz + Math.sin(this.angle) * b.r;
-          speed = this.moveTo(x, z, b.speed * 1.5, dt) ? b.speed : 0;
+          const ahead = this.angle + 0.35; // punto un po' più avanti sul cerchio
+          const x = b.cx + Math.cos(ahead) * b.r, z = b.cz + Math.sin(ahead) * b.r;
+          speed = this.moveTo(x, z, b.speed, dt) ? b.speed : 0;
           break;
         }
         case 'follow': {

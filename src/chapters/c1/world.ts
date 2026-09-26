@@ -206,7 +206,7 @@ export function buildTown(): World {
   }
   A('bar', -18, 1, 9);
 
-  building({ x0: -7, x1: 0, z0: 10, z1: 19, h: 5.2, face: '-z', door: -3.5, sign: 'POSTA\n(chiusa dal 2003)', signW: 3.6 });
+  building({ x0: -7, x1: 0, z0: 10, z1: 19, h: 5.2, face: '-z', door: -3.5, sign: 'POSTA\n(sciopero delle buste)', signW: 3.6 });
   sign('Torniamo subito', -3.5, 1.4, 9.9, 1.0, 0.45, '-z', { font: HAND_FONT });
 
   building({ x0: 20, x1: 30, z0: 10, z1: 19, h: 4.6, face: '-z', door: 25, sign: 'NEGOZIO DI COSE', signW: 5.5, shopWindow: true });

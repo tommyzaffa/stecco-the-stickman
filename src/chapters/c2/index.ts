@@ -18,15 +18,12 @@ export const chapter2: Chapter = {
     setupStory(g);
   },
   start: startChapter2,
-  // se si salta direttamente qui: un giocatore "medio" che ha finito il capitolo 1
+  password: 'PSST',
+  // se si salta direttamente qui: statistiche di base e solo lo stretto necessario
+  // (le 50 monete per entrare al club, niente di più)
   startState: {
-    hp: 110,
-    maxHp: 110,
-    level: 2,
-    xp: 30,
     coins: 50,
-    items: ['righello', 'libro'],
-    flags: ['metMarco', 'metGiallo'],
-    quests: { c1: 999, cane: 999, consegna: 999, bus: 999, filosofo: 999 },
+    flags: ['metMarco'],
+    quests: { c1: 999 },
   },
 };

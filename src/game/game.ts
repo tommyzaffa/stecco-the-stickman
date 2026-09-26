@@ -255,6 +255,8 @@ export class Game {
   resetState(partial?: Chapter['startState']) {
     const s = freshState();
     if (partial) {
+      // saltando a un capitolo si parte in forma (la salute bassa è solo la gag del risveglio nel capitolo 1)
+      s.hp = s.maxHp;
       Object.assign(s, { ...partial, flags: new Set(partial.flags ?? []) });
     }
     this.state = s;
@@ -407,21 +409,21 @@ export class Game {
     if (this.state.hp <= 0) this.faint();
   }
 
-  // colpo di un avversario: la parata (tasto destro) ne assorbe gran parte
-  damagePlayer(dmg: number, from: NPC) {
+  // colpo di un avversario: se stai parando (tasto destro) e lo guardi, lo pari del tutto
+  damagePlayer(dmg: number, from: NPC): 'parried' | 'hit' {
     const p = this.player;
     const toEnemy = from.pos.clone().sub(p.pos).setY(0).normalize();
     const f = p.forward.setY(0).normalize();
     const push = p.pos.clone().sub(from.pos).setY(0).normalize();
     if (p.blocking && toEnemy.dot(f) > 0.4) {
-      this.audio.block();
+      this.audio.parry();
       this.hud.popWord(p.eye.add(f.multiplyScalar(0.8)), p.camera, 'PARATA!');
-      this.state.hp = Math.max(1, this.state.hp - Math.round(dmg * 0.2));
-      p.knock.copy(push.multiplyScalar(3));
-      return;
+      p.knock.copy(push.multiplyScalar(1));
+      return 'parried';
     }
     p.knock.copy(push.multiplyScalar(6));
     this.hurt(dmg);
+    return 'hit';
   }
 
   give(id: ItemId) {
@@ -619,7 +621,7 @@ export class Game {
   minigame: ((dt: number) => void) | null = null;
 
   private resolveHit() {
-    const reach = this.player.weapon === 'ruler' ? 2.4 : 1.8;
+    const reach = this.player.weapon === 'ruler' ? 2.5 : 2.1;
     const e = this.player.eye;
     const f = this.player.forward.setY(0).normalize();
     let best: NPC | null = null;
@@ -727,7 +729,8 @@ export class Game {
         const talking = this.dialogue.npc === n;
         let icon = f?.ko ? null : this.specs.get(n.id)?.icon?.(this) ?? null;
         // furtività: "?" che cresce, "!" quando ti ha scoperto
-        if (f && !f.ko && f.hostile && d < 25) icon = 'alert';
+        if (f && f.state === 'open') icon = 'dizzy';
+        else if (f && !f.ko && f.hostile && d < 25) icon = 'alert';
         else if (f && !f.ko && f.suspicion > 0.05) icon = 'suspect';
         if (icon && !talking && !this.minigame) this.hud.npcIcon(tmp.set(n.pos.x, n.headY + 0.45, n.pos.z), cam, icon, f?.suspicion);
         if (n.bubble && !talking) this.hud.bubble(tmp.set(n.pos.x, n.headY + (icon ? 0.85 : 0.3), n.pos.z), cam, n.bubble);

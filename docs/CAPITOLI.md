@@ -1,134 +1,111 @@
 # Piano dei capitoli
 
 Documento di lavoro: si può cambiare tutto. Serve a non improvvisare capitolo per capitolo.
+**20 capitoli da circa 10 minuti** (il doppio facendo tutto): circa 3 ore di gioco.
+
+## Due regole
+
+1. **Ogni capitolo cambia pagina:** luogo, personaggi e missioni secondarie sono nuovi.
+2. **Ogni capitolo porta una meccanica nuova.** Mai due capitoli che si giocano uguali.
 
 ## L'idea che tiene insieme tutto
 
-Il mondo di Stilizzato è **un quaderno**. Ogni capitolo è una pagina diversa, con un ambiente e
-un tipo di carta diverso: foglio bianco, quadretti, righe, il margine rosso, la copertina.
-Cambiare pagina = cambiare scena. Così ogni capitolo ha i suoi luoghi, i suoi personaggi e le sue
-missioni secondarie, e la grafica varia senza cambiare stile.
+Il mondo di Stilizzato è **un quaderno**, e ogni capitolo è una pagina diversa: foglio bianco,
+quadretti, righe, il margine rosso, la copertina.
 
 - **Protagonista:** Stecco, omino qualunque di San Scarabocchio.
 - **Migliore amico:** Marco, il motore di tutti i guai.
-- **La gang:** gli Evidenziatori (giallo, rosa, verde, arancione), gli unici ad avere un colore.
-  Il capo è **Don Fluo**, che senza il suo tappo si sta lentamente sbiadendo.
-- **La gang rivale:** i Pastelli a Cera: colorati, infantili, disordinati, pericolosissimi.
+- **La gang:** gli Evidenziatori, gli unici ad avere un colore. Il capo è **Don Fluo**, che senza
+  il suo tappo si sta sbiadendo.
+- **Martina:** una matita colorata (rosa pastello: un colore "vero", non fluo). Colleziona tappi.
+- **La gang rivale:** i Pastelli a Cera, colorati, infantili, disordinati, pericolosissimi.
 - **La polizia:** le Biro Blu, burocrati che scrivono verbali su tutto.
 - **La vera minaccia:** **la Gomma**, che cancella interi quartieri per "ricominciare da un foglio
   pulito".
-- **Il mistero di fondo:** l'Autore, quello che "ha finito la matita" (il cartello a fine
-  capitolo 1).
-
-Durata indicativa: 10-20 minuti a capitolo seguendo solo la trama, il doppio facendo tutto.
+- **Il mistero di fondo:** l'Autore, quello che "ha finito la matita".
 
 ---
 
-## Atto I: La serata
+## Atto I: Il tappo
 
-### 1. Un martedì qualunque ✅
-**Pagina:** San Scarabocchio, foglio bianco, giorno.
-Ti svegli, esci, Marco ti chiede 50 monete per il club. Scopri gli Evidenziatori e il tappo rubato.
-*Sistemi:* movimento, dialoghi, missioni, monete, livelli, pugni.
+| # | Titolo | Pagina | Novità |
+|---|---|---|---|
+| 1 ✅ | Un martedì qualunque | San Scarabocchio, giorno | Esplorazione, dialoghi, missioni secondarie |
+| 2 ✅ | Il Parallelepipedo | Il club, notte (gesso) | Furtività leggera, risse con parata, ballo a tempo |
+| 3 | Il Banco dei Pegni | Quadropoli, città a quadretti | **Indagine**: indizi, testimoni, accusa finale |
+| 4 | Il Mercato Nero | Sotto Quadropoli | **Armi da fuoco**: prima sparatoria |
+| 5 | L'appuntamento | Il ristorante "Da Pastello" | **Solo dialoghi**: piacere a Martina o è game over |
+| 6 | Consegna a domicilio | Le strade di Quadropoli | **Guida**: la macchina (senza motore) di Luca |
 
-### 2. Il Parallelepipedo ✅
-**Pagina:** il club, di notte. Pista da ballo, bar, bagni, ufficio VIP.
-Bisogna rimettere il tappo nell'ufficio di Don Fluo senza farsi notare. Si entra (le 50 monete
-servono), si distrae la sicurezza, si arriva all'ufficio. Colpo di scena: il tappo che Marco ha
-restituito **è quello di una biro**. Don Fluo se ne accorge, rissa, fuga dal retro.
-Don Fluo vi dà 3 giorni per riportare quello vero.
-*Sistemi nuovi:* nemici in corpo a corpo (risse vere), furtività leggera (le guardie ti notano).
+**3. Il Banco dei Pegni.** Marco ha venduto il tappo vero a un banco dei pegni di Quadropoli.
+Il banco però è stato svaligiato stanotte. Stecco fa il detective: raccoglie indizi, interroga
+testimoni (che mentono in modo ridicolo) e alla fine accusa qualcuno. Se sbagli accusa, il
+colpevole scappa e la strada si allunga. Il colpevole ha già rivenduto il tappo al Mercato Nero.
 
-### 3. Quadropoli
-**Pagina:** la città su carta a quadretti. Palazzi alti, metropolitana, traffico.
-Marco confessa di aver venduto il tappo vero a un banco dei pegni in città. Hub grande con molte
-missioni secondarie e un negozio.
-*Sistemi nuovi:* negozio (curarsi, oggetti, cappelli), mappa.
+**4. Il Mercato Nero.** Un mercato sotterraneo di cose disegnate male e vendute bene. Il tappo è
+all'asta. Qualcosa va storto e parte la prima sparatoria: pistola a inchiostro, coperture e
+munizioni. All'asta il tappo l'ha comprato una certa Martina.
 
-### 4. Il Mercato Nero
-**Pagina:** mercato sotterraneo sotto Quadropoli.
-Il banco dei pegni ha rivenduto il tappo ai Pastelli a Cera. Prima pistola (spara inchiostro)
-e **prima sparatoria**.
-*Sistemi nuovi:* armi da fuoco, munizioni, nemici che sparano.
+**5. L'appuntamento.** Martina colleziona tappi e non lo vende. Però accetta un appuntamento.
+Tutto il capitolo è la cena: bisogna piacerle con le risposte giuste.
+- Le risposte dipendono da cosa hai: monete (il conto!), oggetti raccolti, salute, scelte fatte
+  nei capitoli precedenti.
+- Troppe risposte sbagliate e se ne va: game over, si ripete la cena.
+- Martina è sveglia e ironica: non le piacciono le frasi fatte, le piace chi è sincero (e un po'
+  scemo).
+- Il tappo è una scusa: dal capitolo 5 Martina entra nella storia.
 
-### 5. La Cameretta dei Pastelli
-**Pagina:** il quartiere dei Pastelli, disegnato come da un bambino: case storte, sole nell'angolo,
-erba a zig-zag, tutto coloratissimo.
-Si recupera il tappo nella loro fortezza. Don Fluo è soddisfatto e ti offre un lavoro.
-Marco accetta per tutti e due prima che tu possa dire di no.
-*Novità visiva:* stile "pastello a cera".
+**6. Consegna a domicilio.** Il tappo va riportato a Don Fluo prima che scadano i tre giorni.
+Si guida la macchina di Luca (non ha il motore: la spinge Marco, poi si scopre che in discesa va)
+per Quadropoli, inseguiti dai Pastelli. Don Fluo riprende colore e offre un lavoro a Stecco.
+Marco accetta per tutti e due.
 
 ## Atto II: La gang
 
-### 6. Il Tirocinio
-**Pagina:** il Deposito della Cancelleria, quartier generale degli Evidenziatori.
-Tre prove di iniziazione. Alla fine vieni **evidenziato**: per la prima volta hai un colore,
-e tutti i personaggi ti trattano in modo diverso.
-*Sistemi nuovi:* abilità "Evidenzia" (vedi nemici e oggetti attraverso i muri).
+| # | Titolo | Pagina | Novità |
+|---|---|---|---|
+| 7 | Il Tirocinio | Il Deposito della Cancelleria | **Prove a tempo** e percorso a ostacoli, abilità "Evidenzia" |
+| 8 | Il Colpo | San Scarabocchio, notte | **Pianificazione**: scegli squadra e ingresso, poi esegui |
+| 9 | La Questura | Grattacielo delle Biro Blu | **Furtività vera** su tanti piani, telecamere e ascensore |
+| 10 | Il Treno delle Righe | Carta a righe | **Livello in movimento**: sparatoria sui vagoni |
+| 11 | Il Margine | La striscia rossa, western | **Duelli** a riflessi e saloon |
+| 12 | La Guerra dei Colori | Quadropoli in guerra | **Difesa**: barricate e ondate di nemici con alleati |
+| 13 | Il Tradimento | L'attico di Don Fluo | **Boss** a fasi: Don Fluo |
 
-### 7. Il Colpo
-**Pagina:** San Scarabocchio, di notte.
-La gang rapina la Banca dei Soldi del Dottor Soldini. Conosci tutti in paese: le tue scelte
-decidono chi si fa male e chi no, e hanno conseguenze più avanti.
-*Sistemi nuovi:* scelte con conseguenze a lungo termine.
-
-### 8. Il Treno delle Righe
-**Pagina:** carta a righe: le righe sono binari.
-Fuga dalle Biro Blu su un treno in corsa, sparatoria sui vagoni.
-*Sistemi nuovi:* livello in movimento, sequenza d'azione a tempo.
-
-### 9. Il Margine
-**Pagina:** la striscia rossa del margine, terra di nessuno in stile western. Saloon e duelli.
-Un eremita ti racconta della Gomma e dei quartieri spariti.
-*Sistemi nuovi:* duello (minigioco di riflessi).
-
-### 10. La Guerra dei Colori
-**Pagina:** Quadropoli in guerra.
-Evidenziatori contro Pastelli, grande scontro per il controllo di un isolato. Marco viene rapito.
-*Sistemi nuovi:* difesa di una posizione, ondate di nemici.
-
-### 11. Il Tradimento
-**Pagina:** l'attico di Don Fluo.
-Scopri che Don Fluo ha fatto un patto con la Gomma: cancellare il quartiere dei Pastelli.
-Ti oppone, lui ti tradisce e vieni **parzialmente cancellato**: perdi il colore.
-Fine dell'Atto II.
+**7.** Tre prove per entrare negli Evidenziatori. Alla fine vieni evidenziato: per la prima volta
+hai un colore e i personaggi ti trattano in modo diverso.
+**8.** La rapina alla Banca dei Soldi del Dottor Soldini. Conosci tutti in paese: le scelte
+decidono chi si fa male, e contano più avanti.
+**9.** Dopo il colpo sei "verbalizzato". Bisogna entrare nella Questura delle Biro e cancellare il
+fascicolo: molti piani, guardie, telecamere, porte a badge. Niente risse: se ti prendono, ricominci
+dal piano.
+**10.** Fuga dalle Biro su un treno in corsa.
+**11.** Il margine è terra di nessuno. Un eremita ti racconta della Gomma e dei quartieri spariti.
+**12.** Evidenziatori contro Pastelli per un isolato. Marco viene rapito.
+**13.** Don Fluo ha fatto un patto con la Gomma: cancellare il quartiere dei Pastelli. Ti opponi,
+lui ti tradisce e vieni **parzialmente cancellato**: perdi il colore. Fine dell'Atto II.
 
 ## Atto III: La fuga
 
-### 12. L'Astuccio
-**Pagina:** la prigione dentro un astuccio.
-Compagni di cella: un mozzicone di matita, un pastello spezzato, e l'Evidenziatore Giallo del
-capitolo 1, ormai secco. Evasione.
-*Sistemi nuovi:* furtività vera.
+| # | Titolo | Pagina | Novità |
+|---|---|---|---|
+| 14 | L'Astuccio | Prigione dentro un astuccio | **Evasione a enigmi**: oggetti, combinazioni, compagni di cella |
+| 15 | Il Temperamatite | Fabbrica rumorosa | **Percorso a pericoli**: nastri, lame, tempismo |
+| 16 | La Pagina Bianca | Una pagina vuota | **Disegnare**: ponti e scale tracciati dal giocatore |
+| 17 | Alleanze | Le pagine già visitate | **Reclutare**: gli alleati dipendono dalle scelte passate |
+| 18 | La Copertina | Cartone lucido, "A4 - 80 FOGLI" | **Battaglia grande** con alleati, armi e veicoli |
+| 19 | La Gomma | L'arena che si cancella | **Boss finale**: l'arena sparisce mentre combatti |
+| 20 | L'Autore | Oltre il bordo del foglio | **Finali diversi** e quarta parete |
 
-### 13. Il Temperamatite
-**Pagina:** una fabbrica-temperamatite, rumorosa e pericolosa.
-Salvi Marco e scopri il piano finale della Gomma: cancellare **tutto il quaderno** per ricominciare
-da capo.
-
-### 14. La Pagina Bianca
-**Pagina:** una pagina completamente vuota. Capitolo silenzioso ed esistenziale.
-Trovi un mozzicone di matita dell'Autore: puoi disegnare ponti e scale.
-Ritorna Arturo il Filosofo (non si sa come, era seduto).
-*Sistemi nuovi:* disegnare linee nel mondo per risolvere enigmi.
-
-### 15. Alleanze
-**Pagina:** giro tra le pagine già visitate.
-Recluti alleati per l'assalto finale. **Chi si unisce dipende da cosa hai fatto prima**: missioni
-secondarie completate, scelte del capitolo 7, chi hai aiutato. Premia chi ha esplorato, senza
-bloccare chi non l'ha fatto.
-
-### 16. La Copertina
-**Pagina:** la copertina del quaderno: cartone lucido, codice a barre, "A4 - 80 FOGLI".
-Assalto al quartier generale della Gomma con i tuoi alleati.
-
-### 17. La Gomma
-Scontro finale. La Gomma cancella pezzi dell'arena mentre combatti.
-
-### 18. L'Autore
-**Pagina:** oltre il bordo del foglio.
-Incontri l'Autore. Finali diversi: farti ridisegnare, disegnarti un'uscita, oppure tornare a
-San Scarabocchio, dove è martedì e la sveglia suona. DRIIIN.
+**14.** Compagni di cella: un mozzicone di matita, un pastello spezzato e l'Evidenziatore Giallo,
+ormai secco.
+**15.** Salvi Marco e scopri il piano della Gomma: cancellare tutto il quaderno.
+**16.** Capitolo silenzioso ed esistenziale. Trovi un mozzicone di matita dell'Autore. Ritorna
+Arturo il Filosofo, seduto anche qui (nessuno sa come).
+**17.** Chi si unisce dipende da cosa hai fatto: missioni secondarie, il colpo del capitolo 8,
+come è andata con Martina. Premia chi ha esplorato senza bloccare chi non l'ha fatto.
+**20.** Finali: farti ridisegnare, disegnarti un'uscita, oppure tornare a San Scarabocchio, dove è
+martedì e la sveglia suona. DRIIIN.
 
 ---
 
@@ -139,9 +116,15 @@ Da rivedere a gioco finito, ma da rispettare già adesso:
 1. **La trama si finisce sempre senza fare missioni secondarie.** Ogni capitolo è tarato per un
    giocatore che va dritto all'obiettivo.
 2. **Esplorare conviene.** Missioni secondarie ed esplorazione danno esperienza, monete e oggetti:
-   chi le fa arriva più forte e ha più alleati nel capitolo 15.
+   chi le fa arriva più forte, ha più risposte possibili (capitolo 5) e più alleati (capitolo 17).
 3. **Livelli:** più salute e più danno, con un tetto al vantaggio, così il gioco resta una sfida
    anche per chi ha fatto tutto.
-4. **Monete:** servono per cure, munizioni, armi migliori e cappelli (puramente estetici).
-   Non devono mai bloccare la trama.
-5. **Ogni capitolo ha 3-5 missioni secondarie** e qualche segreto da trovare.
+4. **Monete:** servono per cure, munizioni, armi migliori e cappelli (solo estetici).
+   Non bloccano mai la trama.
+5. **Saltare un capitolo** dal menu fa partire con lo stretto necessario per quel capitolo.
+6. **Ogni capitolo ha 3-5 missioni secondarie** e qualche segreto da trovare.
+
+## Risse
+
+Gli avversari parano sempre. Si colpisce solo dopo aver parato un loro attacco, mentre sono
+scoperti (circa 1,6 secondi). Alcuni vanno parati più volte, con un numero casuale di parate.

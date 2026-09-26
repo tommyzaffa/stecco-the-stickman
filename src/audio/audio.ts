@@ -284,6 +284,19 @@ export class Sound {
     this.noise(0.06, 0.1, { type: 'bandpass', freq: 2500, q: 2 });
   }
 
+  // hai parato il suo colpo: "toc" secco di legno
+  parry() {
+    this.tone(1250, 0.05, { type: 'square', vol: 0.06, filter: { type: 'bandpass', freq: 1800, q: 3 } });
+    this.tone(620, 0.12, { type: 'triangle', vol: 0.1, to: 480 });
+    this.noise(0.05, 0.12, { type: 'bandpass', freq: 3200, q: 2 });
+  }
+
+  // l'avversario è scoperto: "boing" che sale
+  opening() {
+    this.tone(330, 0.25, { type: 'triangle', to: 880, vol: 0.08 });
+    this.tone(1760, 0.08, { vol: 0.03, delay: 0.2 });
+  }
+
   door() {
     this.tone(160, 0.2, { to: 120, type: 'triangle', vol: 0.08 });
     this.noise(0.25, 0.04, { type: 'bandpass', freq: 700, to: 400, q: 3 });

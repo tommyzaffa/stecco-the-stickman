@@ -3,7 +3,7 @@ import * as THREE from 'three';
 // HUD in HTML sopra il canvas: più facile da stilizzare "a mano" che in WebGL.
 
 export type MarkerKind = 'main' | 'side';
-export type IconKind = 'main' | 'main-turnin' | 'side' | 'turnin' | 'suspect' | 'alert';
+export type IconKind = 'main' | 'main-turnin' | 'side' | 'turnin' | 'suspect' | 'alert' | 'dizzy';
 
 const el = (tag: string, cls = '', parent?: HTMLElement) => {
   const e = document.createElement(tag);
@@ -258,7 +258,7 @@ export class Hud {
     if (!s.on || s.depth > 60) return;
     const e = this.icons.get();
     e.className = `npc-icon ${kind}`;
-    e.textContent = kind.endsWith('turnin') || kind === 'suspect' ? '?' : '!';
+    e.textContent = kind === 'dizzy' ? '✶ ✶' : kind.endsWith('turnin') || kind === 'suspect' ? '?' : '!';
     let sc = Math.max(0.55, Math.min(1.3, 9 / s.depth));
     if (kind === 'suspect') {
       sc *= 0.5 + level * 0.7;
