@@ -32,7 +32,7 @@ quadretti, righe, il margine rosso, la copertina.
 |---|---|---|---|
 | 1 ✅ | Un martedì qualunque | San Scarabocchio, giorno | Esplorazione, dialoghi, missioni secondarie |
 | 2 ✅ | Il Parallelepipedo | Il club, notte (gesso) | Furtività leggera, risse con parata, ballo a tempo |
-| 3 | Il Banco dei Pegni | Quadropoli, città a quadretti | **Indagine**: indizi, testimoni, accusa finale |
+| 3 ✅ | Il Banco dei Pegni | Quadropoli, città a quadretti | **Indagine**: indizi, testimoni, accusa finale |
 | 4 | Il Mercato Nero | Sotto Quadropoli | **Armi da fuoco**: prima sparatoria |
 | 5 | L'appuntamento | Il ristorante "Da Pastello" | **Solo dialoghi**: piacere a Martina o è game over |
 | 6 | Consegna a domicilio | Le strade di Quadropoli | **Guida**: la macchina (senza motore) di Luca |

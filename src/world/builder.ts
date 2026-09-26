@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { Sketch, makeHatchMaterial, makeLineMaterial, releaseLineMaterial } from '../render/sketch';
 import { Colliders } from './collision';
-import { bushTexture, crownTexture, textTexture, HAND_FONT, MARKER_FONT } from '../render/textures';
+import { bushTexture, cloudTexture, crownTexture, sunTexture, textTexture, HAND_FONT, MARKER_FONT } from '../render/textures';
 import { THEME, makeRng } from '../render/palette';
 
 // ---------------------------------------------------------------------------
@@ -237,6 +237,56 @@ export class WorldBuilder {
       const sw = o.signW ?? Math.min(w - 1, 6);
       this.sign(o.sign, dx, Math.min(o.h - 0.6, 3.0), fz + (o.face === '-z' ? -0.05 : 0.05), sw, sw * 0.22, o.face);
     }
+  };
+
+  // Cielo di giorno: sole con la faccina, nuvole, e all'orizzonte montagne o palazzi
+  daySky = (horizon: 'mountains' | 'skyline' = 'mountains') => {
+    const rr = this.rr;
+    const sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: sunTexture(), fog: false, depthWrite: false }));
+    sun.scale.setScalar(26);
+    sun.position.set(90, 85, -150);
+    sun.renderOrder = -1;
+    this.group.add(sun);
+    for (let i = 0; i < 9; i++) {
+      const cm = new THREE.SpriteMaterial({ map: cloudTexture(40 + i), fog: false, depthWrite: false, transparent: true });
+      const c = new THREE.Sprite(cm);
+      const a = (i / 9) * Math.PI * 2 + rr(-0.2, 0.2);
+      const d = rr(170, 210);
+      c.position.set(Math.cos(a) * d, rr(45, 75), Math.sin(a) * d);
+      c.scale.set(rr(30, 45), rr(12, 16), 1);
+      c.renderOrder = -1;
+      this.group.add(c);
+    }
+    const far = new Sketch();
+    far.style = { jitter: 0.5, over: 1 };
+    if (horizon === 'mountains') {
+      const pts: [number, number, number][] = [];
+      for (let i = 0; i <= 90; i++) {
+        const a = (i / 90) * Math.PI * 2;
+        const hgt = 8 + Math.abs(Math.sin(a * 5.3)) * 16 + Math.sin(a * 13.1) * 4 + rr(0, 3);
+        pts.push([Math.cos(a) * 240, hgt, Math.sin(a) * 240]);
+      }
+      far.curve(pts);
+      for (let i = 0; i < 30; i++) {
+        const top = pts[Math.round((rr(0, Math.PI * 2) / (Math.PI * 2)) * 90)];
+        far.seg(top[0], top[1] - 1, top[2], top[0] * 0.99, top[1] * 0.35, top[2] * 0.99, { over: 0 });
+      }
+    } else {
+      // skyline: grattacieli lontani, solo contorni
+      let a = 0;
+      while (a < Math.PI * 2) {
+        const w = rr(0.05, 0.11), h = rr(20, 60), d = 230;
+        const x0 = Math.cos(a) * d, z0 = Math.sin(a) * d, x1 = Math.cos(a + w) * d, z1 = Math.sin(a + w) * d;
+        far.poly([[x0, 0, z0], [x0, h, z0], [x1, h, z1], [x1, 0, z1]]);
+        for (let yy = 6; yy < h - 3; yy += rr(5, 8)) far.seg(x0, yy, z0, x1, yy, z1, { over: 0, jitter: 0.3 });
+        a += w + rr(0, 0.03);
+      }
+    }
+    const m = this.lineMat(1.6);
+    m.fog = false;
+    const g = far.build(m, this.fill);
+    g.renderOrder = -1;
+    this.group.add(g);
   };
 
   // --- interni --------------------------------------------------------------------

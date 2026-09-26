@@ -38,3 +38,20 @@ Object.assign(VOICES, {
   fila2: { base: 280, type: 'square', spread: 6, every: 2 },
   fila3: { base: 175, type: 'triangle', spread: 4, every: 2 },
 });
+
+// Capitolo 3
+Object.assign(VOICES, {
+  penna: { base: 175, type: 'square', spread: 2, every: 3, vol: 0.05 },
+  pegno: { base: 160, type: 'triangle', spread: 7, every: 2, vibrato: 10 },
+  gustavo: { base: 220, type: 'triangle', spread: 4, every: 2 },
+  colla: { base: 360, type: 'square', spread: 6, every: 2, vol: 0.045 },
+  balcone: { base: 140, type: 'sawtooth', spread: 5, every: 2, vol: 0.05 },
+  temperino: { base: 185, type: 'triangle', spread: 3, every: 3 },
+  presidente: { base: 200, type: 'sine', spread: 4, every: 3, vol: 0.06 },
+  insonne: { base: 260, type: 'square', spread: 9, every: 1, vol: 0.04 },
+  postino: { base: 230, type: 'triangle', spread: 6, every: 2 },
+  mimo: { base: 300, type: 'sine', spread: 3, every: 3, vol: 0.05 },
+  turista: { base: 250, type: 'square', spread: 8, every: 2 },
+  poeta: { base: 170, type: 'sine', spread: 8, every: 2, vol: 0.07, vibrato: 8 },
+  fioraio: { base: 330, type: 'triangle', spread: 5, every: 2 },
+});

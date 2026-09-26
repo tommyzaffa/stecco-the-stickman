@@ -22,6 +22,12 @@ export interface Interactable {
   radius?: number;
   label: (g: Game) => string | null;
   use: (g: Game) => void;
+  icon?: (g: Game) => IconKind | null; // icona sopra l'oggetto (es. indizio da esaminare)
+}
+
+export interface ClueDef {
+  name: string;
+  desc: string;
 }
 
 export interface NpcSpec {
@@ -37,6 +43,7 @@ export interface NpcSpec {
   barks?: (g: Game) => string[];
   dialogue?: Dialogue;
   talkLabel?: string;
+  talkRadius?: number; // distanza da cui si può parlare (es. chi sta su un balcone)
   icon?: (g: Game) => IconKind | null;
   onPunch?: (g: Game, npc: NPC) => void;
   punchLines?: string[];
@@ -115,6 +122,7 @@ export class Game {
   interactables: Interactable[] = [];
   pickups: Pickup[] = [];
   quests: Record<string, QuestDef> = {};
+  clues: Record<string, ClueDef> = {}; // indizi del capitolo (capitolo 3: l'indagine)
   private timers: { t: number; fn: () => void }[] = [];
   private focus: Interactable | null = null;
   private bubblesThisFrame: { pos: THREE.Vector3; text: string }[] = [];
@@ -134,6 +142,7 @@ export class Game {
   onKo: (npc: NPC) => void = () => {};
   onFaint: (() => void) | null = null;
   onChapterComplete: ((g: Game, next: number) => void) | null = null;
+  onGameOver: ((title: string, text: string, retry: () => void) => void) | null = null;
 
   // Gioco in corso (non su titolo, pausa o schermata finale): decide quanti fps servono.
   get active() {
@@ -220,6 +229,7 @@ export class Game {
     this.timers = [];
     this.onKo = () => {};
     this.onFaint = null;
+    this.clues = {};
     this.combat.restricted = () => false;
     this.audio.clearEmitters();
     this.audio.stopMusic();
@@ -271,6 +281,31 @@ export class Game {
   }
   lastTeaser = '';
 
+  // Game over: schermata con "Riprova". retry rimette le cose a posto per ripartire.
+  gameOver(title: string, text: string, retry: () => void) {
+    if (this.dialogue.isOpen) this.dialogue.close();
+    this.mode = 'end';
+    this.audio.faint();
+    this.onGameOver?.(title, text, retry);
+  }
+
+  // --- indizi ---
+  findClue(id: string) {
+    if (this.hasClue(id)) return;
+    this.flag(`clue_${id}`);
+    const c = this.clues[id];
+    this.toast(`<span class="ph">🔍</span> Nuovo indizio: <b>${c.name}</b><br><small>${c.desc}</small>`, 'quest', 6500);
+    this.audio.clue();
+  }
+
+  hasClue(id: string) {
+    return this.is(`clue_${id}`);
+  }
+
+  get cluesFound() {
+    return Object.keys(this.clues).filter((id) => this.hasClue(id));
+  }
+
   setCheckpoint(pos: THREE.Vector3, look: THREE.Vector3, msg: string) {
     this.checkpoint.pos.copy(pos);
     this.checkpoint.look.copy(look);
@@ -295,7 +330,7 @@ export class Game {
       const d = spec.dialogue;
       this.interactables.push({
         pos: npc.pos,
-        radius: 2.4,
+        radius: spec.talkRadius ?? 2.4,
         label: () => (npc.hidden || npc.fighter?.ko || npc.fighter?.hostile ? null : spec.talkLabel ?? `Parla con ${spec.name}`),
         use: (g) => g.talk(d, npc),
       });
@@ -737,6 +772,13 @@ export class Game {
         if (f && f.hostile && !f.ko && f.hp < f.maxHp) this.hud.enemyBar(tmp.set(n.pos.x, n.headY + 0.2, n.pos.z), cam, f.hp / f.maxHp);
         else if (d < 7 && !this.dialogue.isOpen && !f?.ko) this.hud.nameTag(tmp.set(n.pos.x, n.headY + 0.12, n.pos.z), cam, n.name);
       }
+      for (const it of this.interactables) {
+        const ic = it.icon?.(this);
+        if (!ic) continue;
+        const d = Math.hypot(it.pos.x - pp.x, it.pos.z - pp.z);
+        if (d > 9 || (d > 2 && this.world.colliders.blocked(pp.x, pp.z, it.pos.x, it.pos.z, false, 1.0))) continue;
+        this.hud.npcIcon(tmp.set(it.pos.x, it.pos.y + 0.6, it.pos.z), cam, ic);
+      }
       for (const b of this.bubblesThisFrame) this.hud.bubble(b.pos, cam, b.text);
     }
     this.bubblesThisFrame = [];
@@ -757,9 +799,16 @@ export class Game {
     const items = s.items.length
       ? s.items.map((i) => `<li><b>${ITEMS[i].name}</b>${ITEMS[i].weapon ? ' <small>(arma)</small>' : ''}<br><small>${ITEMS[i].desc}</small></li>`).join('')
       : '<li><small>Niente. Neanche le tasche.</small></li>';
+    const found = this.cluesFound;
+    const clues = Object.keys(this.clues).length
+      ? `<h3>Indizi (${found.length})</h3><ul>${
+          found.map((id) => `<li><b>${this.clues[id].name}</b><br><small>${this.clues[id].desc}</small></li>`).join('') ||
+          '<li><small>Nessuno. Guardati intorno, detective.</small></li>'
+        }</ul>`
+      : '';
     return `<h2>Diario · Capitolo ${this.chapterNum}</h2>
       <div class="cols">
-        <div><h3>Missioni</h3><ul>${qs || '<li><small>Nessuna. Per ora.</small></li>'}</ul></div>
+        <div><h3>Missioni</h3><ul>${qs || '<li><small>Nessuna. Per ora.</small></li>'}</ul>${clues}</div>
         <div><h3>Inventario</h3><ul>${items}</ul>
         <h3>Tu</h3><ul><li>Livello ${s.level} · ${s.xp}/${this.xpNext} XP</li><li>Salute ${Math.round(s.hp)}/${s.maxHp}</li><li>${s.coins} monete</li></ul></div>
       </div>

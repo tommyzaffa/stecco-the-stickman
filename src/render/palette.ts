@@ -12,17 +12,30 @@ export const HIGHLIGHT_YELLOW_HEX = '#e8f53a';
 // Tema corrente: di giorno inchiostro su carta, di notte gesso su carta nera.
 // PAPER e INK vengono aggiornati da setTheme(); materiali e texture ne fanno una copia
 // quando vengono creati, quindi il tema va impostato PRIMA di costruire un capitolo.
-export const THEME = { paperHex: PAPER_HEX, inkHex: INK_HEX, night: false };
+export interface Theme {
+  paper: string;
+  ink: string;
+  grid?: { size: number; color: string }; // carta a quadretti
+}
+export const THEME: { paperHex: string; inkHex: string; night: boolean; grid: Theme['grid'] | null } = {
+  paperHex: PAPER_HEX,
+  inkHex: INK_HEX,
+  night: false,
+  grid: null,
+};
 export const PAPER = new THREE.Color(PAPER_HEX);
 export const INK = new THREE.Color(INK_HEX);
 
-export const DAY = { paper: PAPER_HEX, ink: INK_HEX };
-export const NIGHT = { paper: '#1b1a21', ink: '#ebe6d8' };
+export const DAY: Theme = { paper: PAPER_HEX, ink: INK_HEX };
+export const NIGHT: Theme = { paper: '#1b1a21', ink: '#ebe6d8' };
+// Quadropoli: carta a quadretti, un po' più fredda, inchiostro blu scuro
+export const QUADRETTI: Theme = { paper: '#f2f3f0', ink: '#1d2233', grid: { size: 1, color: '#9fb8d6' } };
 
-export function setTheme(t: { paper: string; ink: string }) {
+export function setTheme(t: Theme) {
   THEME.paperHex = t.paper;
   THEME.inkHex = t.ink;
   THEME.night = t === NIGHT;
+  THEME.grid = t.grid ?? null;
   PAPER.set(t.paper);
   INK.set(t.ink);
 }

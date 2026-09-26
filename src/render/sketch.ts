@@ -3,7 +3,7 @@ import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { INK, PAPER, rng } from './palette';
+import { INK, PAPER, THEME, rng } from './palette';
 
 // ---------------------------------------------------------------------------
 // Materiali
@@ -46,6 +46,8 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
         uLight: { value: new THREE.Vector3(0.55, 0.75, 0.35).normalize() },
         uDensity: { value: opts.density ?? 8 },
         uStrength: { value: opts.strength ?? 0.55 },
+        uGrid: { value: THEME.grid?.size ?? 0 },
+        uGridColor: { value: new THREE.Color(THEME.grid?.color ?? '#000000') },
       },
     ]),
     vertexShader: /* glsl */ `
@@ -67,6 +69,8 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
       uniform vec3 uLight;
       uniform float uDensity;
       uniform float uStrength;
+      uniform float uGrid;
+      uniform vec3 uGridColor;
       varying vec3 vN;
       varying vec3 vW;
       #include <fog_pars_fragment>
@@ -89,7 +93,17 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
         float ink = 0.0;
         if (l < 0.6) ink = max(ink, hatch((p.x + p.y) * uDensity + wob, 0.09) * smoothstep(0.6, 0.5, l));
         if (l < 0.33) ink = max(ink, hatch((p.x - p.y) * uDensity + wob, 0.08) * smoothstep(0.33, 0.25, l));
-        gl_FragColor = vec4(mix(uPaper, uInk, ink * uStrength), 1.0);
+        vec3 base = uPaper;
+        if (uGrid > 0.0) {
+          // quadretti: linee sottili ogni uGrid metri, che sfumano da lontano
+          vec2 g = p / uGrid;
+          vec2 w = fwidth(g);
+          vec2 d = abs(fract(g - 0.5) - 0.5) / max(w, vec2(1e-4));
+          float line = 1.0 - clamp(min(d.x, d.y) - 0.3, 0.0, 1.0);
+          float fade = 1.0 - clamp(max(w.x, w.y) * 3.0, 0.0, 1.0);
+          base = mix(base, uGridColor, line * fade * 0.8);
+        }
+        gl_FragColor = vec4(mix(base, uInk, ink * uStrength), 1.0);
         #include <fog_fragment>
       }
     `,

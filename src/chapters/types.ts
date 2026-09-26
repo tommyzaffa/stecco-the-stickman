@@ -1,13 +1,14 @@
 import type { Game, GameState } from '../game/game';
 import type { QuestDef } from '../game/quests';
 import type { World } from '../world/builder';
+import type { Theme } from '../render/palette';
 
 // Un capitolo = una "pagina" del quaderno: il suo luogo, i suoi personaggi, le sue missioni.
 export interface Chapter {
   num: number;
   title: string; // es. "Un martedì qualunque"
   place: string; // es. "San Scarabocchio"
-  theme: { paper: string; ink: string };
+  theme: Theme;
   quests: Record<string, QuestDef>;
   // quali missioni contano per il riepilogo di fine capitolo
   sideQuests: string[];

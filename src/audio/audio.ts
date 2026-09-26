@@ -297,6 +297,13 @@ export class Sound {
     this.tone(1760, 0.08, { vol: 0.03, delay: 0.2 });
   }
 
+  // nuovo indizio: due note da "detective" e uno scarabocchio sul taccuino
+  clue() {
+    this.tone(587, 0.12, { type: 'triangle', vol: 0.07 });
+    this.tone(880, 0.3, { type: 'triangle', vol: 0.07, delay: 0.12 });
+    for (let i = 0; i < 6; i++) this.noise(0.03, 0.03, { type: 'bandpass', freq: 3000 + Math.random() * 2000, q: 2 }, { delay: 0.3 + i * 0.04 });
+  }
+
   door() {
     this.tone(160, 0.2, { to: 120, type: 'triangle', vol: 0.08 });
     this.noise(0.25, 0.04, { type: 'bandpass', freq: 700, to: 400, q: 3 });

@@ -23,7 +23,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   - `sketch.ts`: classe `Sketch` che accumula linee (fat lines, con sbordature e tremolio "a mano")
     e riempimenti; `makeHatchMaterial` = carta + tratteggio sulle facce in ombra.
   - `postfx.ts`: post-processing (line boil a 8 fps, grana carta, vignetta, flash danno).
-  - `palette.ts`: colori e **tema** (`DAY` inchiostro su carta, `NIGHT` gesso su carta nera).
+  - `palette.ts`: colori e **tema** (`DAY` inchiostro su carta, `NIGHT` gesso su carta nera,
+    `QUADRETTI` carta a quadretti: la griglia la disegna lo shader del tratteggio).
     Il tema va impostato prima di costruire un capitolo (lo fa `Game.loadChapter`).
 - `src/world/` — `builder.ts` (`WorldBuilder`: muri, porte, edifici, cartelli, neon, alberi...;
   `finish()` restituisce un `World`), `collision.ts` (collisioni 2D su XZ + linea di vista;
@@ -40,8 +41,17 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 - `src/ui/hud.ts` — HUD in HTML/CSS sopra il canvas (`src/style.css`).
 - `src/audio/` — audio tutto sintetizzato con Web Audio (nessun file): `audio.ts` effetti, voci a
   bip, sorgenti nel mondo (`addEmitter`), filtro "musica ovattata" (`setMusicMuffle`);
-  `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`).
+  `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`, `indagine`).
   L'AudioContext si sblocca solo con un click (schermata del titolo).
+
+## Sistemi riusabili
+
+- **Indizi** (capitolo 3): il capitolo imposta `g.clues`; `g.findClue(id)` li segna (flag
+  `clue_<id>`), compaiono nel diario. Gli oggetti da esaminare usano `icon: 'clue'`.
+- **Game over**: `g.gameOver(titolo, testo, riprova)` mostra la schermata con "Riprova";
+  `riprova` rimette le cose a posto (es. capitolo 3: tre accuse sbagliate).
+- `NpcSpec.talkRadius` per chi si parla da lontano (es. il testimone sul balcone).
+- `WorldBuilder.daySky('mountains' | 'skyline')` per il cielo di giorno.
 
 ## Capitoli e salvataggi
 
@@ -68,7 +78,7 @@ Progetto da portfolio (nessuno scopo di lucro), **20 capitoli da ~10 minuti**. S
 capitolo alla volta, chiudendolo del tutto** (grafica, dialoghi, suoni) prima di passare al
 successivo. **Ogni capitolo porta una meccanica nuova** (indagine, sparatoria, appuntamento a
 dialoghi, guida, furtività su più piani...): mai due capitoli che si giocano uguali.
-Capitolo 1 (San Scarabocchio) e capitolo 2 (Il Parallelepipedo) = completati.
+Completati: capitolo 1 (San Scarabocchio), 2 (Il Parallelepipedo), 3 (Il Banco dei Pegni, Quadropoli).
 Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 
 ## Convenzioni per i contenuti

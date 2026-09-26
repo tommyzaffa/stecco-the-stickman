@@ -1,4 +1,6 @@
-export type ItemId = 'pacco' | 'righello' | 'libro' | 'tappo' | 'sottobicchiere' | 'calzino' | 'chiave';
+export type ItemId =
+  | 'pacco' | 'righello' | 'libro' | 'tappo' | 'sottobicchiere' | 'calzino' | 'chiave'
+  | 'gomma' | 'guanti' | 'fiore' | 'poesia' | 'sospiri';
 
 export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolean }> = {
   pacco: {
@@ -29,5 +31,25 @@ export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolea
   chiave: {
     name: 'Chiave di servizio',
     desc: 'Apre la porta "SOLO PERSONALE" nei bagni del Parallelepipedo.',
+  },
+  gomma: {
+    name: 'Briciola di gomma',
+    desc: 'Cancella. Anche cose che non vorresti. Maneggiare con cura.',
+  },
+  guanti: {
+    name: 'Guanti bianchi del mimo',
+    desc: 'Regalo di un mimo liberato. Non hai le mani, ma sono il pensiero che conta.',
+  },
+  fiore: {
+    name: 'Fiore disegnato',
+    desc: 'Non appassisce mai. Non profuma mai. È un compromesso.',
+  },
+  poesia: {
+    name: "Poesia d'amore",
+    desc: 'Scritta col Poeta di Quadropoli. Le rime sono discutibili. Il sentimento, anche.',
+  },
+  sospiri: {
+    name: 'Tre sospiri',
+    desc: 'In un barattolo, dal banco dei pegni. Per le occasioni romantiche.',
   },
 };

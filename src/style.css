@@ -252,3 +252,9 @@ b.blue { color: var(--blue); }
 .card .msg { min-height: 24px; font-size: 19px; color: var(--red); }
 .card .pwd-show { font-size: 20px; margin: 6px 0 12px; }
 .card .pwd-show b { font-family: var(--marker); color: var(--red); letter-spacing: 2px; }
+
+/* --- indagine ----------------------------------------------------------------- */
+.npc-icon.clue {
+  color: var(--blue); font-size: 26px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  border: 3px solid var(--blue); border-radius: 50% 45% 55% 48%; background: rgba(250, 247, 238, .85);
+}

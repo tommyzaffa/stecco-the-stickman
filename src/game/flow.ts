@@ -186,6 +186,25 @@ export function setupFlow(g: Game) {
     }
   });
 
+  // --- game over ---------------------------------------------------------------------
+  g.onGameOver = (title, text, retry) => {
+    g.input.unlock();
+    show(
+      `<div class="card paper">
+        <div class="title small">${title}</div>
+        <div class="sub">${text}</div>
+        <div class="buttons"><button class="primary" data-a="retry">Riprova</button></div>
+      </div>`,
+      (e) => {
+        if ((e.target as HTMLElement).closest('button')?.dataset.a !== 'retry') return;
+        retry();
+        g.mode = 'play';
+        hide();
+        g.input.lock();
+      },
+    );
+  };
+
   // --- fine capitolo ---------------------------------------------------------------
   g.onChapterComplete = (g, next) => {
     unlockChapter(next);

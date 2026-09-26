@@ -304,5 +304,49 @@ const disco = (lead: boolean): Track => ({
   },
 });
 
-export const TRACKS = { paese: PAESE, club: disco(false), sbiadisco: disco(true) };
+// "Indagine": jazz da detective per Quadropoli. Basso che cammina, spazzole, accordi
+// di vibrafono e ogni tanto una tromba con la sordina.
+const JAZZ = [
+  { bass: [38, 41, 45, 48], chord: [62, 65, 69, 72] }, // Dm7
+  { bass: [43, 47, 50, 53], chord: [59, 62, 65, 67] }, // G7
+  { bass: [36, 40, 43, 47], chord: [60, 64, 67, 71] }, // Cmaj7
+  { bass: [45, 49, 52, 55], chord: [61, 64, 67, 69] }, // A7
+];
+const TRUMPET: number[][] = [
+  [74, -1, 72, 69, 0, 0, 0, 0],
+  [71, -1, -1, 67, 65, -1, 0, 0],
+  [67, 69, 71, 72, -1, -1, 0, 0],
+  [73, -1, 76, -1, 73, 69, 0, 0],
+];
+export const INDAGINE: Track = {
+  bpm: 112,
+  stepsPerBeat: 2,
+  swing: 0.09,
+  play(m, step, t) {
+    const bar = Math.floor(step / 8) % 4;
+    const slot = step % 8;
+    const phrase = Math.floor(step / 32) % 4; // 0,2 senza tromba; 1,3 con tromba
+    const c = JAZZ[bar];
+    // basso che cammina: una nota per battito
+    if (slot % 2 === 0) m.bass(mtof(c.bass[slot / 2] - 12), t, 0.28, 0.12);
+    // spazzole sul 2 e sul 4, piatto in levare
+    if (slot === 2 || slot === 6) m.hit(t, 0.05, 2200, 'bandpass', 0.14, 0.6);
+    if (slot % 2 === 1) m.hit(t, 0.02, 7500, 'highpass', 0.05, 0.8);
+    if (slot % 2 === 0) m.hit(t, 0.012, 9000, 'highpass', 0.12, 0.8);
+    // accordi in levare, un po' sfasati
+    if (slot === 1 || slot === 5) for (const n of c.chord) m.pluck(mtof(n), t + Math.random() * 0.015, 0.02, 0.6);
+    // tromba con sordina
+    if (phrase % 2 === 1) {
+      const row = TRUMPET[bar];
+      const n = row[slot];
+      if (n > 0) {
+        let len = 1;
+        while (slot + len < 8 && row[slot + len] === -1) len++;
+        m.stab([n], t, 0.028, len * (60 / 112 / 2) * 0.9);
+      }
+    }
+  },
+};
+
+export const TRACKS = { paese: PAESE, club: disco(false), sbiadisco: disco(true), indagine: INDAGINE };
 export type TrackName = keyof typeof TRACKS;

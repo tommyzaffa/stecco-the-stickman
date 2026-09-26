@@ -16,7 +16,8 @@ meta-ironia sul fatto di essere disegnati (niente mani, niente tasche, niente co
 - Omini con scheletro e animazioni procedurali (camminata, corsa, pose, reazioni ai colpi).
 - Sistema di dialoghi a nodi con scelte, missioni a passi, inventario, esperienza e livelli.
 - Risse con parata e contrattacchi, guardie con campo visivo e linea di vista, minigioco di ballo.
-- Un capitolo = un luogo diverso: San Scarabocchio di giorno (inchiostro), il club di notte (gesso).
+- Un capitolo = un luogo e una meccanica diversi: San Scarabocchio di giorno (inchiostro), il club
+  di notte (gesso, furtività e risse), Quadropoli a quadretti (indagine con indizi e accusa).
 - Audio sintetizzato con Web Audio: voci "a bip" diverse per ogni personaggio, suoni ambientali
   spaziali, musica procedurale.
 
@@ -47,6 +48,6 @@ Poi apri http://localhost:5317.
 
 ## Stato
 
-Capitoli 1 e 2 completi. Il piano dei capitoli è in [docs/CAPITOLI.md](docs/CAPITOLI.md).
+Capitoli 1, 2 e 3 completi. Il piano dei capitoli è in [docs/CAPITOLI.md](docs/CAPITOLI.md).
 
 Per saltare direttamente a un capitolo: `http://localhost:5317/?cap=2`.
