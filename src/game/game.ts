@@ -591,7 +591,7 @@ export class Game {
         if (inp.wasPressed('forward') || inp.pressed.has('ArrowUp')) this.dialogue.moveSel(-1);
         if (inp.wasPressed('back') || inp.pressed.has('ArrowDown')) this.dialogue.moveSel(1);
         const n = this.dialogue.npc;
-        if (n) this.player.easeLook(new THREE.Vector3(n.pos.x, n.headY - 0.15, n.pos.z), dt);
+        if (n) this.player.easeLook(new THREE.Vector3(n.pos.x, n.topY - 0.15, n.pos.z), dt);
       } else if (this.hud.diarioOpen) {
         canMove = false;
         if (inp.wasPressed('journal') || inp.pressed.has('Tab') || inp.wasPressed('interact')) this.hud.showDiario(null);
@@ -780,10 +780,10 @@ export class Game {
         if (f && f.state === 'open') icon = 'dizzy';
         else if (f && !f.ko && f.hostile && d < 25) icon = 'alert';
         else if (f && !f.ko && f.suspicion > 0.05) icon = 'suspect';
-        if (icon && !talking && !this.minigame) this.hud.npcIcon(tmp.set(n.pos.x, n.headY + 0.45, n.pos.z), cam, icon, f?.suspicion);
-        if (n.bubble && !talking) this.hud.bubble(tmp.set(n.pos.x, n.headY + (icon ? 0.85 : 0.3), n.pos.z), cam, n.bubble);
-        if (f && f.hostile && !f.ko && f.hp < f.maxHp) this.hud.enemyBar(tmp.set(n.pos.x, n.headY + 0.2, n.pos.z), cam, f.hp / f.maxHp);
-        else if (d < 7 && !this.dialogue.isOpen && !f?.ko) this.hud.nameTag(tmp.set(n.pos.x, n.headY + 0.12, n.pos.z), cam, n.name);
+        if (icon && !talking && !this.minigame) this.hud.npcIcon(tmp.set(n.pos.x, n.topY + 0.45, n.pos.z), cam, icon, f?.suspicion);
+        if (n.bubble && !talking) this.hud.bubble(tmp.set(n.pos.x, n.topY + (icon ? 0.85 : 0.3), n.pos.z), cam, n.bubble);
+        if (f && f.hostile && !f.ko && f.hp < f.maxHp) this.hud.enemyBar(tmp.set(n.pos.x, n.topY + 0.2, n.pos.z), cam, f.hp / f.maxHp);
+        else if (d < 7 && !this.dialogue.isOpen && !f?.ko) this.hud.nameTag(tmp.set(n.pos.x, n.topY + 0.12, n.pos.z), cam, n.name);
       }
       for (const it of this.interactables) {
         const ic = it.icon?.(this);

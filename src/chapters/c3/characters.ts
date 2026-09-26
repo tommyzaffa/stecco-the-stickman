@@ -22,6 +22,9 @@ export function resetAccusation() {
   acc.fails = 0;
 }
 
+// L'indagine è aperta (l'Ispettore ti ha affidato il caso e non è ancora risolto)
+const onCase = (g: Game) => g.quest('c3') >= 2 && !g.questDone('c3') && !g.is('gustavoArrested');
+
 export function createCharacters(g: Game) {
   const A = g.world.anchors;
   resetAccusation();
@@ -31,7 +34,7 @@ export function createCharacters(g: Game) {
   // =========================================================================
   const marcoMenu: Choice[] = [
     { t: 'Hai qualche idea, Watson?', next: 'idea' },
-    { t: "Dov'eri stanotte, Marco?", next: 'alibi' },
+    { t: "Dov'eri stanotte, Marco?", next: 'alibi', if: onCase },
     { t: 'Niente, seguimi.' },
   ];
   g.addNpc({
@@ -102,12 +105,13 @@ export function createCharacters(g: Game) {
   // =========================================================================
   // ISPETTORE PENNA (Biro Blu): verbali e, alla fine, l'accusa
   // =========================================================================
-  const SUSPECTS: [string, string][] = [
-    ['temperino', 'Temperino'],
-    ['colla', 'La Signora Colla'],
-    ['postino', 'Il Postino'],
-    ['gustavo', 'Gustavo, il commesso'],
-    ['marco', 'Marco'],
+  // si può accusare solo chi si conosce
+  const SUSPECTS: [string, string, (g: Game) => boolean][] = [
+    ['temperino', 'Temperino', (g) => g.is('knowTemperino')],
+    ['colla', 'La Signora Colla', () => true],
+    ['postino', 'Il Postino', () => true],
+    ['gustavo', 'Gustavo, il commesso', (g) => g.is('knowGustavo')],
+    ['marco', 'Marco', () => true],
   ];
   const proofChoices: Choice[] = [
     ...Object.entries(CLUES).map(([id, c]) => ({
@@ -134,18 +138,20 @@ export function createCharacters(g: Game) {
       ],
       choices: [
         { t: 'Mi lasci indagare.', next: 'ok' },
-        { t: 'Tutti dicono che è stato Temperino.', next: 'temperino' },
+        { t: 'Il tappo è di un amico. Diciamo.', next: 'ok' },
       ],
     },
-    temperino: { say: ['Tutti dicono tutto di tutti. Io scrivo solo quello che si prova.', 'Cioè niente, finora.'], next: 'ok' },
     ok: {
       say: [
         'Vuole indagare? Un privato cittadino? Grigio?',
-        '...E va bene. Mi porti almeno tre indizi e un colpevole.',
+        `...E va bene. Mi porti almeno ${CLUES_NEEDED} indizi e un colpevole.`,
         'Ma se accusa la persona sbagliata le faccio un verbale. Tre verbali e la arresto.',
         'È la procedura. L\'ho scritta io, stamattina.',
+        'Ah, un consiglio gratis: in piazza dicono che sia stato Temperino, il ladruncolo del quartiere. Sta sempre su una panchina.',
+        'Ma in piazza dicono anche che la Luna è un cerchio mal riuscito. Io non scrivo quello che si dice. Scrivo quello che si prova.',
       ],
       do: (g) => {
+        g.flag('knowTemperino');
         if (g.quest('c3') < 2) {
           g.setStep('c3', 2);
           g.after(2.5, () =>
@@ -170,7 +176,7 @@ export function createCharacters(g: Game) {
     pronto: {
       say: ['Allora, detective. Chi è stato?'],
       choices: [
-        ...SUSPECTS.map(([id, name]) => ({ t: name, do: () => (acc.suspect = id), next: 'prova' })),
+        ...SUSPECTS.map(([id, name, known]) => ({ t: name, if: known, do: () => (acc.suspect = id), next: 'prova' })),
         { t: 'Non sono ancora sicuro.', next: 'aspetto' },
       ],
     },
@@ -179,9 +185,22 @@ export function createCharacters(g: Game) {
     verdetto: {
       say: [],
       next: () => {
-        if (acc.suspect === 'gustavo') return CLUES[acc.proof]?.decisive ? 'giusto' : 'debole';
+        if (acc.suspect === 'gustavo') {
+          if (CLUES[acc.proof]?.decisive) return 'giusto';
+          if (CLUES[acc.proof]?.insider) return 'quasi';
+          return 'debole';
+        }
         return `no_${acc.suspect}`;
       },
+    },
+    // prova giusta ma non basta: nessuna multa, solo un consiglio
+    quasi: {
+      say: [
+        'Mmh. Questo prova che è stato qualcuno con la chiave del negozio.',
+        'Ma le chiavi le hanno in due: il signor Pegno e Gustavo.',
+        'Mi porti una prova che riguardi proprio Gustavo. Dov\'era stanotte. Cosa ha fatto. Cosa ha buttato via.',
+        '@Gustavo| (dal negozio) Io sto spazzando!',
+      ],
     },
     debole: wrong(['Con questa prova non posso arrestare nessuno.', '@Gustavo| Ahah!', 'Vede? Ride. E un po\' rido anche io.']),
     no_temperino: wrong([
@@ -236,7 +255,11 @@ export function createCharacters(g: Game) {
         (g) => `${CLUES[acc.proof].name}. Mmh.`,
         'GUSTAVO! Venga fuori un momento.',
         '@Gustavo| Sì? Stavo spazzando. Tantissimo.',
-        '> La vetrina è stata rotta da dentro. La porta aperta con la chiave. E tu stanotte non eri a casa.',
+        '> La vetrina è stata rotta da dentro e la porta aperta con la chiave. Le chiavi le avete in due: tu e il signor Pegno.',
+        () =>
+          acc.proof === 'biglietto'
+            ? '> E al macero c\'era questa: la ricevuta dell\'asta. "Venditore: G." Con una scopa disegnata in un angolo.'
+            : '> E stanotte alle tre non eri a casa. Il tuo vicino non dorme mai: ti ha sentito uscire.',
         '@Gustavo| ...',
         '@Gustavo| Va bene. Sono stato io.',
         '@Gustavo| Ho venduto il tappo all\'asta di mezzanotte, al Mercato Nero. Sotto la stazione.',
@@ -289,9 +312,10 @@ export function createCharacters(g: Game) {
   // SIGNOR PEGNO e GUSTAVO (dentro il banco)
   // =========================================================================
   const pegnoMenu: Choice[] = [
-    { t: 'Chi ha le chiavi del negozio?', next: 'chiavi' },
+    { t: 'Chi ha le chiavi del negozio?', next: 'chiavi', if: onCase },
     { t: 'Chi le ha venduto il tappo?', next: 'venduto' },
-    { t: 'Che ne pensa di Temperino?', next: 'temperino' },
+    { t: 'Che ne pensa di Temperino?', next: 'temperino', if: (g) => onCase(g) && g.is('knowTemperino') },
+    { t: 'Gustavo ha problemi di soldi?', next: 'soldi', if: (g) => onCase(g) && (g.hasClue('vicino') || g.hasClue('biglietto')) },
     { t: 'Vorrei i tre sospiri. (1 moneta)', next: 'sospiri', if: (g) => !g.has('sospiri') },
     { t: 'Arrivederci.' },
   ];
@@ -320,7 +344,16 @@ export function createCharacters(g: Game) {
         },
         menu: { say: ['Mi dica.'], choices: pegnoMenu },
         chiavi: {
-          say: ['Io e il mio commesso, Gustavo. Bravo ragazzo. Un po\' distratto.', 'Ultimamente è pieno di debiti. Ma bravo.', 'Lo pago in esperienza. L\'esperienza, si sa, non si mangia.'],
+          do: (g) => g.flag('knowGustavo'),
+          say: ['Io e il mio commesso, Gustavo. Bravo ragazzo. Spazza benissimo.', 'Lo pago in esperienza. L\'esperienza, si sa, non si mangia. Ma si spazza.'],
+          next: 'menu',
+        },
+        soldi: {
+          say: [
+            'Soldi? Gustavo?',
+            'Beh... la settimana scorsa mi ha chiesto tre anticipi. Tre!',
+            'Pensavo fosse per un corso di scopa avanzato. Ora che me lo fa notare...',
+          ],
           next: 'menu',
         },
         venduto: {
@@ -350,11 +383,10 @@ export function createCharacters(g: Game) {
   });
 
   const gustavoMenu: Choice[] = [
-    { t: "Dov'eri stanotte?", next: 'dove' },
-    { t: 'Tu hai le chiavi del negozio, vero?', next: 'chiavi' },
-    { t: 'Il tuo vicino dice che stanotte non eri a casa.', next: 'vicino', if: (g) => g.hasClue('vicino') },
-    { t: 'Questa ricevuta dice "Venditore: G."', next: 'g', if: (g) => g.hasClue('biglietto') },
-    { t: 'Un testimone ha visto qualcuno col cappellino al contrario.', next: 'cappello', if: (g) => g.hasClue('balcone') },
+    { t: "Dov'eri stanotte?", next: 'dove', if: onCase },
+    { t: 'Tu hai le chiavi del negozio, vero?', next: 'chiavi', if: onCase },
+    { t: 'Il tuo vicino dice che stanotte non eri a casa.', next: 'vicino', if: (g) => onCase(g) && g.hasClue('vicino') },
+    { t: 'Questa ricevuta dice "Venditore: G." E c\'è disegnata una scopa.', next: 'g', if: (g) => onCase(g) && g.hasClue('biglietto') },
     { t: 'Niente, continua pure a spazzare.' },
   ];
   const gustavo = g.addNpc({
@@ -372,22 +404,34 @@ export function createCharacters(g: Game) {
       start: (g) => (g.is('gustavoArrested') ? 'arrestato' : 'start'),
       nodes: {
         start: {
-          say: ['Buongiorno. Cioè, buongiorno per modo di dire. Ci hanno svaligiato.', 'Sto spazzando i vetri. Tantissimo.'],
+          do: (g) => g.flag('knowGustavo'),
+          say: ['Buongiorno. Sono Gustavo, il commesso. Ci hanno svaligiato.', 'Sto spazzando i vetri. Tantissimo.'],
           choices: gustavoMenu,
         },
         menu: { say: ['Altro? Ho molto da spazzare.'], choices: gustavoMenu },
         dove: {
+          do: (g) => g.flag('gustavoAlibi'),
           say: ['A casa. A dormire. Da solo.', 'Chiedete a chiunque. Cioè, a nessuno: ero da solo.', 'È il bello di essere soli: nessuno può smentirti.'],
           next: 'menu',
         },
-        chiavi: { say: ['Le chiavi? Sì. Cioè, no. Le ho perse. Ieri. Forse. Sì, ieri.', '> Dove?', 'Se lo sapessi non sarebbero perse. Logico, no?'], next: 'menu' },
-        vicino: { say: ['Il mio vicino... non dorme mai, vede cose.', 'Una volta ha giurato di aver visto un triangolo. Qui. A Quadropoli. Figurati.'], next: 'menu' },
-        g: {
-          say: ['"G." può essere chiunque.', 'Gino. Gianni. Giallo. Gnomo. Gelato.', '> Gelato?', 'Ho fame quando sono nervoso. Non che io sia nervoso.'],
+        chiavi: { say: ['Sì, io e il signor Pegno.', 'Le tengo sempre con me. Sempre. Cioè, quasi sempre. Cioè, adesso sì.'], next: 'menu' },
+        vicino: {
+          say: [
+            'Il mio vicino... non dorme mai, vede cose.',
+            'Una volta ha giurato di aver visto un triangolo. Qui. A Quadropoli. Figurati.',
+            '> E stanotte cosa ha visto?',
+            '...Ero da mia zia. Che abita lontano. E che esiste pochissimo.',
+          ],
           next: 'menu',
         },
-        cappello: {
-          say: ['Tantissima gente ha il cappellino al contrario.', 'Il tuo amico, per esempio. Quello che ti segue.', '> Marco?', 'Io non accuso nessuno. Io spazzo.'],
+        g: {
+          say: [
+            '"G." può essere chiunque.',
+            'Gino. Gianni. Giallo. Gnomo. Gelato.',
+            '> E la scopa?',
+            'Tutti hanno una scopa. Anche i gelati. Cioè no.',
+            'Ho fame quando sono nervoso. Non che io sia nervoso.',
+          ],
           next: 'menu',
         },
         arrestato: { say: ['Sto compilando il modulo. "Arresto di me medesimo". È più difficile di quanto sembri.'] },
@@ -407,7 +451,7 @@ export function createCharacters(g: Game) {
   // =========================================================================
   const collaMenu: Choice[] = [
     { t: 'Le impronte appiccicose sulla vetrina del banco?', next: 'impronte', if: (g) => g.hasClue('impronte') && !g.hasClue('colla') },
-    { t: 'Ha visto qualcosa stanotte?', next: 'notte' },
+    { t: 'Ha visto qualcosa stanotte?', next: 'notte', if: onCase },
     { t: 'Chi è "M.", quella del cartello?', next: 'm' },
     { t: 'Vorrei una briciola di gomma. (5 monete)', next: 'gomma', if: (g) => !g.has('gomma') && !g.questDone('mimo') },
     { t: 'Arrivederci.' },
@@ -480,23 +524,30 @@ export function createCharacters(g: Game) {
         start: {
           say: ['Ehi, tu, laggiù! Sì, tu, quello grigio!', 'Io sto sempre sul balcone. Guardo. È il mio lavoro. Non mi pagano, ma è il mio lavoro.'],
           choices: [
-            { t: 'Ha visto qualcosa stanotte, al banco dei pegni?', next: 'notte', if: (g) => !g.hasClue('balcone') },
+            { t: 'Ha visto qualcosa stanotte, al banco dei pegni?', next: 'notte', if: (g) => onCase(g) && !g.hasClue('balcone') },
+            { t: 'Ha notato altro, nel vicolo?', next: 'bidone', if: (g) => onCase(g) && g.hasClue('balcone') },
             { t: 'Cosa si vede da lassù?', next: 'vista' },
             { t: 'Arrivederci.' },
           ],
         },
         notte: {
           say: [
-            'Alle tre qualcuno è uscito dal retro del banco e ha chiuso la porta a chiave.',
-            'Con calma. Fischiettava.',
-            "> Com'era?",
-            'Un omino stilizzato. Col cappellino a visiera girato al contrario.',
-            '> Tutti sono omini stilizzati.',
-            'Ma non tutti fischiettano alle tre di notte chiudendo a chiave un negozio che non è loro.',
+            'Alle tre ho sentito la porta sul retro del banco chiudersi a chiave. Clic, clic. Con calma.',
+            '> Chi era?',
+            'Non l\'ho visto: il lampione del vicolo è spento da una settimana. Ho sentito solo qualcuno che fischiettava.',
+            'Un ladro non chiude a chiave uscendo. Un ladro scappa. Questo chiudeva. Con cura.',
           ],
           next: 'fine',
         },
         fine: { do: (g) => g.findClue('balcone'), say: ['Scrivilo sul taccuino. I detective hanno sempre un taccuino.'] },
+        bidone: {
+          do: (g) => g.flag('knowMacero'),
+          say: [
+            'Stamattina è passato il camion della carta. Ha svuotato tutti i bidoni del vicolo.',
+            'Porta tutto al macero, dietro i Grandi Magazzini Righello.',
+            'Se qualcuno stanotte ha buttato via qualcosa... adesso è lì. Insieme a tutta la carta della città.',
+          ],
+        },
         vista: { say: ['Da quassù vedo tutto. La piazza. Il vicolo. Il bidone.', 'Il bidone è la mia serie preferita. Ogni giorno una puntata nuova.'] },
       },
     },
@@ -516,14 +567,24 @@ export function createCharacters(g: Game) {
       start: 'start',
       nodes: {
         start: {
-          say: ['Lo so cosa pensi. "Ecco Temperino, quello con la fedina sporca".', "È vero. L'ho lavata. Resta grigia. Come tutto, qui."],
+          do: (g) => g.flag('knowTemperino'),
+          say: [
+            (g) =>
+              onCase(g)
+                ? 'Lo so cosa pensi. "Ecco Temperino, quello con la fedina sporca".'
+                : 'Ciao. Sono Temperino. Non guardarmi così: oggi non ho fatto niente.',
+            "Ho la fedina sporca, sì. L'ho lavata. Resta grigia. Come tutto, qui.",
+          ],
           choices: [
-            { t: "Dov'eri stanotte?", next: 'notte' },
+            { t: "Dov'eri stanotte?", next: 'notte', if: onCase },
             { t: 'Perché ti chiamano Temperino?', next: 'nome' },
             { t: 'Niente.' },
           ],
         },
-        notte: { say: ['Al Campionato di Pisolini. La finale.', 'Ho vinto. Chiedi al Presidente: è quello davanti al cartellone, dall\'altra parte della piazza.'] },
+        notte: {
+          do: (g) => g.flag('temperinoClaim'),
+          say: ['Al Campionato di Pisolini. La finale.', 'Ho vinto. Chiedi al Presidente: è quello davanti al cartellone, dall\'altra parte della piazza.'],
+        },
         nome: {
           say: ['Perché sono affilato. Di testa.', "E perché una volta ho temperato una penna della polizia. Era dell'Ispettore Penna. È ancora arrabbiato."],
         },
@@ -545,7 +606,7 @@ export function createCharacters(g: Game) {
         start: {
           say: ['Il Campionato di Pisolini! Silenzio, per favore: alcuni concorrenti sono ancora in gara.'],
           choices: [
-            { t: 'Temperino ha partecipato stanotte?', next: 'temperino', if: (g) => !g.hasClue('alibi') },
+            { t: 'Temperino ha partecipato stanotte?', next: 'temperino', if: (g) => onCase(g) && g.is('temperinoClaim') && !g.hasClue('alibi') },
             { t: 'Come funziona il campionato?', next: 'regole' },
             { t: 'Arrivederci.' },
           ],
@@ -600,15 +661,31 @@ export function createCharacters(g: Game) {
         start: {
           say: ['Ciao. Non dormo mai. Mai.', 'Non per scelta: mi hanno disegnato con gli occhi aperti. Due puntini. Niente palpebre.'],
           choices: [
-            { t: 'Conosci Gustavo, il commesso del banco dei pegni?', next: 'gustavo', if: (g) => !g.hasClue('vicino') },
+            { t: 'Hai visto qualcosa stanotte?', next: 'vista', if: (g) => onCase(g) && !g.is('knowNeighbor') },
+            { t: 'Il tuo vicino è Gustavo, quello del banco? Dice che stanotte era a casa.', next: 'gustavo', if: (g) => onCase(g) && g.is('knowNeighbor') && g.is('gustavoAlibi') && !g.hasClue('vicino') },
+            { t: 'Chi è il tuo vicino?', next: 'chi', if: (g) => onCase(g) && g.is('knowNeighbor') && !g.is('gustavoAlibi') },
             { t: 'Cosa fai tutta la notte?', next: 'notte' },
             { t: 'Buona... giornata.' },
           ],
         },
+        vista: {
+          do: (g) => g.flag('knowNeighbor'),
+          say: [
+            'Io vedo tutto. Tutte le notti. Ma nessuno mi fa mai domande precise.',
+            'Tipo: "dov\'era il tuo vicino di casa alle tre?". Nessuno me lo chiede mai. Che tristezza.',
+          ],
+        },
+        chi: {
+          say: [
+            'Gustavo. Il commesso del banco dei pegni.',
+            'Chiedi a lui dov\'era stanotte. Poi torna da me.',
+            'Io la risposta la so già. Ma è più bello se prima mente.',
+          ],
+        },
         gustavo: {
           say: [
-            'Il mio vicino di casa? Certo.',
-            'Stanotte non c\'era. Alle tre ho bussato per chiedergli un po\' di sale. Niente.',
+            'A casa? Ah sì?',
+            'Alle tre ho bussato per chiedergli un po\' di sale. Niente. Silenzio.',
             'Non c\'era lui e non c\'era il sale. Due assenze in una notte.',
           ],
           next: 'fine',
@@ -636,7 +713,7 @@ export function createCharacters(g: Game) {
         start: {
           say: ['Posta! Nessuno scrive più, ma io consegno lo stesso.'],
           choices: [
-            { t: 'Hai visto qualcosa stanotte?', next: 'notte', if: (g) => !g.hasClue('luce') },
+            { t: 'Hai visto qualcosa stanotte?', next: 'notte', if: (g) => onCase(g) && !g.hasClue('luce') },
             { t: 'Cosa consegni, se nessuno scrive?', next: 'buste' },
             { t: 'Buon lavoro.' },
           ],

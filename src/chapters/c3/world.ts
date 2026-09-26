@@ -191,6 +191,17 @@ export function buildQuadropoli(): World {
   for (const [x, z] of [[-6.8, 38.5], [10, 38.4], [14.5, 34.5]] as const) solid(x, z, 1.1, 1.1, 1.0);
   A('backDoor', 2, 1.2, 33.4);
 
+  // macero della carta: qui finisce tutto quello che si butta a Quadropoli
+  {
+    const mx = 15, mz = -51;
+    solid(mx, mz, 5, 2.4, 2.2, 0, true, false);
+    D.seg(mx - 2.5, 2.25, mz - 1.2, mx + 2.5, 2.25, mz - 1.2).seg(mx - 2.5, 2.25, mz + 1.2, mx + 2.5, 2.25, mz + 1.2);
+    for (let i = 0; i < 12; i++) D.circle(mx + rr(-2.2, 2.2), 2.3 + rr(0, 0.35), mz + rr(-0.9, 0.9), rr(0.12, 0.3), 'y', 8, 0.4);
+    sign('MACERO\ntutta la carta finisce qui', mx, 1.35, mz + 1.23, 3.2, 0.9, '+z', { font: HAND_FONT });
+    for (const [x, z] of [[mx - 4, mz + 0.5], [mx + 3.8, mz + 1.2]] as const) solid(x, z, 1.2, 1.2, 1.0);
+    A('macero', mx, 1.2, mz + 1.3);
+  }
+
   // =========================================================================
   // IL RESTO DELLA CITTÀ
   // =========================================================================

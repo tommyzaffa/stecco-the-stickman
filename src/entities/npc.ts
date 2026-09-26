@@ -50,7 +50,13 @@ export class NPC {
   // Altezza della testa, per fumetti e marker.
   get headY() {
     if (!(this.body instanceof Stickman)) return 0.8;
+    if (this.body.ko) return 0.45; // sdraiato (KO o addormentato)
     return this.body.seated ? 1.5 : 1.93 * this.body.body.scale.y;
+  }
+
+  // altezza della testa nel mondo (conta anche se sta su un balcone o su una pedana)
+  get topY() {
+    return this.pos.y + this.headY;
   }
 
   say(text: string, time = 3.5) {

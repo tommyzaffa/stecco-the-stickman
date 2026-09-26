@@ -15,5 +15,5 @@ export interface QuestDef {
 // Punto sopra la testa di un PNG (per la freccia dell'obiettivo)
 export const npcHead = (id: string) => (g: Game) => {
   const n = g.npc(id);
-  return n.pos.clone().setY(n.headY + 1.05);
+  return n.pos.clone().setY(n.topY + 1.05);
 };

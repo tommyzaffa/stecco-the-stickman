@@ -23,30 +23,56 @@ export function setupStory(g: Game) {
   g.addCoin(A.coinD.x, A.coinD.z, 'Una moneta vicino alla metro. Qualcuno ha pagato il biglietto con la fretta.');
 
   // --- indizi da esaminare ---
-  const clueSpot = (pos: THREE.Vector3, id: keyof typeof CLUES, label: string, lines: string[], radius = 2) =>
+  // gli indizi si possono trovare solo a indagine aperta (prima sono solo cose)
+  const clueSpot = (pos: THREE.Vector3, id: keyof typeof CLUES, label: string, lines: string[], radius = 2, before = 'Niente di strano. Per ora.') =>
     g.addInteractable({
       pos,
       radius,
       label: () => label,
-      use: (g) => g.talk(narr(lines), null, () => g.findClue(id)),
+      use: (g) => (g.quest('c3') >= 2 ? g.talk(narr(lines), null, () => g.findClue(id)) : g.talk(narr([before]))),
     });
-  clueSpot(A.glass, 'vetri', 'Esamina i cocci', [
+  clueSpot(A.glass, 'vetri', 'Guarda i cocci', [
     'Pezzi di vetro sul marciapiede. Tanti. Sparsi verso la piazza.',
     'Se qualcuno avesse rotto la vetrina da fuori, i cocci sarebbero dentro il negozio.',
     'Questi sono fuori. La vetrina è stata rotta da dentro.',
-  ]);
+  ], 2, 'Cocci di vetro dappertutto. Una vetrina rotta. Non è affar tuo. Per ora.');
   clueSpot(A.lock, 'serratura', 'Esamina la serratura', [
     'La serratura della porta è intatta. Nessun graffio, nessuno scasso.',
     'Chi è entrato aveva la chiave. O è entrato con qualcuno che ce l\'aveva. O era già dentro.',
-  ], 1.6);
+  ], 1.6, 'Una serratura. Molto serratura. Tutto qui.');
   clueSpot(A.prints, 'impronte', 'Esamina le impronte sulla vetrina', [
     'Sulla vetrina ci sono impronte. Appiccicose. Molto appiccicose.',
     'Chiunque le abbia lasciate aveva le dita piene di colla.',
-  ], 1.6);
-  clueSpot(A.bin, 'biglietto', 'Fruga nel bidone', [
-    'Nel bidone: carta. Altra carta. Un disegno di un bidone (meta).',
-    'E una ricevuta stropicciata: "Mercato Nero, asta di mezzanotte. Lotto 7: tappo giallo. Venditore: G."',
-  ]);
+  ], 1.6, 'Una vetrina sporca. Qualcuno la dovrebbe pulire. Con qualcosa che non sia colla.');
+  // il bidone sul retro è vuoto: la carta è già al macero
+  g.addInteractable({
+    pos: A.bin,
+    label: () => 'Fruga nel bidone',
+    use: (g) =>
+      g.talk(narr(['Il bidone è vuoto. Completamente.', 'Sul coperchio, un adesivo: "Svuotato alle 8. Tutto al macero, dietro i Grandi Magazzini."']), null, () => g.flag('knowMacero')),
+  });
+  g.addInteractable({
+    pos: A.macero,
+    radius: 2.6,
+    label: () => 'Fruga nel macero',
+    use: (g) => {
+      if (g.quest('c3') < 2 || g.hasClue('biglietto')) {
+        g.talk(narr(['Carta. Carta. Carta. Un disegno di un bidone (meta). Altra carta.']));
+        return;
+      }
+      g.talk(
+        narr([
+          'Carta. Carta. Un calendario dell\'anno prossimo, già usato. Altra carta.',
+          'Frughi a lungo. Molto a lungo. Ti viene il dubbio di essere tu stesso carta.',
+          'Poi, in mezzo ai volantini del vicolo, una ricevuta stropicciata.',
+          '"Mercato Nero, asta di mezzanotte. Lotto 7: tappo giallo. Venditore: G."',
+          'In un angolo, qualcuno ha disegnato una piccola scopa. Distrattamente. Come chi spazza tutto il giorno.',
+        ]),
+        null,
+        () => g.findClue('biglietto'),
+      );
+    },
+  });
   g.addInteractable({
     pos: A.case,
     label: () => 'Guarda la teca vuota',

@@ -1,38 +1,40 @@
 import { npcHead, type QuestDef } from '../../game/quests';
 import type { ClueDef } from '../../game/game';
 
-export const CLUES_NEEDED = 3;
+export const CLUES_NEEDED = 4;
 
-// Gli indizi del furto. Quelli con "decisive" inchiodano il colpevole (Gustavo, il commesso).
-export const CLUES: Record<string, ClueDef & { decisive?: boolean }> = {
+// Gli indizi del furto.
+//  - insider: provano che è stato qualcuno con la chiave (ma le chiavi le hanno in due)
+//  - decisive: riguardano proprio Gustavo, il commesso: servono per arrestarlo
+export const CLUES: Record<string, ClueDef & { decisive?: boolean; insider?: boolean }> = {
   vetri: {
     name: 'Cocci fuori dalla vetrina',
     desc: 'I pezzi di vetro sono sul marciapiede, fuori. La vetrina è stata rotta da dentro.',
-    decisive: true,
+    insider: true,
   },
   serratura: {
     name: 'Serratura intatta',
     desc: 'Nessun graffio, nessun segno di scasso. Chi è entrato aveva la chiave.',
-    decisive: true,
-  },
-  biglietto: {
-    name: "Ricevuta dell'asta",
-    desc: '"Mercato Nero, asta di mezzanotte. Lotto 7: tappo giallo. Venditore: G." Era nel bidone sul retro.',
-    decisive: true,
+    insider: true,
   },
   balcone: {
     name: 'Il testimone del balcone',
-    desc: 'Alle tre qualcuno è uscito dal retro del banco chiudendo a chiave. Fischiettava. Cappellino girato al contrario.',
-    decisive: true,
+    desc: "Alle tre qualcuno è uscito dal retro chiudendo a chiave. Fischiettava. Il lampione era spento: il testimone non ha visto chi.",
+    insider: true,
   },
   luce: {
     name: 'La luce accesa',
     desc: 'Alle tre la luce del banco era accesa. Un ladro vero non accende la luce: chi era dentro si sentiva a casa.',
-    decisive: true,
+    insider: true,
   },
   vicino: {
     name: 'Gustavo non era a casa',
-    desc: 'Il vicino insonne di Gustavo giura che stanotte alle tre Gustavo non era in casa.',
+    desc: 'Il vicino di Gustavo giura che stanotte alle tre Gustavo non era in casa. Gustavo invece dice di sì.',
+    decisive: true,
+  },
+  biglietto: {
+    name: "Ricevuta dell'asta",
+    desc: '"Mercato Nero, asta di mezzanotte. Lotto 7: tappo giallo. Venditore: G." In un angolo, il disegnino di una scopa. Era al macero.',
     decisive: true,
   },
   impronte: {
