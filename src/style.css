@@ -383,13 +383,12 @@ body.touch #hud .choice { padding: 6px 8px; }
 .touch-ui.free .tb { display: flex; }
 .touch-ui .tb.down { background: rgba(30, 29, 36, .28); }
 .touch-ui .tb.hide { display: none !important; }
-.touch-ui .b-fire { right: 24px; bottom: 26px; width: 94px; height: 94px; font-size: 15px; border-width: 3px; }
-.touch-ui .b-parry { right: 130px; bottom: 18px; }
-.touch-ui .b-jump { right: 36px; bottom: 134px; }
-.touch-ui .b-crouch { right: 118px; bottom: 96px; }
-.touch-ui .b-reload { right: 196px; bottom: 30px; font-size: 10px; }
-.touch-ui .b-weapon { right: 104px; bottom: 170px; width: 50px; height: 50px; font-size: 11px; }
-.touch-ui .b-use { right: 194px; bottom: 118px; width: 68px; height: 68px; font-size: 15px; background: rgba(250, 247, 238, .65); border-color: var(--ink); }
+.touch-ui .b-jump { right: 24px; bottom: 26px; width: 86px; height: 86px; font-size: 15px; border-width: 3px; }
+.touch-ui .b-parry { right: 122px; bottom: 22px; width: 64px; height: 64px; font-size: 13px; }
+.touch-ui .b-crouch { right: 38px; bottom: 124px; }
+.touch-ui .b-reload { right: 116px; bottom: 102px; font-size: 10px; }
+.touch-ui .b-weapon { right: 198px; bottom: 32px; width: 52px; height: 52px; font-size: 11px; }
+.touch-ui .b-use { right: 196px; bottom: 112px; width: 68px; height: 68px; font-size: 15px; background: rgba(250, 247, 238, .65); border-color: var(--ink); }
 .touch-ui .b-pause, .touch-ui .b-journal { top: 10px; height: 38px; border-radius: 12px 9px 13px 10px; }
 .touch-ui .b-pause { left: calc(50% + 6px); width: 46px; font-size: 14px; }
 .touch-ui .b-journal { left: calc(50% - 76px); width: 74px; font-size: 12px; }
@@ -407,8 +406,14 @@ html.compact #hud .stats, html.compact #hud .objectives, html.compact #hud .toas
 html.compact #hud .prompt, html.compact #hud .ammo, html.compact #hud .chapter { zoom: .68; }
 html.compact #hud .dialogue, html.compact #hud .diario { zoom: .72; }
 html.compact .screen .card, html.compact .screen .menu-page { zoom: .7; }
-html.compact body.touch #hud .ammo { right: 250px; bottom: 16px; }
+/* (con zoom anche le distanze si rimpiccioliscono: 420px ≈ 285px sullo schermo) */
+html.compact body.touch #hud .ammo { right: 420px; bottom: 20px; }
 
 /* telefono tenuto in orizzontale con lo schermo bloccato in verticale: il gioco si disegna girato */
 html.rotated, html.rotated body { overflow: hidden; }
 html.rotated body { position: fixed; left: 0; top: 0; transform-origin: 0 0; }
+
+/* conferme del gioco (al posto delle finestre del browser) */
+.card .buttons.row { flex-direction: row; justify-content: center; flex-wrap: wrap; }
+.card.confirm { max-width: min(520px, calc(var(--gw, 100vw) * 0.92)); }
+.card.confirm .sub { margin: 10px 0 20px; }

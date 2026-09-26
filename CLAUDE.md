@@ -78,7 +78,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   lo ricostruisce e lo pubblica a ogni push su `main` (repo pubblico, `vite.config.ts` con
   `base: './'`).
 - **Telefono** (`src/touch.ts` rileva il touch; `?touch=1` lo forza su computer per provarlo):
-  `src/ui/touch.ts` disegna joystick, zona per la visuale e pulsanti, e scrive in `Input`
+  `src/ui/touch.ts` disegna joystick, zona per la visuale e pulsanti (un tocco veloce sulla metà
+  destra = colpisci/spara al mirino, un colpo per tocco), e scrive in `Input`
   (`moveX/moveY`, `press(azione)`, `hold`, `cycleWeapon`). Niente pointer lock: `input.lock()`
   è virtuale e `input.onLock` avvisa il flusso (pausa). `keyName()` restituisce i nomi dei
   pulsanti (USA, GIÙ, ARMA...), `parryName()`/`attackName()` per i testi su parata e attacco:
@@ -89,6 +90,10 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   lato). `VIEW.w/h` = dimensioni del gioco: **usarle al posto di `window.innerWidth/Height`**, e
   nel CSS `var(--gw)/var(--gh)` al posto di `vw/vh`. I tocchi passano da `toGame()`. "Capovolgi lo
   schermo" nelle impostazioni per l'altro verso. Su iPhone in orizzontale vero: consiglio una volta.
+
+- **Mai `confirm()`/`alert()` del browser**: per le conferme c'è `ask()` in `flow.ts` (foglietto
+  con Sì/No). Sul telefono i clic simulati dopo un tocco vanno ignorati (`Input` li scarta):
+  un tocco = un'azione.
 
 ## Capitoli e salvataggi
 

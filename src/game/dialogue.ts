@@ -62,6 +62,7 @@ export class DialogueRunner {
   private line: ParsedLine | null = null;
   private shown = 0; // caratteri mostrati (effetto macchina da scrivere)
   private choices: Choice[] | null = null;
+  private choicesAt = 0; // quando sono comparse le risposte
   private sel = 0;
   private onEnd: (() => void) | null = null;
   // Chi (o cosa) guardare adesso: la testa si gira verso chi parla, anche se non è
@@ -117,6 +118,7 @@ export class DialogueRunner {
     const ch = n.choices?.filter((c) => !c.if || c.if(this.g));
     if (ch && ch.length) {
       this.choices = ch;
+      this.choicesAt = performance.now();
       this.sel = 0;
       if (this.npc) this.npc.speaking = false;
       this.render();
@@ -188,10 +190,18 @@ export class DialogueRunner {
     if (i % (v?.every ?? 2) === 0) this.g.audio.voice(v, ch);
   }
 
-  // E / Spazio / click
+  get hasChoices() {
+    return this.choices !== null;
+  }
+
+  // E / Spazio / click. Con le risposte in vista conferma quella evidenziata, ma non subito:
+  // chi stava cliccando per far scorrere le battute non deve sceglierne una per sbaglio
   advance() {
     if (!this.active || !this.line) return;
-    if (this.choices) return this.choose(this.sel);
+    if (this.choices) {
+      if (performance.now() - this.choicesAt < 450) return;
+      return this.choose(this.sel);
+    }
     if (this.shown < this.line.text.length) {
       this.shown = this.line.text.length;
       this.render();

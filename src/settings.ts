@@ -149,5 +149,5 @@ export function keyName(action: Action) {
 }
 
 // colpire e parare: mouse su computer, pulsanti sul telefono
-export const attackName = () => (TOUCH ? 'COLPISCI' : 'click');
+export const attackName = () => (TOUCH ? 'un tocco sullo schermo' : 'click');
 export const parryName = () => (TOUCH ? 'il pulsante PARA' : 'il tasto destro');

@@ -3,11 +3,15 @@ import type { Input } from './input';
 import type { Colliders } from './world/collision';
 import { THEME } from './render/palette';
 import { SETTINGS } from './settings';
+import { TOUCH } from './touch';
 import { headTexture, rulerTexture } from './render/textures';
 
 export type Weapon = 'fist' | 'ruler' | 'pistol';
 
-const WALK = 4.2, RUN = 7.5, JUMP = 5.2, GRAVITY = 16, EYE = 1.62, EYE_CROUCH = 1.02, EYE_SEATED = 1.15;
+const WALK = 4.2, JUMP = 5.2, GRAVITY = 16, EYE = 1.62, EYE_CROUCH = 1.02, EYE_SEATED = 1.15;
+// sul telefono si corre un po' più piano e la testa ondeggia meno (su uno schermo piccolo stanca)
+const RUN = TOUCH ? 6.0 : 7.5;
+const BOB = TOUCH ? 0.5 : 1;
 
 export class Player {
   camera: THREE.PerspectiveCamera;
@@ -255,16 +259,17 @@ export class Player {
     const prevBob = this.bob;
     if (len > 0 && onGround) this.bob += dt * (running ? 13 : 9);
     if (Math.floor(prevBob / Math.PI) !== Math.floor(this.bob / Math.PI)) stepped = true;
-    const bobY = onGround && len > 0 ? Math.abs(Math.sin(this.bob)) * (running ? 0.07 : 0.045) : 0;
+    const bobY = onGround && len > 0 ? Math.abs(Math.sin(this.bob)) * (running ? 0.07 : 0.045) * BOB : 0;
     const eyeWant = this.seated ? EYE_SEATED : this.crouching ? EYE_CROUCH : EYE;
     this.eyeH += (eyeWant - this.eyeH) * Math.min(1, dt * (this.seated ? 4 : 10));
     this.camera.position.set(this.pos.x, this.pos.y + this.eyeH + bobY, this.pos.z);
     this.camera.rotation.set(this.pitch, this.yaw, 0);
 
     // braccio: oscillazione + attacco
-    this.sway.x += (input.mouseDX * 0.0004 - this.sway.x) * Math.min(1, dt * 8);
-    this.sway.y += (input.mouseDY * 0.0004 - this.sway.y) * Math.min(1, dt * 8);
-    let ax = 0.42 - this.sway.x + Math.sin(this.bob * 0.5) * (len > 0 ? 0.02 : 0);
+    const swayK = 0.0004 * (TOUCH ? 0.4 : 1);
+    this.sway.x += (input.mouseDX * swayK - this.sway.x) * Math.min(1, dt * 8);
+    this.sway.y += (input.mouseDY * swayK - this.sway.y) * Math.min(1, dt * 8);
+    let ax = 0.42 - this.sway.x + Math.sin(this.bob * 0.5) * (len > 0 ? 0.02 * BOB : 0);
     let ay = -0.62 + this.sway.y - bobY * 0.4 + Math.sin(performance.now() * 0.0015) * 0.006;
     let az = -0.28;
     let rx = 0, rz = 0;

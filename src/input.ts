@@ -40,6 +40,8 @@ export class Input {
       this.mouseDY += e.movementY;
     });
     document.addEventListener('mousedown', (e) => {
+      // sul telefono il browser simula un clic dopo ogni tocco: lo ignoriamo (i tocchi li gestisce ui/touch.ts)
+      if (TOUCH) return;
       if (this.locked && e.button === 0) this.clicked = true;
       if (this.locked && e.button === 2) this.rightDown = true;
     });

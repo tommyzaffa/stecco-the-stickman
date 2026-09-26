@@ -742,7 +742,9 @@ export class Game {
       if (this.dialogue.isOpen) {
         canMove = false;
         this.dialogue.update(dt);
-        if (inp.wasPressed('interact') || inp.pressed.has('Space') || inp.pressed.has('Enter') || inp.clicked) this.dialogue.advance();
+        // sul telefono un tocco fa solo scorrere le battute: le risposte si scelgono toccandole
+        const tap = inp.clicked && !(TOUCH && this.dialogue.hasChoices);
+        if (inp.wasPressed('interact') || inp.pressed.has('Space') || inp.pressed.has('Enter') || tap) this.dialogue.advance();
         for (let i = 0; i < 9; i++) if (inp.pressed.has(`Digit${i + 1}`)) this.dialogue.choose(i);
         if (inp.wasPressed('forward') || inp.pressed.has('ArrowUp')) this.dialogue.moveSel(-1);
         if (inp.wasPressed('back') || inp.pressed.has('ArrowDown')) this.dialogue.moveSel(1);

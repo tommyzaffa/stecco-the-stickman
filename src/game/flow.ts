@@ -43,8 +43,8 @@ export function unlockChapter(n: number) {
 const controls = () => TOUCH ? `
   <div class="controls">
     <div><b>pollice sinistro</b> muoviti (in fondo corri)</div><div><b>trascina a destra</b> guardati intorno</div>
-    <div><b>COLPISCI</b> colpisci / spara</div><div><b>PARA</b> tieni premuto per parare</div>
-    <div><b>USA</b> parla / interagisci</div><div><b>GIÙ</b> accovacciati</div>
+    <div><b>tocca lo schermo</b> colpisci / spara (al mirino)</div><div><b>PARA</b> tieni premuto per parare</div>
+    <div><b>USA</b> parla / interagisci</div><div><b>SALTA</b> / <b>GIÙ</b> salta / accovacciati</div>
     <div><b>ARMA</b> cambia arma</div><div><b>❚❚</b> pausa</div>
   </div>` : `
   <div class="controls">
@@ -84,6 +84,26 @@ export function setupFlow(g: Game) {
     g.hud.root.classList.remove('in-menu');
   };
   const action = (e: MouseEvent) => (e.target as HTMLElement).closest('button') as Btn | null;
+
+  // Conferma "nostra" (al posto delle finestre del browser): foglietto con Sì / No
+  const ask = (o: { title: string; text: string; yes: string; no: string; onYes: () => void; onNo: () => void; kind?: 'menu' | 'overlay' }) => {
+    show(
+      `<div class="card paper confirm">
+        <div class="title small">${o.title}</div>
+        <div class="sub">${o.text}</div>
+        <div class="buttons row">
+          <button data-a="no">${o.no}</button>
+          <button class="primary" data-a="yes">${o.yes}</button>
+        </div>
+      </div>`,
+      (e) => {
+        const a = action(e)?.dataset.a;
+        if (a === 'yes') o.onYes();
+        else if (a === 'no') o.onNo();
+      },
+      o.kind ?? 'overlay',
+    );
+  };
 
   // ?cap=N nell'indirizzo: scorciatoia per i test (compare come primo pulsante del menu)
   const capParam = Number(new URLSearchParams(location.search).get('cap'));
@@ -163,8 +183,16 @@ export function setupFlow(g: Game) {
           return begin();
         }
         if (a === 'new') {
-          if (saved && !confirm('Ricominciare dal capitolo 1? Il salvataggio verrà sostituito.')) return;
-          return startChapter(1, true);
+          if (!saved) return startChapter(1, true);
+          return ask({
+            title: 'Nuova partita?',
+            text: 'Si ricomincia dal capitolo 1 e il salvataggio di adesso viene sostituito.',
+            yes: 'Sì, ricomincia',
+            no: 'No, torna indietro',
+            onYes: () => startChapter(1, true),
+            onNo: mainMenu,
+            kind: 'menu',
+          });
         }
         if (a === 'chapters') return chaptersMenu();
         if (a === 'settings') return settingsMenu(mainMenu);
@@ -204,8 +232,16 @@ export function setupFlow(g: Game) {
         if (a === 'back') return mainMenu();
         if (a === 'ch') {
           const n = Number(b!.dataset.n);
-          if (Game.loadSave() && !confirm(`Iniziare dal capitolo ${n}? Il salvataggio verrà sostituito.`)) return;
-          return startChapter(n, true);
+          if (!Game.loadSave()) return startChapter(n, true);
+          return ask({
+            title: `Capitolo ${n}?`,
+            text: 'Parti con lo stretto necessario e il salvataggio di adesso viene sostituito.',
+            yes: 'Sì, inizia',
+            no: 'No, torna indietro',
+            onYes: () => startChapter(n, true),
+            onNo: () => chaptersMenu(),
+            kind: 'menu',
+          });
         }
         if (a === 'pwd') {
           const val = (screen.querySelector('.password input') as HTMLInputElement).value.trim().toUpperCase();
@@ -324,8 +360,14 @@ export function setupFlow(g: Game) {
         } else if (a === 'settings') {
           settingsMenu(pauseMenu, 'overlay');
         } else if (a === 'menu') {
-          if (!confirm("Tornare al menu? Quando continuerai, ripartirai dall'inizio di questo capitolo.")) return;
-          mainMenu();
+          ask({
+            title: 'Tornare al menu?',
+            text: "Quando continuerai, ripartirai dall'inizio di questo capitolo.",
+            yes: 'Sì, torna al menu',
+            no: 'No, resto qui',
+            onYes: mainMenu,
+            onNo: pauseMenu,
+          });
         }
       },
     );

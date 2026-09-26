@@ -6,13 +6,16 @@ import { toGame } from '../view';
 // Comandi a schermo per il telefono (in orizzontale):
 //  - metà sinistra: joystick che compare dove appoggi il pollice
 //  - metà destra: trascina per guardarti intorno
-//  - pulsanti trasparenti: COLPISCI (tieni premuto = a raffica, e trascinando giri la visuale),
-//    PARA (tieni premuto), SALTA, GIÙ, USA, RICARICA, ARMA, DIARIO, pausa
+//  - un tocco veloce sulla metà destra = colpisci (o spari) dove punta il mirino, un colpo per tocco
+//  - pulsanti trasparenti: SALTA, PARA (tieni premuto), GIÙ, USA, RICARICA, ARMA, DIARIO, pausa
 //  - nei dialoghi: tocca per andare avanti, tocca una risposta per sceglierla
 // Scrive tutto dentro Input, come se fossero tasti e mouse.
 // ---------------------------------------------------------------------------
 
 const LOOK_SPEED = 1.9; // pixel di trascinamento → come pixel di mouse
+// un tocco è un "colpo" se è breve e il dito non si è quasi mosso
+const TAP_MS = 280;
+const TAP_MOVE = 12;
 const STICK_R = 56;
 
 const el = (tag: string, cls: string, parent: HTMLElement, html = '') => {
@@ -30,8 +33,6 @@ export class TouchUI {
   private stickId: number | null = null;
   private stickOrigin = { x: 0, y: 0 };
   private looks = new Map<number, { x: number; y: number; t: number; moved: number }>();
-  private fireHeld = false;
-  private fireNext = 0;
   private btn: Record<string, HTMLElement> = {};
 
   constructor(private g: Game) {
@@ -54,22 +55,7 @@ export class TouchUI {
     right.addEventListener('touchcancel', (e) => this.lookEnd(e));
 
     const inp = g.input;
-    // pulsanti
-    const fire = this.button('fire', 'COLPISCI', 'b-fire');
-    fire.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      this.fireHeld = true;
-      this.fireNext = 0;
-      this.trackLook(e);
-    }, { passive: false });
-    fire.addEventListener('touchmove', (e) => this.lookMove(e), { passive: false });
-    const fireEnd = (e: TouchEvent) => {
-      this.fireHeld = false;
-      this.lookEnd(e);
-    };
-    fire.addEventListener('touchend', fireEnd);
-    fire.addEventListener('touchcancel', fireEnd);
-
+    // pulsanti (per colpire basta toccare lo schermo: si colpisce dove punta il mirino)
     const parry = this.button('parry', 'PARA', 'b-parry');
     parry.addEventListener('touchstart', (e) => {
       e.preventDefault();
@@ -191,7 +177,12 @@ export class TouchUI {
   }
 
   private lookEnd(e: TouchEvent) {
-    for (const t of Array.from(e.changedTouches)) this.looks.delete(t.identifier);
+    for (const t of Array.from(e.changedTouches)) {
+      const l = this.looks.get(t.identifier);
+      this.looks.delete(t.identifier);
+      // tocco veloce e fermo: colpisci
+      if (l && l.moved < TAP_MOVE && performance.now() - l.t < TAP_MS && this.root.classList.contains('free')) this.g.input.clicked = true;
+    }
   }
 
   // chiamato a ogni frame: quali pulsanti mostrare
@@ -212,20 +203,12 @@ export class TouchUI {
     this.btn.weapon.classList.toggle('hide', !(g.has('righello') || g.has('pistola')));
     this.btn.use.classList.toggle('hide', !g.hasFocus);
     this.btn.crouch.classList.toggle('down', p.crouching);
-    this.btn.fire.textContent = p.weapon === 'pistol' ? 'SPARA' : 'COLPISCI';
     if (!free) {
-      this.fireHeld = false;
       if (this.stickId !== null) {
         this.stickId = null;
         this.stick.classList.remove('on');
       }
       inp.moveX = inp.moveY = 0;
-      return;
-    }
-    // COLPISCI tenuto premuto: un colpo ogni tanto (i pugni e la pistola hanno già il loro ritmo)
-    if (this.fireHeld && g.time >= this.fireNext) {
-      inp.clicked = true;
-      this.fireNext = g.time + (p.weapon === 'pistol' ? 0.28 : 0.35);
     }
   }
 }
