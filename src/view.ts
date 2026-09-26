@@ -15,11 +15,25 @@ export const VIEW = {
   w: typeof innerWidth === 'number' ? innerWidth : 1280, // larghezza del gioco (px CSS)
   h: typeof innerHeight === 'number' ? innerHeight : 720,
   rot: 0 as 0 | 90 | -90, // rotazione applicata alla pagina
+  needLock: false, // iPhone in Safari girato in orizzontale: si gioca solo col blocco rotazione
 };
+
+// ?iphone=1 nell'indirizzo simula un iPhone (per provare l'avviso sul computer)
+export const IPHONE = /iPhone|iPod/.test(navigator.userAgent) || new URLSearchParams(location.search).has('iphone');
+// aperto dalla schermata Home: già a tutto schermo, in qualunque verso
+export const STANDALONE =
+  (navigator as Navigator & { standalone?: boolean }).standalone === true ||
+  matchMedia('(display-mode: standalone)').matches ||
+  matchMedia('(display-mode: fullscreen)').matches;
 
 export function updateView() {
   const sw = window.innerWidth, sh = window.innerHeight;
   const rotate = TOUCH && sh > sw;
+  // Su iPhone in Safari l'orizzontale "vero" ha le barre del browser sopra e sotto: si gioca
+  // girando il telefono con il blocco rotazione attivo (lo schermo resta verticale e il gioco
+  // si disegna girato). Su Android e dalla schermata Home si è già a tutto schermo: niente blocco.
+  VIEW.needLock = TOUCH && IPHONE && !STANDALONE && sw > sh;
+  document.documentElement.classList.toggle('need-lock', VIEW.needLock);
   VIEW.rot = rotate ? (SETTINGS.flip ? -90 : 90) : 0;
   VIEW.w = rotate ? sh : sw;
   VIEW.h = rotate ? sw : sh;

@@ -1,6 +1,6 @@
 import type { Game } from '../game/game';
 import type { Action } from '../settings';
-import { toGame } from '../view';
+import { VIEW, toGame } from '../view';
 
 // ---------------------------------------------------------------------------
 // Comandi a schermo per il telefono (in orizzontale):
@@ -38,6 +38,19 @@ export class TouchUI {
   constructor(private g: Game) {
     document.body.classList.add('touch');
     this.root = el('div', 'touch-ui', document.body);
+    // iPhone girato senza blocco rotazione: si gioca solo col blocco attivo (vedi view.ts)
+    el(
+      'div',
+      'lock-need',
+      document.body,
+      `<div class="card paper">
+        <div class="phone"><span>🔒</span></div>
+        <div class="title small">Attiva il blocco rotazione</div>
+        <div class="sub">Su iPhone il gioco si gioca con il telefono girato ma lo schermo bloccato: così le barre di Safari finiscono di lato e hai tutto lo schermo.</div>
+        <div class="steps">Apri il <b>Centro di Controllo</b> (scorri giù dall'angolo in alto a destra) e tocca il <b>lucchetto con la freccia</b>. Poi gira il telefono: il gioco si gira da solo.</div>
+        <div class="alt">Oppure: <b>Condividi → Aggiungi alla schermata Home</b>, e da lì giochi a tutto schermo come preferisci.</div>
+      </div>`,
+    );
 
     // zone: sinistra = joystick, destra = visuale (i pulsanti stanno sopra)
     const left = el('div', 'tz tz-left', this.root);
@@ -189,6 +202,8 @@ export class TouchUI {
   update() {
     const g = this.g;
     const inp = g.input;
+    // girato senza blocco rotazione: il gioco va in pausa finché non lo attivi
+    if (VIEW.needLock && inp.locked) inp.unlock();
     const playing = g.mode === 'play' && inp.locked && !g.hud.screenVisible;
     const talk = playing && g.dialogue.isOpen;
     const dance = playing && !!g.minigame && !talk;

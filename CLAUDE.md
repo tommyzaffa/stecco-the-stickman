@@ -89,7 +89,9 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   la pagina si disegna girata di 90° e si gioca tenendolo in orizzontale (barre di Safari di
   lato). `VIEW.w/h` = dimensioni del gioco: **usarle al posto di `window.innerWidth/Height`**, e
   nel CSS `var(--gw)/var(--gh)` al posto di `vw/vh`. I tocchi passano da `toGame()`. "Capovolgi lo
-  schermo" nelle impostazioni per l'altro verso. Su iPhone in orizzontale vero: consiglio una volta.
+  schermo" nelle impostazioni per l'altro verso. **Su iPhone in Safari** girato in orizzontale vero
+  (blocco rotazione spento) il gioco va in pausa con l'avviso "Attiva il blocco rotazione"
+  (`VIEW.needLock`; `?iphone=1` lo simula). Android, iPad e schermata Home: nessun blocco.
 
 - **Mai `confirm()`/`alert()` del browser**: per le conferme c'è `ask()` in `flow.ts` (foglietto
   con Sì/No). Sul telefono i clic simulati dopo un tocco vanno ignorati (`Input` li scarta):

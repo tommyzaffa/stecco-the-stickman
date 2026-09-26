@@ -30,7 +30,7 @@ Funziona anche da telefono, in orizzontale: joystick a sinistra, trascina a dest
 intorno, tocca lo schermo per colpire (dove punta il mirino), pulsanti trasparenti per saltare,
 parare, abbassarti, usare. Col blocco rotazione attivo il
 gioco si gira da solo (e le barre del browser finiscono di lato); aggiunto alla schermata Home si
-apre a tutto schermo.
+apre a tutto schermo. Su iPhone in Safari si gioca col blocco rotazione attivo (il gioco lo chiede).
 
 ## Avvio in locale
 

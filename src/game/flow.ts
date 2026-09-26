@@ -9,14 +9,7 @@ import { TOUCH } from '../touch';
 // ---------------------------------------------------------------------------
 
 const UNLOCK_KEY = 'stilizzato.unlocked.v1';
-const LOCK_HINT_KEY = 'stilizzato.hintBloccoRotazione.v1';
 
-const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-// aperto dalla schermata Home (già a tutto schermo)
-const isStandalone = () =>
-  (navigator as Navigator & { standalone?: boolean }).standalone === true ||
-  matchMedia('(display-mode: standalone)').matches ||
-  matchMedia('(display-mode: fullscreen)').matches;
 const TOTAL_CHAPTERS = 20;
 
 export function unlockedChapters(): Set<number> {
@@ -118,19 +111,6 @@ export function setupFlow(g: Game) {
     g.chapterDef.start(g);
     hide();
     g.input.lock();
-    // iPhone in Safari tenuto in orizzontale vero: un consiglio, una volta sola (non obbligatorio)
-    if (TOUCH && isIOS() && !isStandalone() && window.innerWidth > window.innerHeight) {
-      try {
-        if (!localStorage.getItem(LOCK_HINT_KEY)) {
-          localStorage.setItem(LOCK_HINT_KEY, '1');
-          g.after(3, () =>
-            g.toast('<b>Consiglio</b>: attiva il <b>blocco rotazione</b> e tieni il telefono in orizzontale: il gioco si gira da solo e le barre di Safari finiscono di lato. Più schermo per te.<br><small>Oppure aggiungilo alla schermata Home: tutto schermo.</small>', 'info', 11000),
-          );
-        }
-      } catch {
-        /* niente */
-      }
-    }
     // telefono: schermo intero e orizzontale, dove il browser lo permette (su iPhone no)
     if (TOUCH && !document.fullscreenElement) {
       document.documentElement
