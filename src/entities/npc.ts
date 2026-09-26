@@ -4,7 +4,7 @@ import { Stickman, StickDog, type Action } from './stickman';
 export type Behavior =
   | { type: 'stand' }
   | { type: 'sit' }
-  | { type: 'patrol'; path: [number, number][]; speed: number; wait?: number }
+  | { type: 'patrol'; path: [number, number][]; speed: number; wait?: number; once?: boolean } // once: percorre la strada una volta e si ferma
   | { type: 'circle'; cx: number; cz: number; r: number; speed: number }
   | { type: 'follow'; target: () => THREE.Vector3; dist: number; speed: number };
 
@@ -21,6 +21,8 @@ export class NPC {
   controlled = false; // quando true il movimento lo decide il sistema di combattimento
   noTurn = false; // non si gira verso chi gli parla (es. chi spinge un'auto)
   ctrlSpeed = 0;
+  // chi ti segue non taglia attraverso i muri: il gioco gli indica un punto delle tue tracce
+  waypoint: THREE.Vector3 | null = null;
   private pathIdx = 0;
   private waitT = 0;
   private angle = 0;
@@ -130,8 +132,14 @@ export class NPC {
           const [tx, tz] = b.path[this.pathIdx];
           speed = this.moveTo(tx, tz, b.speed, dt);
           if (Math.hypot(tx - this.pos.x, tz - this.pos.z) < 0.1) {
-            this.pathIdx = (this.pathIdx + 1) % b.path.length;
-            this.waitT = b.wait ?? 0;
+            if (b.once) {
+              // strada fatta una volta sola: si ferma all'ultimo punto
+              if (this.pathIdx < b.path.length - 1) this.pathIdx++;
+              else this.waitT = Infinity;
+            } else {
+              this.pathIdx = (this.pathIdx + 1) % b.path.length;
+              this.waitT = b.wait ?? 0;
+            }
           }
           break;
         }
@@ -145,7 +153,9 @@ export class NPC {
         case 'follow': {
           const t = b.target();
           const d = Math.hypot(t.x - this.pos.x, t.z - this.pos.z);
-          if (d > b.dist) speed = this.moveTo(t.x, t.z, d > b.dist * 3 ? b.speed * 1.8 : b.speed, dt);
+          const w = this.waypoint;
+          if (w && d > b.dist) speed = this.moveTo(w.x, w.z, d > b.dist * 3 ? b.speed * 1.6 : b.speed, dt);
+          else if (d > b.dist) speed = this.moveTo(t.x, t.z, d > b.dist * 3 ? b.speed * 1.6 : b.speed, dt);
           else this.face(t.x, t.z, dt, 3);
           break;
         }

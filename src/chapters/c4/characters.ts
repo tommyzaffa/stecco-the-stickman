@@ -5,6 +5,7 @@ import type { FighterOpts } from '../../game/combat';
 import { Stickman } from '../../entities/stickman';
 import { CERA, THEME } from '../../render/palette';
 import { raidCrash } from './raid';
+import { presentLot, sendLot } from './auction';
 import { rangeRunning } from './range';
 
 // ---------------------------------------------------------------------------
@@ -22,6 +23,15 @@ function waxGun(color: string) {
   const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.24, 0.07).translate(0, -0.12, 0), new THREE.MeshBasicMaterial({ color }));
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.13).translate(0, -0.03, -0.07), new THREE.MeshBasicMaterial({ color: THEME.inkHex }));
   grp.add(barrel, grip);
+  return grp;
+}
+
+// lama di temperino (per gli Appuntiti)
+function knife() {
+  const grp = new THREE.Group();
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.26, 0.06).translate(0, -0.2, 0), new THREE.MeshBasicMaterial({ color: '#d9d4c8' }));
+  const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.1, 0.05).translate(0, -0.04, 0), new THREE.MeshBasicMaterial({ color: THEME.inkHex }));
+  grp.add(blade, handle);
   return grp;
 }
 
@@ -827,17 +837,49 @@ export function createCharacters(g: Game) {
     if (n.body instanceof Stickman) n.body.prop.add(waxGun(color));
     return n;
   };
-  pastello('pRosso', 'Pastello Rosso', CERA.rosso);
-  pastello('pBlu', 'Pastello Blu', CERA.blu);
-  pastello('pVerde', 'Pastello Verde', CERA.verde);
-  pastello('pArancione', 'Pastello Arancione', CERA.arancione);
-  const w2 = (color: string) => ({ hp: 70, ranged: { accuracy: 0.5, dmg: 8, aim: 0.9, color, hide: [1.2, 2.4] as [number, number] } });
+  // prima ondata: 75 di cera, mirano bene se stai fermo
+  const w1 = (color: string) => ({ hp: 75, ranged: { accuracy: 0.6, dmg: 8, aim: 0.85, color, hide: [0.9, 2.0] as [number, number] } });
+  pastello('pRosso', 'Pastello Rosso', CERA.rosso, w1(CERA.rosso));
+  pastello('pBlu', 'Pastello Blu', CERA.blu, w1(CERA.blu));
+  pastello('pVerde', 'Pastello Verde', CERA.verde, w1(CERA.verde));
+  pastello('pArancione', 'Pastello Arancione', CERA.arancione, w1(CERA.arancione));
+  const w2 = (color: string) => ({ hp: 85, ranged: { accuracy: 0.58, dmg: 8, aim: 0.8, color, hide: [0.9, 1.9] as [number, number] } });
   pastello('pMarrone', 'Pastello Marrone', CERA.marrone, w2(CERA.marrone));
   pastello('pNero', 'Pastello Nero', '#34302c', w2('#34302c'));
   pastello('pCeleste', 'Pastello Celeste', '#47a7d8', w2('#47a7d8'));
   pastello('pOcra', 'Pastello Ocra', '#c99a2e', w2('#c99a2e'));
+  pastello('pRame', 'Pastello Rame', '#b8733e', w2('#b8733e'));
   pastello('pRosso2', 'Pastello Rosso (di scorta)', CERA.rosso, w2(CERA.rosso));
   pastello('pVerde2', 'Pastello Verde (di scorta)', CERA.verde, w2(CERA.verde));
+
+  // gli Appuntiti: niente pistola, un temperino aperto e tanta fretta. Corrono a zig-zag.
+  const appuntito = (id: string, name: string, color: string) => {
+    const n = g.addNpc({
+      id,
+      name,
+      pos: [0, -300],
+      hidden: true,
+      look: { highlighter: color, hat: 'crayon', scale: 0.92 },
+      fighter: {
+        hp: 45,
+        speed: 6.4,
+        dmg: 15,
+        reach: 1.6,
+        windup: 0.45,
+        cooldown: 0.7,
+        parries: [1, 1],
+        zigzag: true,
+        alertLine: pick(['TI FACCIO LA PUNTA!', 'Temperino in arrivo!', 'Appuntito e arrabbiato!']),
+        hurtLines: ['Ahi!', 'Mi hai smussato!', 'Non vale, da lontano!'],
+        koLine: pick(['Mi sono spuntato...', 'Troppo appuntito per vivere...', 'Tempera... tempera...']),
+      },
+    });
+    if (n.body instanceof Stickman) n.body.prop.add(knife());
+  };
+  appuntito('aGiallo', 'Appuntito Giallo', '#e0b400');
+  appuntito('aBianco', 'Appuntito Bianco', '#e8e2d0');
+  appuntito('aNero', 'Appuntito Nero', '#34302c');
+  appuntito('aRosso', 'Appuntito Rosso', CERA.rosso);
   pastello(
     'pastellone',
     'Il Pastellone',
@@ -848,36 +890,58 @@ export function createCharacters(g: Game) {
       alertLine: 'CHI HA SPUNTATO I MIEI FRATELLI?!',
       hurtLines: ['Solletico!', 'Sono a cera spessa, io!', 'TOC TOC. Chi è? Nessuno.'],
       koLine: 'Mi... sono... consumato...',
-      ranged: { accuracy: 0.45, dmg: 9, aim: 1.2, color: CERA.viola, burst: 3, sharpenEvery: 6, armor: 0.3, hide: [1.4, 2.2] },
+      ranged: { accuracy: 0.55, dmg: 11, aim: 1.1, color: CERA.viola, burst: 3, sharpenEvery: 6, armor: 0.3, hide: [1.2, 2.0] },
     },
     1.4,
   );
 }
 
-// L'asta di mezzanotte: si apre quando il banditore dice "si comincia"
+// L'asta di mezzanotte: si apre quando il banditore dice "si comincia" (dopo lo stacco in ultima fila)
 export const auctionDialogue = (): Dialogue => ({
   name: 'Banditore',
   start: 'inizio',
   nodes: {
     inizio: {
-      do: (g) => {
-        g.audio.gavel();
-        g.npc('banditore').baseAction = 'gavel';
-      },
       say: [
         '* Il banditore batte il martelletto sul leggio. TOC.',
         'Signore, signori, e chiunque altro! Asta di mezzanotte!',
+      ],
+      next: 'lotto5',
+    },
+    lotto5: {
+      do: (g) => (g.world.props.idea.visible = true),
+      look: (g) => g.world.anchors.lotto,
+      say: [
         'Lotto cinque: un\'idea. Usata una volta sola, da un filosofo di San Scarabocchio. Non ha portato a niente.',
+        '* Sul piedistallo c\'è una lampadina disegnata. Spenta.',
         '@Collezionista| Due monete.',
         'Aggiudicata! TOC!',
+      ],
+      next: 'lotto6',
+    },
+    lotto6: {
+      do: (g) => {
+        g.world.props.idea.visible = false;
+        g.after(1.5, () => g.audio.applause());
+      },
+      look: (g) => g.world.anchors.lotto,
+      say: [
         'Lotto sei: il suono di un applauso. Solo il suono: le mani non sono incluse. Come sempre.',
+        '* Da qualche parte parte un applauso. Il piedistallo è vuoto.',
         '@Signora Pelliccia| Tre monete.',
         '@Salutatore| Ciao Gianna!',
         'Quattro monete dal signore che saluta! Aggiudicato!',
         '@Salutatore| No, stavo salutando...',
         'Aggiudicato è aggiudicato. TOC!',
+      ],
+      next: 'lotto7',
+    },
+    lotto7: {
+      do: () => presentLot(),
+      look: (g) => g.world.props.lotto.position,
+      say: [
         'E ora... il pezzo forte della serata! Il lotto sette!',
-        '* L\'assistente solleva un cuscinetto. Sopra c\'è il tappo giallo fluo. Sbiadito, ma inconfondibile.',
+        '* L\'assistente va al piedistallo e solleva il tappo giallo fluo. Sbiadito, ma inconfondibile.',
         '@Marco| È lui! Il tappo! Ciao tappo!',
         'Base d\'asta: dieci monete!',
       ],
@@ -903,7 +967,7 @@ export const auctionDialogue = (): Dialogue => ({
     mano: {
       say: [
         '* Alzi il braccio. Dove dovrebbe esserci una mano c\'è la fine del braccio.',
-        'Il signore alza... il braccio! Vale come offerta! Dieci monete!',
+        'Il signore in ultima fila alza... il braccio! Vale come offerta! Dieci monete!',
         '> Non ho dieci monete.',
         'Adesso sì che è un\'asta.',
       ],
@@ -923,22 +987,17 @@ export const auctionDialogue = (): Dialogue => ({
         'Più uno cosa?',
         '@Pneumatica| Dice: "Più uno e basta. Voi capite."',
         'Nessuno capisce, ma è moltissimo!',
+        'AGGIUDICATO alla signorina al telefono! TOC!',
+        '> NO! Aspetti!',
       ],
-      next: 'aggiudicato',
-    },
-    aggiudicato: {
-      do: (g) => g.audio.gavel(),
-      say: ['AGGIUDICATO alla signorina al telefono! TOC!', '> NO! Aspetti!'],
       next: 'tubo',
     },
     tubo: {
-      do: (g) => {
-        g.audio.tube();
-        g.world.props.lotto.visible = false;
-      },
+      do: () => sendLot(),
+      look: (g) => g.world.anchors.tubeLook,
       say: [
-        '* L\'assistente infila il tappo nel tubo della posta pneumatica. FIUUUUU.',
-        '* Il tappo sparisce verso l\'alto. Per sempre, o almeno fino all\'indirizzo del destinatario.',
+        '* L\'assistente porta il tappo alla cassetta della posta pneumatica e lo infila nello sportello.',
+        '* FIUUUUU. Il tappo sale nel tubo di vetro e sparisce nel soffitto. Per sempre, o almeno fino all\'indirizzo del destinatario.',
         'Posta pneumatica! Qui si consegna subito, prima che il cliente cambi idea. O che qualcuno spari.',
         '> A chi è andato?!',
         'Riservatezza del cliente. Il Mercato Nero è una cosa seria.',
@@ -947,12 +1006,14 @@ export const auctionDialogue = (): Dialogue => ({
     },
     crash: {
       do: (g) => {
-        g.npc('banditore').baseAction = 'none';
         raidCrash(g);
+        // ti alzi di scatto
+        g.player.seated = false;
       },
+      look: (g) => new THREE.Vector3(-27, 1.4, 1),
       say: [
-        '* CRASH. La barriera del tunnel ovest vola via.',
-        '* Dal buio escono quattro omini colorati. Colorati davvero. Con la punta.',
+        '* CRASH. La barriera del tunnel ovest vola via. Ti alzi di scatto.',
+        '* Dal buio escono omini colorati. Colorati davvero. Con la punta.',
         '@Pastello Rosso| QUESTA È UNA RAPINA! CIOÈ UNO SCARABOCCHIO! CIOÈ... MANI IN ALTO!',
         '@Marco| Qui nessuno ha le mani!',
         '@Pastello Rosso| Allora... TUTTO in alto! E dateci il tappo giallo di Don Fluo!',

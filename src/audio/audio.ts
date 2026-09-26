@@ -364,6 +364,14 @@ export class Sound {
     this.noise(0.05, 0.15, { type: 'bandpass', freq: 900, q: 1.5 });
   }
 
+  // lotto 6: il suono di un applauso (solo il suono)
+  applause() {
+    for (let i = 0; i < 38; i++) {
+      const d = Math.random() * 1.8;
+      this.noise(0.03, 0.05 + Math.random() * 0.05, { type: 'bandpass', freq: 1400 + Math.random() * 1800, q: 1.2 }, { delay: d, pan: Math.random() * 1.2 - 0.6 });
+    }
+  }
+
   // posta pneumatica: FIUUUU
   tube() {
     this.noise(0.9, 0.12, { type: 'bandpass', freq: 400, to: 3500, q: 3 });

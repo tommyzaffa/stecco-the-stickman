@@ -80,6 +80,6 @@ Object.assign(VOICES, {
   pRosso: { base: 270, type: 'sawtooth', spread: 9, every: 1, vol: 0.05 },
   pastellone: { base: 85, type: 'sawtooth', spread: 4, every: 3, vol: 0.08 },
 });
-for (const id of ['pBlu', 'pVerde', 'pArancione', 'pMarrone', 'pNero', 'pCeleste', 'pOcra', 'pRosso2', 'pVerde2']) {
+for (const id of ['pBlu', 'pVerde', 'pArancione', 'pMarrone', 'pNero', 'pCeleste', 'pOcra', 'pRame', 'pRosso2', 'pVerde2', 'aGiallo', 'aBianco', 'aNero', 'aRosso']) {
   VOICES[id] = { base: 230 + Math.random() * 80, type: 'sawtooth', spread: 9, every: 1, vol: 0.045 };
 }

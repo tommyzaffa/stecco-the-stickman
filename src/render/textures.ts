@@ -444,3 +444,14 @@ export function silhouetteTexture(color = '#2a2119') {
   ctx.stroke();
   return toTexture(c);
 }
+
+// Alone morbido (per far notare un oggetto importante, tipo il tappo all'asta)
+export function glowTexture(color: string) {
+  const { c, ctx } = canvas(128, 128);
+  const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
+  g.addColorStop(0, color);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  return toTexture(c);
+}

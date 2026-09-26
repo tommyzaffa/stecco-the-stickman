@@ -1,3 +1,4 @@
+import type * as THREE from 'three';
 import type { Game } from './game';
 import type { NPC } from '../entities/npc';
 import { VOICES } from '../content/voices';
@@ -27,6 +28,8 @@ export interface DNode {
   do?: (g: Game) => void; // eseguito entrando nel nodo
   choices?: Choice[];
   next?: string | ((g: Game) => string | undefined);
+  // dove guardare durante le righe del narratore (es. un oggetto di cui si parla)
+  look?: (g: Game) => THREE.Vector3 | NPC | null;
 }
 
 export interface Dialogue {
@@ -61,6 +64,9 @@ export class DialogueRunner {
   private choices: Choice[] | null = null;
   private sel = 0;
   private onEnd: (() => void) | null = null;
+  // Chi (o cosa) guardare adesso: la testa si gira verso chi parla, anche se non è
+  // il personaggio con cui hai iniziato il dialogo (es. "@Gustavo| ..." arrivato da fuori campo)
+  focus: NPC | THREE.Vector3 | null = null;
 
   constructor(private g: Game) {}
 
@@ -72,6 +78,7 @@ export class DialogueRunner {
     this.active = d;
     this.npc = npc;
     this.onEnd = onEnd ?? null;
+    this.focus = npc;
     if (npc) npc.talking = true;
     this.g.audio.dialogueOpen();
     const id = typeof d.start === 'string' ? d.start : d.start(this.g);
@@ -99,6 +106,8 @@ export class DialogueRunner {
     if (this.lineIdx < n.say.length) {
       this.line = parseLine(this.txt(n.say[this.lineIdx]), this.active!.name);
       this.shown = 0;
+      this.updateFocus(n);
+      this.g.onLine?.(this.line);
       this.choices = null;
       if (this.npc) this.npc.speaking = this.line.kind === 'npc';
       if (this.npc?.isDog && this.line.kind === 'npc') this.g.audio.bark(this.npc.pos);
@@ -115,6 +124,28 @@ export class DialogueRunner {
     }
     const next = typeof n.next === 'function' ? n.next(this.g) : n.next;
     this.enter(next);
+  }
+
+  private updateFocus(n: DNode) {
+    const l = this.line!;
+    if (l.kind === 'narrator') {
+      const t = n.look?.(this.g);
+      if (t) this.focus = t;
+      return;
+    }
+    if (l.kind !== 'npc') return; // quando parli tu, continui a guardare chi stavi guardando
+    if (this.npc && l.who === this.active!.name) {
+      this.focus = this.npc;
+      return;
+    }
+    // qualcun altro: il più vicino con quel nome (e visibile)
+    const p = this.g.player.pos;
+    let best: NPC | null = null;
+    for (const o of this.g.npcs) {
+      if (o.name !== l.who || o.hidden || o.pos.distanceTo(p) > 30) continue;
+      if (!best || o.pos.distanceTo(p) < best.pos.distanceTo(p)) best = o;
+    }
+    if (best) this.focus = best;
   }
 
   private render() {
@@ -194,6 +225,7 @@ export class DialogueRunner {
     }
     this.active = null;
     this.npc = null;
+    this.focus = null;
     this.node = null;
     this.line = null;
     this.choices = null;

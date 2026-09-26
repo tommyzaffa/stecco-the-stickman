@@ -9,7 +9,7 @@ import { Hud, type IconKind, type MarkerKind } from '../ui/hud';
 import type { World } from '../world/builder';
 import { NPC, type Behavior } from '../entities/npc';
 import { Stickman, StickDog, type Action, type StickmanOpts } from '../entities/stickman';
-import { DialogueRunner, type Dialogue } from './dialogue';
+import { DialogueRunner, type Dialogue, type ParsedLine } from './dialogue';
 import type { QuestDef } from './quests';
 import { Combat, type FighterOpts } from './combat';
 import { Guns, CLIP_SIZE, PISTOL_DMG } from './guns';
@@ -147,6 +147,7 @@ export class Game {
   private focus: Interactable | null = null;
   private bubblesThisFrame: { pos: THREE.Vector3; text: string }[] = [];
   private checkpoint = { pos: new THREE.Vector3(), look: new THREE.Vector3(), msg: '' };
+  private trail: THREE.Vector3[] = []; // le tue tracce (per chi ti segue)
 
   state: GameState = freshState();
 
@@ -167,6 +168,7 @@ export class Game {
   onFaint: (() => void) | null = null;
   onChapterComplete: ((g: Game, next: number) => void) | null = null;
   onGameOver: ((title: string, text: string, retry: () => void) => void) | null = null;
+  onLine: ((l: ParsedLine) => void) | null = null; // ogni nuova riga di dialogo (per effetti sonori a tempo)
 
   // Gioco in corso (non su titolo, pausa o schermata finale): decide quanti fps servono.
   get active() {
@@ -235,6 +237,7 @@ export class Game {
     this.chapterTime = 0;
     const sp = this.world.anchors.spawn;
     this.player.pos.set(sp.x, 0, sp.z);
+    this.trail = [];
     this.player.vy = 0;
     this.player.setLook(this.world.anchors.spawnLook ?? sp.clone().add(new THREE.Vector3(0, 1.6, 1)));
     this.setCheckpoint(sp, this.world.anchors.spawnLook ?? sp, 'Ti rialzi. Più o meno intero');
@@ -267,12 +270,17 @@ export class Game {
     this.timers = [];
     this.onKo = () => {};
     this.onFaint = null;
+    this.onLine = null;
     this.clues = {};
     this.combat.restricted = () => false;
     this.combat.nav = [];
     this.audio.clearEmitters();
     this.audio.stopMusic();
     this.player.setCrouch(false);
+    this.player.seated = false;
+    // i timer spariscono con il capitolo: niente schermo nero o svenimenti rimasti a metà
+    this.fade(false);
+    this.fainting = false;
     this.hud.showDiario(null);
     this.minigame = null;
     document.querySelectorAll('.dance').forEach((e) => e.remove());
@@ -715,8 +723,10 @@ export class Game {
         for (let i = 0; i < 9; i++) if (inp.pressed.has(`Digit${i + 1}`)) this.dialogue.choose(i);
         if (inp.wasPressed('forward') || inp.pressed.has('ArrowUp')) this.dialogue.moveSel(-1);
         if (inp.wasPressed('back') || inp.pressed.has('ArrowDown')) this.dialogue.moveSel(1);
-        const n = this.dialogue.npc;
-        if (n) this.player.easeLook(new THREE.Vector3(n.pos.x, n.topY - 0.15, n.pos.z), dt);
+        // la testa si gira verso chi sta parlando (o verso ciò di cui si parla)
+        const f = this.dialogue.focus;
+        if (f instanceof NPC) this.player.easeLook(new THREE.Vector3(f.pos.x, f.topY - 0.15, f.pos.z), dt);
+        else if (f) this.player.easeLook(f, dt);
       } else if (this.hud.diarioOpen) {
         canMove = false;
         if (inp.wasPressed('journal') || inp.pressed.has('Tab') || inp.wasPressed('interact')) this.hud.showDiario(null);
@@ -754,9 +764,13 @@ export class Game {
 
     // PNG
     const pp = this.player.pos;
+    this.updateTrail();
     for (const n of this.npcs) {
       if (n.hidden) continue;
+      const follows = n.behavior.type === 'follow' && !n.controlled && !n.talking;
+      if (follows) this.followWaypoint(n);
       const d = n.update(dt, pp);
+      if (follows) this.world.colliders.resolve(n.pos, 0.3);
       // il giocatore non passa attraverso le persone (a meno che non siano KO)
       const min = this.player.radius + (n.isDog ? 0.25 : 0.3);
       if (d < min && d > 1e-4 && !n.fighter?.ko) {
@@ -804,6 +818,43 @@ export class Game {
     this.updateHud();
     this.post.render(this.time, this.damageFx);
     inp.endFrame();
+  }
+
+  // Tracce del giocatore: un punto ogni 0,7 m (le ultime 120)
+  private updateTrail() {
+    const p = this.player.pos;
+    const last = this.trail[this.trail.length - 1];
+    if (!last || Math.hypot(p.x - last.x, p.z - last.z) > 0.7) {
+      this.trail.push(new THREE.Vector3(p.x, 0, p.z));
+      if (this.trail.length > 120) this.trail.shift();
+    }
+  }
+
+  // Chi ti segue va dritto se ti vede, altrimenti verso il punto più recente delle tue tracce che
+  // riesce a vedere (così passa dalle porte come te). Se resta troppo indietro, fuori vista, ti raggiunge.
+  private followWaypoint(n: NPC) {
+    const b = n.behavior;
+    if (b.type !== 'follow') return;
+    const t = b.target();
+    const col = this.world.colliders;
+    const toPlayer = t === this.player.pos;
+    n.waypoint = null;
+    if (!col.blocked(n.pos.x, n.pos.z, t.x, t.z, false, 0.2) || !toPlayer) return;
+    for (let i = this.trail.length - 1; i >= 0; i--) {
+      const w = this.trail[i];
+      if (!col.blocked(n.pos.x, n.pos.z, w.x, w.z, false, 0.2)) {
+        n.waypoint = w;
+        break;
+      }
+    }
+    // perso del tutto (nessuna traccia visibile o troppo lontano): riappare dietro di te, dove non guardi
+    const far = Math.hypot(n.pos.x - t.x, n.pos.z - t.z) > 30;
+    if ((!n.waypoint || far) && this.trail.length > 8) {
+      const w = this.trail[this.trail.length - 8];
+      const f = this.player.forward;
+      const behind = (w.x - t.x) * f.x + (w.z - t.z) * f.z < 0;
+      if (behind) n.pos.set(w.x, 0, w.z);
+    }
   }
 
   // minigioco attivo (es. sfida di ballo): riceve il dt e blocca il movimento

@@ -16,25 +16,33 @@ interface WaveEnemy {
   id: string;
   from: 'W' | 'E';
   cover: [number, number] | null;
+  delay?: number; // secondi prima di attaccare (i coltelli arrivano quando meno te lo aspetti)
 }
 
+// Tre ondate. Chi ha la pistola si ripara e cambia nascondiglio; gli Appuntiti corrono a zig-zag
+// col temperino in mano. Nella seconda ondata qualcuno arriva anche dall'altro tunnel.
 export const WAVES: WaveEnemy[][] = [
   [
     { id: 'pRosso', from: 'W', cover: COVERS.west[0] },
     { id: 'pBlu', from: 'W', cover: COVERS.west[1] },
     { id: 'pVerde', from: 'W', cover: COVERS.west[2] },
     { id: 'pArancione', from: 'W', cover: COVERS.west[3] },
+    { id: 'aGiallo', from: 'W', cover: null, delay: 6 },
   ],
   [
     { id: 'pMarrone', from: 'E', cover: COVERS.east[0] },
     { id: 'pNero', from: 'E', cover: COVERS.east[1] },
     { id: 'pCeleste', from: 'E', cover: COVERS.east[2] },
     { id: 'pOcra', from: 'E', cover: COVERS.east[3] },
+    { id: 'aBianco', from: 'E', cover: null, delay: 4 },
+    { id: 'pRame', from: 'W', cover: COVERS.west[1], delay: 9 },
   ],
   [
     { id: 'pastellone', from: 'W', cover: null },
     { id: 'pRosso2', from: 'E', cover: COVERS.east[0] },
     { id: 'pVerde2', from: 'E', cover: COVERS.east[2] },
+    { id: 'aNero', from: 'W', cover: null, delay: 5 },
+    { id: 'aRosso', from: 'E', cover: null, delay: 10 },
   ],
 ];
 
@@ -56,7 +64,8 @@ export function resetRaid() {
 
 export const raidActive = () => state.active;
 
-const spawnPoint = (from: 'W' | 'E', i: number) => new THREE.Vector3((from === 'W' ? -1 : 1) * (33 - i * 1.4), 0, 0.2 + (i % 2) * 1.6);
+// in fondo al tunnel (i = posizione tra quelli che arrivano dallo stesso lato)
+const spawnPoint = (from: 'W' | 'E', i: number) => new THREE.Vector3((from === 'W' ? -1 : 1) * (31.5 - i * 1.2), 0, 0.2 + (i % 2) * 1.6);
 
 function crash(g: Game, side: 'W' | 'E') {
   const prop = g.world.props[side === 'W' ? 'barrierW' : 'barrierE'];
@@ -71,7 +80,9 @@ function crash(g: Game, side: 'W' | 'E') {
 
 // Mostra i Pastelli di un'ondata all'imbocco del tunnel (non ancora all'attacco)
 function place(g: Game, w: number) {
-  WAVES[w - 1].forEach((e, i) => {
+  const side = { W: 0, E: 0 };
+  WAVES[w - 1].forEach((e) => {
+    const i = side[e.from]++;
     const n = g.npc(e.id);
     const f = n.fighter!;
     f.reset();
@@ -89,7 +100,19 @@ function place(g: Game, w: number) {
 }
 
 function attack(g: Game, w: number) {
-  for (const e of WAVES[w - 1]) g.combat.provoke(g.npc(e.id));
+  for (const e of WAVES[w - 1]) {
+    const n = g.npc(e.id);
+    const go = () => {
+      if (RAID.wave !== w || n.fighter!.ko || n.fighter!.hostile) return;
+      g.combat.provoke(n);
+      if (n.fighter!.opts.zigzag && !g.is('tutAppuntito')) {
+        g.flag('tutAppuntito');
+        g.toast(`Un <b>Appuntito</b> corre verso di te col temperino!<br>Sparagli prima che arrivi, oppure para (tasto destro) e colpiscilo quando è scoperto.`, 'bad', 6500);
+      }
+    };
+    if (e.delay) g.after(e.delay, go);
+    else go();
+  }
 }
 
 // Il tunnel ovest salta: i primi Pastelli si affacciano (durante il dialogo dell'asta)
@@ -103,7 +126,11 @@ export function startRaid(g: Game) {
   state.active = true;
   RAID.wave = 1;
   RAID.left = WAVES[0].length;
+  g.player.seated = false;
   g.setStep('c4', 6);
+  // tre possono mirare insieme; le coperture si calcolano adesso (i venditori sono ai loro posti)
+  g.combat.maxAimers = 3;
+  g.combat.covers = g.combat.buildCovers((x, z) => x > -25.5 && x < 25.5 && z > -35.5 && z < 13.6);
   g.audio.playMusic('sparatoria');
   g.audio.clearEmitters();
   g.setCheckpoint(A.checkpointRaid, A.checkpointLook, 'Ti rialzi dietro le casse. I Pastelli ricominciano da capo, e anche tu');
@@ -127,19 +154,32 @@ export function startRaid(g: Game) {
     const n = g.npc(id);
     n.faceWhenNear = false;
     n.baseAction = 'none';
-    n.setBehavior({ type: 'patrol', path: [[i % 2 ? 1.2 : -1.2, -33], [0, -44]], speed: 6, wait: 9999 });
+    n.setBehavior({ type: 'patrol', path: [[i % 2 ? 1.2 : -1.2, -33], [0, -44]], speed: 6, once: true });
     n.say(['AIUTO!', 'Io non c\'ero!', 'Non sparate, sono di carta riciclata!', 'Ciao a tutti! Cioè, addio!', 'Il mio calzino!'][i], 2);
     g.after(9, () => g.setHidden(n, true));
   });
   for (const id of ['banditore', 'pneumatica']) g.setHidden(g.npc(id), true);
   const marco = g.npc('marco');
-  marco.setBehavior({ type: 'patrol', path: [[A.marcoHide.x, A.marcoHide.z]], speed: 6, wait: 9999 });
+  marco.setBehavior({ type: 'patrol', path: [[A.marcoHide.x, A.marcoHide.z]], speed: 6, once: true });
   marco.baseAction = 'none';
   g.after(3, () => (marco.baseAction = 'cover'));
   // cure e cartucce sparse tra le casse
   for (const [x, z] of [[-6, 5.6], [6, 5.6], [0, -12]] as const) g.addPickup('ammo', x, z, 6);
-  for (const [x, z] of [[-2, -1], [7.5, -18], [-7.5, -18]] as const) g.addPickup('heal', x, z, 25);
+  for (const [x, z] of [[-2, -1], [2, 12.5], [7.5, -18], [-7.5, -18]] as const) g.addPickup('heal', x, z, 25);
+  // mentre il Pastello Rosso parlava, gli altri hanno già preso posizione dietro le casse
+  for (const e of WAVES[0]) {
+    const n = g.npc(e.id);
+    const f = n.fighter!;
+    if (f.cover) n.pos.copy(f.cover);
+  }
   attack(g, 1);
+  for (const e of WAVES[0]) {
+    const f = g.npc(e.id).fighter!;
+    if (f.ranged && f.cover) {
+      f.state = 'hide';
+      f.t = 0.8 + Math.random() * 1.5;
+    }
+  }
   g.toast(`<b>Sparatoria!</b><br>Accovacciati (${keyName('crouch')}) dietro le casse quando vedi una linea colorata puntata su di te. Mira alla testa.`, 'quest', 7000);
 }
 
@@ -194,6 +234,7 @@ export function raidFaint(g: Game) {
   if (!state.active) return;
   const s = g.state;
   s.ammo = Math.max(s.ammo, 24);
+  s.hp = s.maxHp; // si riparte dall'ondata intera: almeno in forma
   if (RAID.left === 0) return; // tra un'ondata e l'altra: la prossima arriva comunque
   state.nextWaveAt = -1;
   const w = RAID.wave;
@@ -203,9 +244,9 @@ export function raidFaint(g: Game) {
 
 // cera che cade dai Pastelli spuntati: cartucce, a volte una merendina
 export function raidDrop(g: Game, n: NPC) {
-  if (!n.id.startsWith('p')) return;
+  if (!n.fighter?.ranged && !n.fighter?.opts.zigzag) return;
   g.addPickup('ammo', n.pos.x + 0.4, n.pos.z, n.id === 'pastellone' ? 12 : 5);
-  if (Math.random() < 0.35) g.addPickup('heal', n.pos.x - 0.4, n.pos.z + 0.3, 20);
+  if (Math.random() < 0.45) g.addPickup('heal', n.pos.x - 0.4, n.pos.z + 0.3, 20);
 }
 
 // cassa di cartucce di Bossolo: durante la sparatoria è gratis (ogni tanto)

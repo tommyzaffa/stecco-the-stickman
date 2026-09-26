@@ -243,17 +243,20 @@ export function createCharacters(g: Game) {
       say: [(g) => `Verbale per accusa infondata: 10 monete. Accuse sbagliate: ${acc.fails}/3.`, 'Torni quando ha le idee più chiare. O più indizi.'],
     },
     giusto: {
+      say: [(g) => `${CLUES[acc.proof].name}. Mmh.`],
+      next: 'chiama',
+    },
+    chiama: {
       do: (g) => {
-        // Gustavo viene chiamato fuori dal negozio
+        // Gustavo viene chiamato fuori: esce dal negozio adesso, non prima
         const gu = g.npc('gustavo');
         const p = g.npc('penna').pos;
-        gu.pos.set(p.x + 1.3, 0, p.z + 0.6);
-        gu.setBehavior({ type: 'stand' });
-        gu.baseAction = 'none';
+        gu.setBehavior({ type: 'patrol', path: [[-2, 26.4], [-2, 24.2], [p.x + 1.3, p.z + 0.6]], speed: 1.8, once: true });
       },
+      look: (g) => g.npc('gustavo'),
       say: [
-        (g) => `${CLUES[acc.proof].name}. Mmh.`,
         'GUSTAVO! Venga fuori un momento.',
+        '* Dalla porta del banco esce Gustavo, con la scopa in mano. Spazza anche mentre cammina.',
         '@Gustavo| Sì? Stavo spazzando. Tantissimo.',
         '> La vetrina è stata rotta da dentro e la porta aperta con la chiave. Le chiavi le avete in due: tu e il signor Pegno.',
         () =>

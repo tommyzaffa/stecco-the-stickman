@@ -152,9 +152,10 @@ export class Guns {
     // riparato dietro una cassa, accovacciato
     const covered = !wall && pl.crouching && col.blocked(from.x, from.z, target.x, target.z, true, 0.2);
     let p = accuracy;
-    if (pl.speed > 5) p -= 0.4;
-    else if (pl.speed > 0) p -= 0.22;
-    p -= Math.max(0, d - 8) * 0.025;
+    if (pl.speed > 5) p -= 0.35;
+    else if (pl.speed > 0) p -= 0.18;
+    else if (pl.stillT > 1.2) p += 0.15; // fermo allo scoperto: ti hanno inquadrato
+    p -= Math.max(0, d - 10) * 0.015;
     if (covered) p = 0.04;
     const hits = !wall && Math.random() < p;
     g.audio.enemyShot(from);

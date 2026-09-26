@@ -7,7 +7,7 @@ import { headTexture, rulerTexture } from './render/textures';
 
 export type Weapon = 'fist' | 'ruler' | 'pistol';
 
-const WALK = 4.2, RUN = 7.5, JUMP = 5.2, GRAVITY = 16, EYE = 1.62, EYE_CROUCH = 1.02;
+const WALK = 4.2, RUN = 7.5, JUMP = 5.2, GRAVITY = 16, EYE = 1.62, EYE_CROUCH = 1.02, EYE_SEATED = 1.15;
 
 export class Player {
   camera: THREE.PerspectiveCamera;
@@ -21,6 +21,8 @@ export class Player {
   speed = 0;
   blocking = false;
   crouching = false;
+  seated = false; // seduto (scene): occhi più bassi, niente passi
+  stillT = 0; // da quanti secondi sei fermo (chi spara ti inquadra meglio)
   private eyeH = EYE;
   private armMat: THREE.MeshBasicMaterial;
   private fistMat: THREE.SpriteMaterial;
@@ -38,6 +40,7 @@ export class Player {
   private attackT = -1;
   private hitDone = false;
   private bob = 0;
+  private lower = 0; // 1 = braccio abbassato (dialoghi e scene)
   private sway = new THREE.Vector2();
 
   constructor(aspect: number) {
@@ -117,6 +120,7 @@ export class Player {
   }
 
   setCrouch(on: boolean) {
+    if (on !== this.crouching) this.stillT = 0; // chi si alza e si abbassa non è un bersaglio fermo
     this.crouching = on;
   }
 
@@ -234,6 +238,7 @@ export class Player {
     }
     col.resolve(this.pos, this.radius);
     this.speed = len > 0 ? sp : 0;
+    this.stillT = this.speed > 0 ? 0 : this.stillT + dt;
 
     // camera + dondolio della camminata
     const onGround = this.pos.y <= 0.001;
@@ -241,7 +246,8 @@ export class Player {
     if (len > 0 && onGround) this.bob += dt * (running ? 13 : 9);
     if (Math.floor(prevBob / Math.PI) !== Math.floor(this.bob / Math.PI)) stepped = true;
     const bobY = onGround && len > 0 ? Math.abs(Math.sin(this.bob)) * (running ? 0.07 : 0.045) : 0;
-    this.eyeH += ((this.crouching ? EYE_CROUCH : EYE) - this.eyeH) * Math.min(1, dt * 10);
+    const eyeWant = this.seated ? EYE_SEATED : this.crouching ? EYE_CROUCH : EYE;
+    this.eyeH += (eyeWant - this.eyeH) * Math.min(1, dt * (this.seated ? 4 : 10));
     this.camera.position.set(this.pos.x, this.pos.y + this.eyeH + bobY, this.pos.z);
     this.camera.rotation.set(this.pitch, this.yaw, 0);
 
@@ -302,6 +308,9 @@ export class Player {
       }
       if (this.attackT >= 1) this.attackT = -1;
     }
+    // durante dialoghi e scene il braccio (e l'arma) si abbassa: non copre la scena
+    this.lower += ((canMove ? 0 : 1) - this.lower) * Math.min(1, dt * 6);
+    ay -= this.lower * 0.65;
     this.arm.position.set(ax, ay, az);
     this.arm.rotation.set(rx, 0, rz);
     return { hit, jumped, landed, stepped, running };

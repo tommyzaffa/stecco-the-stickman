@@ -5,6 +5,7 @@ import { HALL_H, REFS, ZONES } from './world';
 import { auctionDialogue } from './characters';
 import { crateLabel, crateUse, raidDrop, raidFaint, resetRaid, setupBarrels, startRaid, updateRaid } from './raid';
 import { setupRange } from './range';
+import { auctionCut, auctionLine, resetAuction, updateAuction } from './auction';
 
 // Capitolo 4: buttafuori → armeria e poligono → mercato → asta → sparatoria → telefonata.
 
@@ -13,6 +14,8 @@ const narr = (lines: string[]): Dialogue => ({ name: '', start: 'a', nodes: { a:
 export function setupStory(g: Game) {
   const A = g.world.anchors;
   resetRaid();
+  resetAuction();
+  g.onLine = (l) => auctionLine(g, l.text);
   g.audio.birds = false;
   g.guns.ceiling = HALL_H;
   g.audio.addEmitter('crowd', new THREE.Vector3(0, 1, -12), 30, 0.6);
@@ -135,9 +138,9 @@ export function setupStory(g: Game) {
 
   // --- per frame ---
   const marco = g.npc('marco');
-  const banditore = g.npc('banditore');
-  g.onUpdate.push((g) => {
+  g.onUpdate.push((g, dt) => {
     const p = g.player.pos;
+    updateAuction(g, dt);
 
     // il cancello si apre quando il buttafuori ti fa passare
     if (g.is('gateOpen') && REFS.gate) {
@@ -151,8 +154,7 @@ export function setupStory(g: Game) {
     // l'asta comincia dopo che il banditore ha detto "si comincia"
     if (g.is('auctionGo') && !g.is('auctionOn') && !g.dialogue.isOpen) {
       g.flag('auctionOn');
-      g.player.setLook(new THREE.Vector3(banditore.pos.x, banditore.topY - 0.2, banditore.pos.z));
-      g.talk(auctionDialogue(), banditore);
+      auctionCut(g, auctionDialogue());
     }
     // e finisce con i Pastelli
     if (g.is('raidStart') && !g.is('raidOn') && !g.dialogue.isOpen) {

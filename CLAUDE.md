@@ -56,11 +56,20 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   `riprova` rimette le cose a posto (es. capitolo 3: tre accuse sbagliate).
 - `NpcSpec.talkRadius` per chi si parla da lontano (es. il testimone sul balcone).
 - `WorldBuilder.daySky('mountains' | 'skyline')` per il cielo di giorno.
+- **Dialoghi e regia**: la testa si gira da sola verso chi parla (anche un `@Nome|` che non è il
+  PNG con cui hai iniziato). `DNode.look` = cosa guardare durante le righe del narratore di quel
+  nodo (un oggetto, un punto). `g.onLine` = callback a ogni riga (es. "TOC" → suono del martelletto).
+  `player.seated` per le scene da seduti. Durante i dialoghi il braccio/arma si abbassa.
+- **Chi ti segue** (`behavior: 'follow'` verso il giocatore) segue le tue tracce: passa dalle porte,
+  non attraversa i muri; se si perde riappare dietro di te, fuori dalla visuale.
 - **Armi da fuoco** (capitolo 4): oggetto `pistola`, tasto `weapon3`, `reload`; `GameState.clip/ammo`,
   `g.clipSize` (flag `caricatoreGrande` = 12). `g.addPickup('ammo' | 'heal', x, z, valore)`.
   Nemici che sparano: `fighter.ranged` (si riparano, si alzano, mirano con una linea colorata
-  visibile, sparano); `fighter.cover` = dove ripararsi. Chi spara non para i pugni. Accovacciato
-  dietro un ostacolo basso non ti colpiscono quasi mai. `g.guns.targets` per sagome e barili.
+  visibile, sparano); `fighter.cover` = copertura iniziale, poi la cambiano da soli tra
+  `combat.covers` (`combat.buildCovers(zona)` li calcola attorno agli ostacoli bassi) e ti aggirano
+  se resti riparato. `FighterOpts.zigzag` = chi corre a zig-zag col coltello. Chi spara non para i
+  pugni. Accovacciato dietro un ostacolo basso non ti colpiscono quasi mai; fermo allo scoperto
+  ti inquadrano (`player.stillT`). `g.guns.targets` per sagome e barili.
   `g.guns.ceiling` = soffitto per i colpi al chiuso. `NpcSpec.onShot/shotLines` per i civili colpiti.
 
 ## Capitoli e salvataggi

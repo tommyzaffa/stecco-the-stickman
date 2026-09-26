@@ -166,7 +166,7 @@ export function setupStory(g: Game) {
       const m = g.npc('mimo');
       m.baseAction = 'wave';
       m.faceWhenNear = false;
-      m.setBehavior({ type: 'patrol', path: [[130, 3]], speed: 3.6, wait: 9999 });
+      m.setBehavior({ type: 'patrol', path: [[130, 3]], speed: 3.6, once: true });
       m.say('Addio, foglio!', 3);
       g.after(4, () => m.say('Qui fuori è tutto bianco! BELLISSIMO!', 3.5));
       g.after(24, () => g.setHidden(m, true));
@@ -176,7 +176,7 @@ export function setupStory(g: Game) {
     if (g.is('gustavoArrested') && !g.is('gustavoGone') && !g.dialogue.isOpen) {
       g.flag('gustavoGone');
       const gu = g.npc('gustavo');
-      gu.setBehavior({ type: 'patrol', path: [[-6, 21], [-20, 21]], speed: 1.4, wait: 9999 });
+      gu.setBehavior({ type: 'patrol', path: [[-6, 21], [-20, 21]], speed: 1.4, once: true });
       gu.say('In triplice copia... in triplice copia...', 4);
       g.after(9, () => g.setHidden(gu, true));
     }

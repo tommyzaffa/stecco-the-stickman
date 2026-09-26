@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Sketch } from '../../render/sketch';
-import { HAND_FONT, silhouetteTexture, targetTexture, textTexture } from '../../render/textures';
+import { HAND_FONT, glowTexture, silhouetteTexture, targetTexture, textTexture } from '../../render/textures';
 import { CERA, HL, THEME } from '../../render/palette';
 import { WorldBuilder, type Facing, type World } from '../../world/builder';
 import type { Circle, Rect } from '../../world/collision';
@@ -298,27 +298,53 @@ export function buildMercato(): World {
   S.box(0, 0.9, 16.2, 0.9, 1.15, 0.6);
   sign('BANDITORE', 0, 1.6, 15.88, 0.8, 0.25, '-z', { font: HAND_FONT });
   A('banditore', 0, 0.9, 16.9);
-  // piedistallo del lotto e il tappo
+  // piedistallo del lotto: cuscino scuro e il tappo (in un gruppo che la storia può muovere)
   S.cylinder(3.2, 0.9, 16, 0.32, 1.0, 12);
-  D.box(3.2, 1.9, 16, 0.5, 0.1, 0.5);
   {
+    const cushion = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.12, 0.62), new THREE.MeshBasicMaterial({ color: THEME.inkHex }));
+    cushion.position.set(3.2, 1.96, 16);
+    group.add(cushion);
     const cap = new THREE.Group();
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.12, 16), new THREE.MeshBasicMaterial({ color: HL.yellow }));
-    c.position.set(3.2, 2.07, 16);
+    cap.position.set(3.2, 2.12, 16);
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.29, 0.16, 20), new THREE.MeshBasicMaterial({ color: HL.yellow }));
     cap.add(c);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.012, 4, 20), new THREE.MeshBasicMaterial({ color: THEME.inkHex }));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.018, 4, 24), new THREE.MeshBasicMaterial({ color: THEME.inkHex }));
     ring.rotation.x = Math.PI / 2;
-    ring.position.set(3.2, 2.13, 16);
+    ring.position.y = 0.08;
     cap.add(ring);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture('rgba(232,245,58,0.55)'), transparent: true, depthWrite: false }));
+    glow.scale.setScalar(1.3);
+    cap.add(glow);
     group.add(cap);
     b.props.lotto = cap;
+    // lotto 5: un'idea (una lampadina, spenta)
+    const bulb = new Sketch();
+    bulb.style = { jitter: 0.008, over: 0.02 };
+    bulb.circle(0, 0.32, 0, 0.17, 'z', 16).circle(0, 0.32, 0, 0.17, 'x', 16);
+    bulb.box(0, 0.05, 0, 0.14, 0.12, 0.14);
+    bulb.seg(-0.05, 0.17, 0, -0.03, 0.34, 0).seg(0.05, 0.17, 0, 0.03, 0.34, 0).seg(-0.03, 0.34, 0, 0.03, 0.34, 0);
+    const idea = bulb.build(b.lineMat(1.6), b.fill);
+    idea.position.set(3.2, 2.02, 16);
+    idea.visible = false;
+    group.add(idea);
+    b.props.idea = idea;
   }
   A('lotto', 3.2, 2.1, 16);
-  // tubo della posta pneumatica
-  S.cylinder(6.6, 0.9, 19.6, 0.35, HALL_H - 0.9, 12);
-  D.rectV(6.35, 1.3, 19.24, 0.5, 0.6, 'x');
-  sign('POSTA PNEUMATICA\nconsegna in 3 secondi', 6.6, 2.6, 19.2, 1.4, 0.45, '-z', { font: HAND_FONT });
-  A('tube', 6.6, 1.7, 18.9);
+  // posta pneumatica: cassetta con lo sportello e tubo di vetro (si vede cosa ci sale dentro)
+  {
+    const tx = 6.6, tz = 19.6;
+    S.box(tx, 0.9, tz, 0.9, 1.0, 0.9);
+    D.rectV(tx - 0.25, 1.1, tz - 0.47, 0.5, 0.55, 'x');
+    for (let yy = 1.9; yy <= HALL_H; yy += 0.45) D.circle(tx, yy, tz, 0.3, 'y', 14, 0.02);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      D.seg(tx + Math.cos(a) * 0.3, 1.9, tz + Math.sin(a) * 0.3, tx + Math.cos(a) * 0.3, HALL_H, tz + Math.sin(a) * 0.3, { over: 0 });
+    }
+    sign('POSTA PNEUMATICA\nconsegna in 3 secondi', 5.2, 2.7, 21.65, 1.6, 0.5, '-z', { font: HAND_FONT });
+    A('tubeHatch', tx, 1.4, tz - 0.3);
+    A('tubeLook', tx, 2.6, tz);
+    A('tube', tx, 2.5, 15.2);
+  }
   A('pneumatica', 5.4, 0.9, 18.4);
   // sipario
   for (let x = -7.8; x <= 7.8; x += 0.5) D.seg(x + rr(-0.05, 0.05), 0.9, 21.7, x, HALL_H - 0.3, 21.8, { over: 0 });
@@ -334,6 +360,10 @@ export function buildMercato(): World {
     D.seg(x - 0.2, 0.9, z - 0.22, x + 0.2, 0.9, z - 0.22).seg(x - 0.2, 0.72, z - 0.22, x + 0.2, 0.72, z - 0.22);
   };
   for (const x of [-5, -2.5, 0, 2.5, 5]) for (const z of [8, 10.5]) chair(x, z);
+  // ultima fila: da qui si vede tutto il palco
+  for (const x of [-3.75, -1.25, 1.25, 3.75]) chair(x, 5.8);
+  A('seat', 1.25, 0, 5.8);
+  A('seatMarco', -1.25, 0, 5.8);
   A('collezionista', -2.5, 0, 10.5);
   A('pelliccia', 2.5, 0, 10.5);
   A('salutatore', 7.8, 0, 7.4);

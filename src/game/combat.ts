@@ -34,6 +34,8 @@ export interface FighterOpts {
   openTime?: number;
   // armi da fuoco (dal capitolo 4): chi spara non para, si ripara dietro le casse
   ranged?: RangedOpts;
+  // corre verso di te a zig-zag (difficile da colpire da lontano)
+  zigzag?: boolean;
 }
 
 // Chi spara: si nasconde dietro una copertura, si alza, prende la mira (linea colorata
@@ -70,9 +72,10 @@ export class Fighter {
   parriesLeft = 1;
   strafe = Math.random() > 0.5 ? 1 : -1;
   ranged?: RangedOpts;
-  cover: THREE.Vector3 | null = null; // dove ripararsi (lo decide il capitolo)
+  cover: THREE.Vector3 | null = null; // dove ripararsi (all'inizio lo decide il capitolo)
   shots = 0;
   burstLeft = 0;
+  pinnedT = 0; // da quanto tempo da qui non riesce a colpirti (sei riparato): prima o poi ti aggira
 
   constructor(o: FighterOpts = {}) {
     this.opts = o;
@@ -117,6 +120,7 @@ export class Combat {
   // punti di passaggio (porte): se un avversario non ti vede, passa da qui per raggiungerti
   nav: THREE.Vector3[] = [];
   maxAimers = 2; // quanti nemici possono prendere la mira nello stesso momento
+  covers: THREE.Vector3[] = []; // punti dove ripararsi (vedi buildCovers)
   private lastAlert = -10;
 
   constructor(private g: Game) {}
@@ -212,8 +216,8 @@ export class Combat {
     const top = npc.pos.clone().setY(npc.topY + 0.1);
     g.hud.popWord(top, g.player.camera, headshot ? 'IN TESTA!' : r?.armor && f.state !== 'sharpen' ? 'TOC!' : SPLAT_WORDS[Math.floor(Math.random() * SPLAT_WORDS.length)]);
     this.provoke(npc, f.hostile ? 0 : 10);
-    // chi stava prendendo la mira si scompone (il Pastellone no: è troppo grosso)
-    if (r && f.state === 'aim' && !r.sharpenEvery) {
+    // un colpo in testa scompone chi sta prendendo la mira (il Pastellone no: è troppo grosso)
+    if (r && headshot && f.state === 'aim' && !r.sharpenEvery) {
       f.state = 'stagger';
       f.t = 0.4;
     }
@@ -345,9 +349,19 @@ export class Combat {
           const tgt = this.chaseTarget(n);
           this.face(n, tgt.x, tgt.z, dt, 8);
           if (d > f.reach * 0.85 || tgt !== p) {
-            const tx = tgt.x - n.pos.x, tz = tgt.z - n.pos.z;
+            let tx = tgt.x - n.pos.x, tz = tgt.z - n.pos.z;
             const td = Math.hypot(tx, tz) || 1;
-            speed = this.move(n, tx / td, tz / td, f.speed, dt);
+            tx /= td;
+            tz /= td;
+            if (f.opts.zigzag && d > 3.5) {
+              // zig-zag: un po' a destra, un po' a sinistra
+              const w = Math.sin(g.time * 4.5 + f.strafe * 2) * 0.9;
+              const zx = tx - tz * w, zz = tz + tx * w;
+              const zl = Math.hypot(zx, zz) || 1;
+              tx = zx / zl;
+              tz = zz / zl;
+            }
+            speed = this.move(n, tx, tz, f.speed, dt);
           } else if (tokens < 1 && !open && g.mode === 'play' && f.t <= 0) {
             f.state = 'windup';
             f.t = f.windup;
@@ -435,6 +449,7 @@ export class Combat {
     const col = g.world.colliders;
     // ti vede? (solo i muri veri contano: da dietro una cassa si spara lo stesso, anche se ci si prende)
     const clear = () => !col.blocked(n.pos.x, n.pos.z, p.x, p.z, false, 0.2);
+    const hideTime = () => rand(...(r.hide ?? [1.2, 2.4]));
     let speed = 0;
     switch (f.state) {
       case 'move': {
@@ -444,7 +459,7 @@ export class Combat {
         const td = Math.hypot(tx, tz);
         if (f.cover && td < 0.3) {
           f.state = 'hide';
-          f.t = rand(...(r.hide ?? [1.2, 2.4]));
+          f.t = hideTime() * 0.6;
           break;
         }
         // senza copertura: cammina finché non ti vede
@@ -457,25 +472,40 @@ export class Combat {
         speed = this.move(n, tx / (td || 1), tz / (td || 1), f.speed, dt);
         break;
       }
-      case 'hide':
+      case 'hide': {
         if (body) body.action = f.cover ? 'cover' : 'guard';
         this.face(n, p.x, p.z, dt, 4);
         // allo scoperto, avanza verso di te (il Pastellone fa così)
         if (!f.cover && d > 9) speed = this.move(n, (p.x - n.pos.x) / d, (p.z - n.pos.z) / d, f.speed * 0.8, dt);
+        // sei riparato rispetto a lui? Allora prima o poi cambia posto per prenderti di fianco
+        if (f.cover && this.playerCovered(f.cover)) f.pinnedT += dt;
+        else f.pinnedT = Math.max(0, f.pinnedT - dt);
         f.t -= dt;
-        if (f.t <= 0) {
-          if (!clear()) {
-            // da qui non ti vede: lascia la copertura e ti viene a cercare
-            f.cover = null;
+        if (f.t > 0) break;
+        const exposed = f.cover && !this.protects(f.cover);
+        const relocate = !clear() || exposed || (f.pinnedT > 2.5 && Math.random() < 0.7) || (!r.sharpenEvery && Math.random() < 0.18);
+        if (relocate && !r.sharpenEvery) {
+          const c = this.pickCover(n, f.pinnedT > 2.5);
+          if (c || !clear()) {
+            f.cover = c;
+            f.pinnedT = 0;
             f.state = 'move';
-          } else if (aimers.count < this.maxAimers && g.mode === 'play') {
-            f.state = 'aim';
-            f.t = r.aim;
-            f.burstLeft = r.burst ?? 1;
-            aimers.count++;
-          } else f.t = rand(0.3, 0.8);
+            if (c && Math.random() < 0.3) n.say(['Cambio posto!', 'Copritemi!', 'Lo prendo di lato!', 'Mi sposto!'][Math.floor(Math.random() * 4)], 1.5);
+            break;
+          }
+        } else if (!clear()) {
+          f.cover = null;
+          f.state = 'move';
+          break;
         }
+        if (aimers.count < this.maxAimers && g.mode === 'play') {
+          f.state = 'aim';
+          f.t = r.aim * rand(0.9, 1.15);
+          f.burstLeft = r.burst ?? 1;
+          aimers.count++;
+        } else f.t = rand(0.3, 0.8);
         break;
+      }
       case 'aim':
         if (body) body.action = 'aim';
         this.face(n, p.x, p.z, dt, 10);
@@ -495,7 +525,7 @@ export class Combat {
           } else if (f.burstLeft > 0) f.t = 0.2;
           else {
             f.state = 'hide';
-            f.t = rand(...(r.hide ?? [1.2, 2.4]));
+            f.t = hideTime();
           }
         }
         break;
@@ -513,7 +543,7 @@ export class Combat {
         f.t -= dt;
         if (f.t <= 0) {
           f.state = 'hide';
-          f.t = rand(0.6, 1.2);
+          f.t = rand(0.5, 1.0);
         }
         break;
       default:
@@ -522,6 +552,73 @@ export class Combat {
     }
     if (f.state !== 'aim') g.guns.aim(n, 0);
     n.ctrlSpeed = speed;
+  }
+
+  // --- coperture ---------------------------------------------------------------
+
+  // Punti di copertura attorno agli ostacoli bassi (casse, banconi) dentro una zona
+  buildCovers(inside: (x: number, z: number) => boolean) {
+    const col = this.g.world.colliders;
+    const out: THREE.Vector3[] = [];
+    const free = (x: number, z: number) =>
+      !col.rects.some((r) => x > r.x0 - 0.4 && x < r.x1 + 0.4 && z > r.z0 - 0.4 && z < r.z1 + 0.4) &&
+      !col.circles.some((c) => Math.hypot(x - c.x, z - c.z) < c.r + 0.4);
+    for (const r of col.rects) {
+      if (!r.low || !r.h || r.h < 0.8) continue;
+      const w = r.x1 - r.x0, dz = r.z1 - r.z0;
+      const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2;
+      const along = (len: number) => (len > 1.5 ? [-(len / 2 - 0.45), len / 2 - 0.45] : [0]);
+      const pts: [number, number][] = [];
+      for (const o of along(dz)) pts.push([r.x0 - 0.6, cz + o], [r.x1 + 0.6, cz + o]);
+      for (const o of along(w)) pts.push([cx + o, r.z0 - 0.6], [cx + o, r.z1 + 0.6]);
+      for (const [x, z] of pts) if (inside(x, z) && free(x, z)) out.push(new THREE.Vector3(x, 0, z));
+    }
+    return out;
+  }
+
+  // accovacciato lì, l'ostacolo accanto lo nasconde a te?
+  private protects(c: THREE.Vector3) {
+    const p = this.g.player.pos;
+    const d = Math.hypot(p.x - c.x, p.z - c.z) || 1;
+    const k = Math.min(1.6, d * 0.5) / d;
+    return this.g.world.colliders.blocked(c.x, c.z, c.x + (p.x - c.x) * k, c.z + (p.z - c.z) * k, true, 0.2);
+  }
+
+  // da lì, tu sei riparato dietro qualcosa di basso (se ti abbassi)?
+  private playerCovered(c: THREE.Vector3) {
+    const p = this.g.player.pos;
+    const d = Math.hypot(p.x - c.x, p.z - c.z) || 1;
+    const k = Math.min(1.8, d * 0.5) / d;
+    return this.g.player.crouching && this.g.world.colliders.blocked(p.x, p.z, p.x + (c.x - p.x) * k, p.z + (c.z - p.z) * k, true, 0.2);
+  }
+
+  // Sceglie una nuova copertura: riparata, da cui ti si vede stando in piedi, raggiungibile in linea retta.
+  // flank: preferisce i punti da cui tu NON sei riparato (ti prende di fianco)
+  private pickCover(n: NPC, flank: boolean) {
+    const g = this.g;
+    const p = g.player.pos;
+    const col = g.world.colliders;
+    let best: THREE.Vector3 | null = null;
+    let bestScore = Infinity;
+    for (const c of this.covers) {
+      const dp = Math.hypot(c.x - p.x, c.z - p.z);
+      if (dp < 6 || dp > 22) continue;
+      const travel = Math.hypot(c.x - n.pos.x, c.z - n.pos.z);
+      if (travel < 1.5 || travel > 15) continue;
+      if (this.fighters.some((o) => o !== n && !o.fighter!.ko && o.fighter!.cover && o.fighter!.cover.distanceTo(c) < 1.3)) continue;
+      if (g.npcs.some((o) => !o.fighter && !o.hidden && o.pos.distanceTo(c) < 1.1)) continue;
+      if (!this.protects(c)) continue;
+      if (col.blocked(c.x, c.z, p.x, p.z, false, 0.2)) continue;
+      if (col.blocked(n.pos.x, n.pos.z, c.x, c.z, false, 0.2)) continue;
+      let score = travel * 0.45 + Math.abs(dp - 12) * 0.35 + Math.random() * 4;
+      const covered = g.world.colliders.blocked(p.x, p.z, p.x + (c.x - p.x) * (1.8 / dp), p.z + (c.z - p.z) * (1.8 / dp), true, 0.2);
+      if (flank && !covered) score -= 8;
+      if (score < bestScore) {
+        bestScore = score;
+        best = c;
+      }
+    }
+    return best;
   }
 
   private move(n: NPC, dx: number, dz: number, speed: number, dt: number) {
@@ -551,13 +648,14 @@ export class Combat {
   private chaseTarget(n: NPC) {
     const p = this.g.player.pos;
     const col = this.g.world.colliders;
-    if (!col.blocked(n.pos.x, n.pos.z, p.x, p.z)) return p;
+    // colonne e casse non contano (ci si gira intorno strisciando): solo i muri veri
+    if (!col.blocked(n.pos.x, n.pos.z, p.x, p.z, false, 1.5)) return p;
     let best: THREE.Vector3 | null = null;
     let bestCost = Infinity;
     for (const w of this.nav) {
       if (Math.hypot(w.x - n.pos.x, w.z - n.pos.z) < 0.6) continue;
-      if (col.blocked(n.pos.x, n.pos.z, w.x, w.z)) continue;
-      const cost = n.pos.distanceTo(w) + w.distanceTo(p) + (col.blocked(w.x, w.z, p.x, p.z) ? 12 : 0);
+      if (col.blocked(n.pos.x, n.pos.z, w.x, w.z, false, 1.5)) continue;
+      const cost = n.pos.distanceTo(w) + w.distanceTo(p) + (col.blocked(w.x, w.z, p.x, p.z, false, 1.5) ? 12 : 0);
       if (cost < bestCost) {
         bestCost = cost;
         best = w;

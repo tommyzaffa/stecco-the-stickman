@@ -46,8 +46,8 @@ colpevole scappa e la strada si allunga. Il colpevole ha già rivenduto il tappo
 usate, parole di seconda mano, colori "veri" in bianco e nero). Il buttafuori non fa entrare chi è
 disarmato: pistola a inchiostro e tiro a segno dal Calamaio (mai colpire la nonna). All'asta il
 tappo va a un'offerta telefonica e parte per la posta pneumatica; poi i Pastelli a Cera fanno
-irruzione: tre ondate con coperture, barili d'inchiostro e il Pastellone, che si ferma a
-temperarsi. Dal registro e da una telefonata: il tappo l'ha comprato Martina, che dà appuntamento
+irruzione: tre ondate che cambiano copertura e ti aggirano, gli Appuntiti che corrono col
+temperino, barili d'inchiostro e il Pastellone, che si ferma a temperarsi. Dal registro e da una telefonata: il tappo l'ha comprato Martina, che dà appuntamento
 da Pastello (il ristorante dei Pastelli a Cera).
 
 **5. L'appuntamento.** Martina colleziona tappi e non lo vende. Però accetta un appuntamento.
