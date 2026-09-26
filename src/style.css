@@ -390,15 +390,15 @@ body.touch #hud .choice { padding: 6px 8px; }
 .touch-ui .b-parry { right: 128px; bottom: 18px; width: 64px; height: 64px; font-size: 13px; }
 .touch-ui .b-jump { right: 31px; bottom: 133px; width: 62px; height: 62px; font-size: 13px; }
 .touch-ui .b-crouch { right: 112px; bottom: 100px; width: 56px; height: 56px; }
-.touch-ui .b-reload { right: 183px; bottom: 77px; width: 70px; height: 70px; font-family: var(--hand); line-height: 1; }
+.touch-ui .b-reload { right: 200px; bottom: 16px; width: 68px; height: 68px; font-family: var(--hand); line-height: 1; }
 .touch-ui .b-reload b { font-family: var(--marker); font-size: 22px; }
 .touch-ui .b-reload small { display: block; font-size: 9px; margin-top: 2px; }
 .touch-ui .b-reload.empty { border-color: var(--red); color: var(--red); animation: blink .8s infinite; }
-.touch-ui .b-weapon { right: 196px; bottom: 14px; width: 52px; height: 52px; font-size: 11px; }
 .touch-ui .b-use { right: 106px; bottom: 166px; width: 68px; height: 68px; font-size: 15px; background: rgba(250, 247, 238, .65); border-color: var(--ink); }
 /* sul telefono le munizioni sono nel pulsante RICARICA, e per interagire basta il pulsante USA */
 body.touch #hud .ammo, body.touch #hud .prompt { display: none !important; }
-.touch-ui .b-pause, .touch-ui .b-journal { top: 10px; height: 38px; border-radius: 12px 9px 13px 10px; }
+.touch-ui .b-pause, .touch-ui .b-journal, .touch-ui .b-weapon { top: 10px; height: 38px; border-radius: 12px 9px 13px 10px; }
+.touch-ui .b-weapon { left: calc(50% + 58px); width: 66px; font-size: 12px; }
 .touch-ui .b-pause { left: calc(50% + 6px); width: 46px; font-size: 14px; }
 .touch-ui .b-journal { left: calc(50% - 76px); width: 74px; font-size: 12px; }
 /* frecce del minigioco di ballo */

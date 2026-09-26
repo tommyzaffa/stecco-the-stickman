@@ -6,8 +6,8 @@ import { VIEW, toGame } from '../view';
 // Comandi a schermo per il telefono (in orizzontale):
 //  - metà sinistra: joystick che compare dove appoggi il pollice
 //  - metà destra: trascina per guardarti intorno
-//  - COLPISCI/SPARA: ogni pressione è un colpo, e tenendolo premuto e trascinando giri la visuale
-//    (come una levetta). Anche un tocco veloce sulla metà destra colpisce dove punta il mirino.
+//  - COLPISCI/SPARA: un tocco è un colpo (parte quando stacchi il dito); se invece trascini fa da
+//    levetta per la visuale e non spara. Anche un tocco veloce sulla metà destra colpisce.
 //  - pulsanti trasparenti: SALTA, PARA (tieni premuto), GIÙ, USA, RICARICA, ARMA, DIARIO, pausa
 //  - nei dialoghi: tocca per andare avanti, tocca una risposta per sceglierla
 // Scrive tutto dentro Input, come se fossero tasti e mouse.
@@ -16,6 +16,7 @@ import { VIEW, toGame } from '../view';
 const LOOK_SPEED = 1.9; // pixel di trascinamento → come pixel di mouse
 // un tocco è un "colpo" se è breve e il dito non si è quasi mosso
 const TAP_MS = 280;
+const FIRE_TAP_MS = 450; // sul pulsante si può tenere il dito un attimo di più
 const TAP_MOVE = 12;
 const STICK_R = 56;
 
@@ -79,13 +80,12 @@ export class TouchUI {
     parry.addEventListener('touchend', parryEnd);
     parry.addEventListener('touchcancel', parryEnd);
 
-    // COLPISCI/SPARA: un colpo per pressione, poi fa da levetta per la visuale
+    // COLPISCI/SPARA: tocco = colpo, trascinamento = visuale (il colpo si decide quando stacchi il dito)
     const fire = this.button('fire', 'COLPISCI', 'b-fire');
     fire.addEventListener('touchstart', (e) => {
       e.preventDefault();
       e.stopPropagation();
       if (!this.root.classList.contains('free')) return;
-      inp.clicked = true;
       fire.classList.add('down');
       this.trackLook(e, true);
     }, { passive: false });
@@ -212,8 +212,9 @@ export class TouchUI {
     for (const t of Array.from(e.changedTouches)) {
       const l = this.looks.get(t.identifier);
       this.looks.delete(t.identifier);
-      // tocco veloce e fermo sullo schermo: colpisci (col pulsante il colpo è già partito alla pressione)
-      if (l && !l.fire && l.moved < TAP_MOVE && performance.now() - l.t < TAP_MS && this.root.classList.contains('free')) this.g.input.clicked = true;
+      // tocco veloce e fermo (sullo schermo o sul pulsante COLPISCI): colpisci. Se hai trascinato no.
+      if (!l || l.moved >= TAP_MOVE || !this.root.classList.contains('free')) continue;
+      if (performance.now() - l.t < (l.fire ? FIRE_TAP_MS : TAP_MS)) this.g.input.clicked = true;
     }
   }
 
