@@ -386,7 +386,12 @@ body.touch #hud .choice { padding: 6px 8px; }
 .touch-ui .b-jump { right: 24px; bottom: 26px; width: 86px; height: 86px; font-size: 15px; border-width: 3px; }
 .touch-ui .b-parry { right: 122px; bottom: 22px; width: 64px; height: 64px; font-size: 13px; }
 .touch-ui .b-crouch { right: 38px; bottom: 124px; }
-.touch-ui .b-reload { right: 116px; bottom: 102px; font-size: 10px; }
+.touch-ui .b-reload { right: 112px; bottom: 98px; width: 70px; height: 70px; font-family: var(--hand); line-height: 1; }
+.touch-ui .b-reload b { font-family: var(--marker); font-size: 22px; }
+.touch-ui .b-reload small { display: block; font-size: 9px; margin-top: 2px; }
+.touch-ui .b-reload.empty { border-color: var(--red); color: var(--red); animation: blink .8s infinite; }
+/* sul telefono le munizioni sono nel pulsante RICARICA */
+body.touch #hud .ammo { display: none !important; }
 .touch-ui .b-weapon { right: 198px; bottom: 32px; width: 52px; height: 52px; font-size: 11px; }
 .touch-ui .b-use { right: 196px; bottom: 112px; width: 68px; height: 68px; font-size: 15px; background: rgba(250, 247, 238, .65); border-color: var(--ink); }
 .touch-ui .b-pause, .touch-ui .b-journal { top: 10px; height: 38px; border-radius: 12px 9px 13px 10px; }
@@ -406,8 +411,6 @@ html.compact #hud .stats, html.compact #hud .objectives, html.compact #hud .toas
 html.compact #hud .prompt, html.compact #hud .ammo, html.compact #hud .chapter { zoom: .68; }
 html.compact #hud .dialogue, html.compact #hud .diario { zoom: .72; }
 html.compact .screen .card, html.compact .screen .menu-page { zoom: .7; }
-/* (con zoom anche le distanze si rimpiccioliscono: 420px ≈ 285px sullo schermo) */
-html.compact body.touch #hud .ammo { right: 420px; bottom: 20px; }
 
 /* telefono tenuto in orizzontale con lo schermo bloccato in verticale: il gioco si disegna girato */
 html.rotated, html.rotated body { overflow: hidden; }

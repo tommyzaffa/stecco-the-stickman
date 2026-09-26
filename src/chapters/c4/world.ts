@@ -64,9 +64,15 @@ export function buildMercato(): World {
   for (let i = 0; i < 11; i++) S.box(0, 0, -49.8 - i * 0.3, 5.9, 0.25 + i * 0.25, 0.3);
   col.rect(-3, -53.2, 3, -49.6);
   sign('USCITA\n(ma non è ancora il momento)', 0, 3.4, -49.7, 2.6, 0.6, '+z', { font: HAND_FONT });
-  // piastrelle della metro sulle pareti
+  // piastrelle della metro sulle pareti (sulla parete ovest le righe si interrompono alla porta
+  // dell'armeria: z -46,2..-43,8, alta 2,5)
   for (const x of [-2.86, 2.86]) {
-    for (let yy = 0.6; yy < 4.4; yy += 0.6) D.seg(x, yy, -49.5, x, yy, -36.2, { over: 0 });
+    for (let yy = 0.6; yy < 4.4; yy += 0.6) {
+      if (x < 0 && yy < 2.5) {
+        D.seg(x, yy, -49.5, x, yy, -46.25, { over: 0 });
+        D.seg(x, yy, -43.75, x, yy, -36.2, { over: 0 });
+      } else D.seg(x, yy, -49.5, x, yy, -36.2, { over: 0 });
+    }
   }
   sign('ARMERIA CALAMAIO\narmi a inchiostro · tiro a segno', -2.85, 3.35, -45, 2.4, 0.7, '+x');
   // cancello col metal detector (al contrario)

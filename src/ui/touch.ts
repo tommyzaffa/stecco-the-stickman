@@ -199,7 +199,15 @@ export class TouchUI {
     r.toggle('talk', talk);
     r.toggle('dance', dance);
     const p = g.player;
+    // sul telefono le munizioni stanno dentro il pulsante RICARICA (niente riquadro a parte)
     this.btn.reload.classList.toggle('hide', p.weapon !== 'pistol');
+    if (p.weapon === 'pistol') {
+      const st = g.state;
+      const reloading = p.reloadT > 0;
+      const html = `<span><b>${st.clip}</b>/${g.clipSize}<small>${reloading ? 'ricarico…' : `+${st.ammo} · RICARICA`}</small></span>`;
+      if (this.btn.reload.innerHTML !== html) this.btn.reload.innerHTML = html;
+      this.btn.reload.classList.toggle('empty', st.clip === 0 && !reloading);
+    }
     this.btn.weapon.classList.toggle('hide', !(g.has('righello') || g.has('pistola')));
     this.btn.use.classList.toggle('hide', !g.hasFocus);
     this.btn.crouch.classList.toggle('down', p.crouching);
