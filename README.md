@@ -27,8 +27,8 @@ meta-ironia sul fatto di essere disegnati (niente mani, niente tasche, niente co
 **https://tommyzaffa.github.io/stilizzato/** (si aggiorna da solo a ogni push su `main`).
 
 Funziona anche da telefono, in orizzontale: joystick a sinistra, trascina a destra per guardarti
-intorno, tocca lo schermo per colpire (dove punta il mirino), pulsanti trasparenti per saltare,
-parare, abbassarti, usare. Col blocco rotazione attivo il
+intorno, COLPISCI/SPARA (premi per colpire, trascinalo per mirare), pulsanti trasparenti per
+saltare, parare, abbassarti, usare. Col blocco rotazione attivo il
 gioco si gira da solo (e le barre del browser finiscono di lato); aggiunto alla schermata Home si
 apre a tutto schermo. Su iPhone in Safari si gioca col blocco rotazione attivo (il gioco lo chiede).
 

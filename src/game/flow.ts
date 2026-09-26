@@ -36,7 +36,8 @@ export function unlockChapter(n: number) {
 const controls = () => TOUCH ? `
   <div class="controls">
     <div><b>pollice sinistro</b> muoviti (in fondo corri)</div><div><b>trascina a destra</b> guardati intorno</div>
-    <div><b>tocca lo schermo</b> colpisci / spara (al mirino)</div><div><b>PARA</b> tieni premuto per parare</div>
+    <div><b>COLPISCI</b> premi per colpire, trascina per guardare</div><div><b>PARA</b> tieni premuto per parare</div>
+    <div><b>tocco veloce a destra</b> colpisci anche così</div><div></div>
     <div><b>USA</b> parla / interagisci</div><div><b>SALTA</b> / <b>GIÙ</b> salta / accovacciati</div>
     <div><b>ARMA</b> cambia arma</div><div><b>❚❚</b> pausa</div>
   </div>` : `

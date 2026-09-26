@@ -78,8 +78,9 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   lo ricostruisce e lo pubblica a ogni push su `main` (repo pubblico, `vite.config.ts` con
   `base: './'`).
 - **Telefono** (`src/touch.ts` rileva il touch; `?touch=1` lo forza su computer per provarlo):
-  `src/ui/touch.ts` disegna joystick, zona per la visuale e pulsanti (un tocco veloce sulla metà
-  destra = colpisci/spara al mirino, un colpo per tocco), e scrive in `Input`
+  `src/ui/touch.ts` disegna joystick, zona per la visuale e pulsanti (COLPISCI/SPARA: un colpo per
+  pressione e, tenuto premuto, fa da levetta per la visuale; anche un tocco veloce sulla metà destra
+  colpisce al mirino), e scrive in `Input`
   (`moveX/moveY`, `press(azione)`, `hold`, `cycleWeapon`). Niente pointer lock: `input.lock()`
   è virtuale e `input.onLock` avvisa il flusso (pausa). `keyName()` restituisce i nomi dei
   pulsanti (USA, GIÙ, ARMA...), `parryName()`/`attackName()` per i testi su parata e attacco:

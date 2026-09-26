@@ -383,17 +383,21 @@ body.touch #hud .choice { padding: 6px 8px; }
 .touch-ui.free .tb { display: flex; }
 .touch-ui .tb.down { background: rgba(30, 29, 36, .28); }
 .touch-ui .tb.hide { display: none !important; }
-.touch-ui .b-jump { right: 24px; bottom: 26px; width: 86px; height: 86px; font-size: 15px; border-width: 3px; }
-.touch-ui .b-parry { right: 122px; bottom: 22px; width: 64px; height: 64px; font-size: 13px; }
-.touch-ui .b-crouch { right: 38px; bottom: 124px; }
-.touch-ui .b-reload { right: 112px; bottom: 98px; width: 70px; height: 70px; font-family: var(--hand); line-height: 1; }
+.touch-ui .b-fire { right: 22px; bottom: 24px; width: 96px; height: 96px; font-size: 14px; border-width: 3px; }
+.touch-ui .b-fire::after { /* mirino disegnato: fa capire che si può anche trascinare */
+  content: ''; position: absolute; inset: 14px; border: 1.5px dashed rgba(30, 29, 36, .3); border-radius: 50%;
+}
+.touch-ui .b-parry { right: 128px; bottom: 18px; width: 64px; height: 64px; font-size: 13px; }
+.touch-ui .b-jump { right: 31px; bottom: 133px; width: 62px; height: 62px; font-size: 13px; }
+.touch-ui .b-crouch { right: 112px; bottom: 100px; width: 56px; height: 56px; }
+.touch-ui .b-reload { right: 183px; bottom: 77px; width: 70px; height: 70px; font-family: var(--hand); line-height: 1; }
 .touch-ui .b-reload b { font-family: var(--marker); font-size: 22px; }
 .touch-ui .b-reload small { display: block; font-size: 9px; margin-top: 2px; }
 .touch-ui .b-reload.empty { border-color: var(--red); color: var(--red); animation: blink .8s infinite; }
+.touch-ui .b-weapon { right: 196px; bottom: 14px; width: 52px; height: 52px; font-size: 11px; }
+.touch-ui .b-use { right: 106px; bottom: 166px; width: 68px; height: 68px; font-size: 15px; background: rgba(250, 247, 238, .65); border-color: var(--ink); }
 /* sul telefono le munizioni sono nel pulsante RICARICA, e per interagire basta il pulsante USA */
 body.touch #hud .ammo, body.touch #hud .prompt { display: none !important; }
-.touch-ui .b-weapon { right: 198px; bottom: 32px; width: 52px; height: 52px; font-size: 11px; }
-.touch-ui .b-use { right: 196px; bottom: 112px; width: 68px; height: 68px; font-size: 15px; background: rgba(250, 247, 238, .65); border-color: var(--ink); }
 .touch-ui .b-pause, .touch-ui .b-journal { top: 10px; height: 38px; border-radius: 12px 9px 13px 10px; }
 .touch-ui .b-pause { left: calc(50% + 6px); width: 46px; font-size: 14px; }
 .touch-ui .b-journal { left: calc(50% - 76px); width: 74px; font-size: 12px; }

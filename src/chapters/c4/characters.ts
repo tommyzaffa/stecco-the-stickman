@@ -218,7 +218,7 @@ export function createCharacters(g: Game) {
             g.after(1, () =>
               g.toast(
                 TOUCH
-                  ? '<b>Pistola a inchiostro</b><br>Tocca lo schermo per sparare (dove punta il mirino) · RICARICA: ricarica · ARMA: cambia arma'
+                  ? '<b>Pistola a inchiostro</b><br>SPARA per sparare (trascinalo per mirare) · RICARICA: ricarica · ARMA: cambia arma'
                   : `<b>Pistola a inchiostro</b><br>Click: spara · ${keyName('reload')}: ricarica · ${keyName('weapon1')}: pugni · ${keyName('weapon3')}: pistola<br><small>(i tasti si cambiano dalle impostazioni)</small>`,
                 'info',
                 7000,
