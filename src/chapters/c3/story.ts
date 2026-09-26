@@ -28,7 +28,6 @@ export function setupStory(g: Game) {
       pos,
       radius,
       label: () => label,
-      icon: (g) => (!g.hasClue(id) && g.quest('c3') >= 2 ? 'clue' : null),
       use: (g) => g.talk(narr(lines), null, () => g.findClue(id)),
     });
   clueSpot(A.glass, 'vetri', 'Esamina i cocci', [
@@ -95,12 +94,23 @@ export function setupStory(g: Game) {
       const rel = new THREE.Vector3(p.x - c.car.position.x, 0, p.z - c.car.position.z);
       const along = rel.dot(fwd);
       const side = Math.abs(rel.x * fwd.z - rel.z * fwd.x);
-      const blocking = side < 1.4 && along > -2.2 && along < 4.2;
+      let blocking = side < 1.4 && along > -2.2 && along < 4.2;
+      // c'è un'altra auto (o il suo spingitore) davanti? Allora si aspetta in coda
+      for (const o of cars) {
+        if (o === c) continue;
+        for (const q of [o.car.position, o.pusher.pos]) {
+          const ox = q.x - c.car.position.x, oz = q.z - c.car.position.z;
+          const oAlong = ox * fwd.x + oz * fwd.z;
+          const oSide = Math.abs(ox * fwd.z - oz * fwd.x);
+          if (oSide < 2 && oAlong > 0 && oAlong < 6.5) blocking = true;
+        }
+      }
+      const playerBlocking = side < 1.4 && along > -2.2 && along < 4.2;
       if (!c.pusher.talking) {
         c.pusher.controlled = blocking;
         c.pusher.ctrlSpeed = 0;
       }
-      if (blocking && g.time > c.nextHonk) {
+      if (playerBlocking && g.time > c.nextHonk) {
         c.pusher.say(['Precedenza! PRECEDENZA!', 'Si sposti! Questa non ha i freni!', 'Pedone disegnato male!'][Math.floor(Math.random() * 3)], 2);
         c.nextHonk = g.time + 4;
       }
@@ -123,12 +133,17 @@ export function setupStory(g: Game) {
       }
     }
 
-    // il mimo liberato va in piazza a esibirsi
+    // il mimo liberato scappa davvero oltre il bordo del foglio, salutando
     if (g.is('mimoFree') && !g.is('mimoWalking') && !g.dialogue.isOpen) {
       g.flag('mimoWalking');
+      g.world.props.erased.visible = true;
       const m = g.npc('mimo');
-      m.baseAction = 'push';
-      m.setBehavior({ type: 'patrol', path: [[30, 1.5], [12, -11]], speed: 2, wait: 9999 });
+      m.baseAction = 'wave';
+      m.faceWhenNear = false;
+      m.setBehavior({ type: 'patrol', path: [[130, 3]], speed: 3.6, wait: 9999 });
+      m.say('Addio, foglio!', 3);
+      g.after(4, () => m.say('Qui fuori è tutto bianco! BELLISSIMO!', 3.5));
+      g.after(24, () => g.setHidden(m, true));
     }
 
     // Gustavo arrestato: se ne va con l'ispettore (dopo il dialogo)

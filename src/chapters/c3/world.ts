@@ -66,6 +66,23 @@ export function buildQuadropoli(): World {
   col.rect(-80, -80, 80, -58);
   col.rect(-80, 58, 80, 80);
   A('mime', 57.1, 0, 1.5);
+  {
+    const erased = new THREE.Group();
+    const patch = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 5), new THREE.MeshBasicMaterial({ color: '#f2f3f0' }));
+    patch.rotation.x = -Math.PI / 2;
+    patch.position.set(58, 0.035, 1.5);
+    erased.add(patch);
+    const crumbs = new Sketch();
+    crumbs.style = { jitter: 0.01, over: 0 };
+    for (let i = 0; i < 16; i++) {
+      const x = 57.2 + rr(0, 1.6), z = rr(-0.8, 3.8), s = rr(0.05, 0.12);
+      crumbs.circle(x, 0.045, z, s, 'y', 6, 0.3);
+    }
+    erased.add(crumbs.build(b.lineMat(1.2), b.fill));
+    erased.visible = false;
+    group.add(erased);
+    b.props.erased = erased;
+  }
 
   // =========================================================================
   // PIAZZA DEL QUADRETTO
@@ -199,9 +216,8 @@ export function buildQuadropoli(): World {
     S.box(mx - 1.6, 0, mz, 0.2, 1.0, 4);
     S.box(mx + 1.6, 0, mz, 0.2, 1.0, 4);
     S.box(mx, 0, mz - 2, 3.4, 1.0, 0.2);
-    col.rect(mx - 1.7, mz - 2.1, mx + 1.7, mz - 1.9);
-    col.rect(mx - 1.7, mz - 2, mx - 1.5, mz + 2);
-    col.rect(mx + 1.5, mz - 2, mx + 1.7, mz + 2);
+    // tutta l'entrata è bloccata: niente passeggiate sopra il buco delle scale
+    col.rect(mx - 1.7, mz - 2.1, mx + 1.7, mz + 2.05);
     for (let i = 0; i < 7; i++) G.seg(mx - 1.4, y, mz + 1.6 - i * 0.5, mx + 1.4, y, mz + 1.6 - i * 0.5, { over: 0 });
     const m = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.6), new THREE.MeshBasicMaterial({ color: '#1d2233' }));
     m.rotation.x = -Math.PI / 2;

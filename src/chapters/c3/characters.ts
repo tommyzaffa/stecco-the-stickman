@@ -148,7 +148,7 @@ export function createCharacters(g: Game) {
         if (g.quest('c3') < 2) {
           g.setStep('c3', 2);
           g.after(2.5, () =>
-            g.toast('Cerca gli indizi: gli oggetti da esaminare hanno un <b style="color:#2f5bd3">?</b> blu. E parla con tutti. Il taccuino è nel diario (<b>Q</b>).', 'info', 8000),
+            g.toast('Cerca gli indizi: guarda bene intorno al banco (anche dietro) e parla con tutti. Il taccuino è nel diario (<b>Q</b>).', 'info', 8000),
           );
         }
       },
@@ -715,7 +715,7 @@ export function createCharacters(g: Game) {
           say: [
             '* Il mimo strofina la briciola sul bordo del foglio.',
             '* Il tratteggio si scolora. Il muro invisibile diventa meno invisibile. Poi sparisce.',
-            'Libero! Libero! Posso fare il mimo in centro, come i mimi veri!',
+            'Libero! Libero! Vado a vedere cosa c\'è fuori dal foglio!',
           ],
           next: 'premio',
         },
@@ -907,6 +907,7 @@ export function createCharacters(g: Game) {
       look: { hat: (['cap', 'bun', 'beanie'] as const)[i] },
       action: 'push',
       faceWhenNear: false,
+      noTurn: true,
       behavior: { type: 'patrol', path: [...rotated.slice(1), rotated[0]], speed: 2.4, wait: 0 },
       barks: () => ['Precedenza!', 'Uff... salita.', 'Qualcuno ha visto un motore? No? Pazienza.'],
       dialogue: { name: i === 1 ? 'Spingitrice' : 'Spingitore', start: 'a', nodes: { a: { say: pushLines[i] } } },

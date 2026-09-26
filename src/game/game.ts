@@ -40,6 +40,7 @@ export interface NpcSpec {
   behavior?: Behavior;
   action?: Action;
   faceWhenNear?: boolean;
+  noTurn?: boolean; // non si gira verso chi gli parla
   barks?: (g: Game) => string[];
   dialogue?: Dialogue;
   talkLabel?: string;
@@ -325,6 +326,7 @@ export class Game {
     this.specs.set(spec.id, spec);
     npc.onSay = (text) => (npc.isDog ? this.audio.bark(npc.pos) : this.audio.mumble(VOICES[npc.id], text, npc.pos));
     if (spec.fighter) this.combat.attach(npc, spec.fighter);
+    npc.noTurn = spec.noTurn ?? false;
     if (spec.hidden) this.setHidden(npc, true);
     if (spec.dialogue) {
       const d = spec.dialogue;

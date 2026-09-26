@@ -19,6 +19,7 @@ export class NPC {
   onSay: ((text: string) => void) | null = null;
   fighter?: import('../game/combat').Fighter;
   controlled = false; // quando true il movimento lo decide il sistema di combattimento
+  noTurn = false; // non si gira verso chi gli parla (es. chi spinge un'auto)
   ctrlSpeed = 0;
   private pathIdx = 0;
   private waitT = 0;
@@ -100,7 +101,9 @@ export class NPC {
     }
 
     if (this.talking) {
-      if (b.type !== 'sit' && b.type !== 'circle') this.face(player.x, player.z, dt);
+      if (this.noTurn) {
+        // resta com'è
+      } else if (b.type !== 'sit' && b.type !== 'circle') this.face(player.x, player.z, dt);
       else if (b.type === 'sit') this.face(player.x, player.z, dt, 2);
     } else {
       switch (b.type) {
