@@ -26,8 +26,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   - `postfx.ts`: post-processing (line boil a 8 fps, grana carta, vignetta, flash danno).
   - `palette.ts`: colori e **tema** (`DAY` inchiostro su carta, `NIGHT` gesso su carta nera,
     `QUADRETTI` carta a quadretti: la griglia la disegna lo shader del tratteggio,
-    `PACCHI` carta da pacchi, `CARTONCINO` cartoncino prugna a lume di candela). `CERA` = colori
-    dei Pastelli a Cera.
+    `PACCHI` carta da pacchi, `CARTONCINO` cartoncino prugna a lume di candela, `MILLIMETRATA`
+    carta millimetrata: `grid.major` = una riga più marcata ogni N). `CERA` = colori dei Pastelli a Cera.
     Il tema va impostato prima di costruire un capitolo (lo fa `Game.loadChapter`).
 - `src/world/` — `builder.ts` (`WorldBuilder`: muri, porte, edifici, cartelli, neon, alberi,
   `ceiling` per gli interni, `wallText` per le scritte sui muri...; `finish()` restituisce un
@@ -48,7 +48,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 - `src/audio/` — audio tutto sintetizzato con Web Audio (nessun file): `audio.ts` effetti, voci a
   bip, sorgenti nel mondo (`addEmitter`), filtro "musica ovattata" (`setMusicMuffle`);
   `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`, `indagine`, `mercato`, `sparatoria`,
-  `cena`, `violino`).
+  `cena`, `violino`, `consegna`). Suoni della macchina (capitolo 6): `car(v, freno, sbandata)`
+  continuo, `crash`, `bump`, `scrape`, `horn`, `wiper`, `bleat`, `glow`, `erase`.
   L'AudioContext si sblocca solo con un click (schermata del titolo).
 
 ## Sistemi riusabili
@@ -81,6 +82,19 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   pugni. Accovacciato dietro un ostacolo basso non ti colpiscono quasi mai; fermo allo scoperto
   ti inquadrano (`player.stillT`). `g.guns.targets` per sagome e barili.
   `g.guns.ceiling` = soffitto per i colpi al chiuso. `NpcSpec.onShot/shotLines` per i civili colpiti.
+- **Guida** (capitolo 6, `src/chapters/c6/drive.ts`): la strada è una sola (`road.ts`: tratti dritti
+  e curve con pendenza, coordinate stradali `s`/`d`), la macchina senza motore va a pendenza, attrito
+  e aria; si sterza e si frena (niente acceleratore); ferma in piano o in salita spingono Marco e
+  Luca, col freno tenuto da fermi spingono indietro. Curve troppo veloci = contro il bordo, urti
+  forti = pezzi persi (4, poi game over). Inseguimento della Scatola da 24 (in discesa li semini,
+  in piano/salita ti prendono), cera sul parabrezza e tergicristallo, posta da lanciare nelle
+  cassette (mira aiutata), tappi, pecore e nonna da scansare col clacson ("bip"), tappe con Riprova.
+  Il mondo è a pezzi da 100 m (`REFS.chunks`) e ciò che è lontano non si disegna.
+- **Pavimento a quota variabile**: `player.floor` (default 0). Il capitolo 6 scende sotto lo zero.
+- **Opzioni del capitolo sul Game** (tornano normali allo scarico): `g.touchMode` = pulsanti a
+  schermo speciali (`{fire, use, jump}`: testo o `null` per nasconderlo), `g.hideNameTags`,
+  `g.interactOff` (niente "parla con"/"usa"). Gli elementi HTML con classe `chapter-ui` spariscono
+  da soli con il capitolo.
 
 ## Pubblicazione e telefono
 
@@ -149,7 +163,8 @@ successivo. **Ogni capitolo porta una meccanica nuova** (indagine, sparatoria, a
 dialoghi, guida, furtività su più piani...): mai due capitoli che si giocano uguali.
 Completati: capitolo 1 (San Scarabocchio), 2 (Il Parallelepipedo), 3 (Il Banco dei Pegni, Quadropoli),
 4 (Il Mercato Nero: poligono, asta, sparatoria a ondate con il Pastellone),
-5 (L'appuntamento: cena a portate con Martina, interesse, risposte a tempo, Marco da scacciare).
+5 (L'appuntamento: cena a portate con Martina, interesse, risposte a tempo, Marco da scacciare),
+6 (Consegna a domicilio: la macchina senza motore di Luca giù per 1300 metri, i Pastelli dietro).
 Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 
 ## Convenzioni per i contenuti
@@ -172,3 +187,4 @@ Quando il pannello è nascosto `requestAnimationFrame` non gira: per testare da 
 Il minigioco di ballo usa l'orologio dell'audio se la musica suona: per testarlo da script
 sospendere l'AudioContext così usa il tempo di gioco. Gli screenshot a volte mostrano il frame
 precedente: farne due. I `setTimeout` dei messaggi (toast) vanno in tempo reale, non di gioco.
+Capitolo 6: `window.__c6` (solo in sviluppo) espone `DRIVE`, `ROAD`, `REFS`, `S` per le prove.

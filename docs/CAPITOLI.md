@@ -29,7 +29,8 @@ gassate, e il "capogiro" è da zucchero e bollicine.
   capitolo 6 diventano comparse ricorrenti, più ridicole che pericolose.
 - **Le Biro Blu:** burocrati che scrivono verbali su tutto.
 - **Dario e Barnie:** Dario gestisce il pub "Da Dario"; Barnie è un gigante gentile, campione di
-  freccette, fisso al bancone. Compaiono al capitolo 9 e tornano tra gli alleati.
+  freccette, fisso al bancone. Si conoscono nel capitolo 6 (Barnie fa l'autostop), sono al centro
+  del capitolo 9 e tornano tra gli alleati.
 - **La vera minaccia:** **la Gomma**, che cancella le cose per "ricominciare da un foglio pulito".
   Prima piccole cose (una panchina, una via, l'orto di Nonna Pina), poi interi quartieri.
 - **Il mistero di fondo:** l'Autore, quello che "ha finito la matita".
@@ -54,7 +55,7 @@ gassate, e il "capogiro" è da zucchero e bollicine.
 | 3 ✅ | Il Banco dei Pegni | Quadropoli, città a quadretti | **Indagine**: indizi, testimoni, accusa finale |
 | 4 ✅ | Il Mercato Nero | Sotto Quadropoli | **Armi da fuoco**: poligono, coperture, ondate, boss |
 | 5 ✅ | L'appuntamento | Il ristorante "Da Pastello" | **Solo dialoghi**: interesse, risposte a tempo, Marco da nascondere |
-| 6 | Consegna a domicilio | Le strade di Quadropoli | **Guida**: la macchina (senza motore) di Luca |
+| 6 ✅ | Consegna a domicilio | Da Quadropoli a San Scarabocchio (carta millimetrata) | **Guida**: la macchina (senza motore) di Luca |
 
 **3. Il Banco dei Pegni.** Marco ha venduto il tappo vero a un banco dei pegni di Quadropoli.
 Il banco però è stato svaligiato stanotte. Stecco fa il detective: raccoglie indizi, interroga
@@ -69,11 +70,14 @@ a Cera fanno irruzione (tre ondate e il Pastellone). Il tappo l'ha comprato Mart
 risposte a tempo (stare zitti a volte è giusto), Marco da scacciare prima che lei lo veda. Contano
 oggetti e scelte dei capitoli prima. Alla fine il maître riconosce Stecco e Marco: fuga.
 
-**6. Consegna a domicilio.** Il tappo va riportato a Don Fluo prima che scadano i tre giorni.
-Si guida la macchina di Luca (non ha il motore: la spinge Marco, poi si scopre che in discesa va)
-per Quadropoli, con i Pastelli dietro. Don Fluo riprende colore, e la faccenda del tappo si chiude:
-da qui in poi le bande sono sfondo. Tornati a San Scarabocchio, la prima stranezza: la panchina
-del parco non c'è più. Cancellata.
+**6. Consegna a domicilio.** Terzo giorno. Luca è salito a Quadropoli spingendo tutta la notte;
+al ritorno è discesa e la macchina, senza motore, va da sola. Si guida per 1300 metri (via ripida,
+tornanti, mercato in piano, ponte "ancora da disegnare", salita, gregge di pecore-nuvola, un pezzo
+di strada cancellato) con la Scatola da 24 dei Pastelli dietro. Missioni: la posta da lanciare
+nelle cassette, i tappi per Martina, Barnie in autostop fino al pub di Dario, la torta di Nonna
+Pina (ogni botta un piano in meno). Don Fluo si rimette il tappo e torna giallo; i Pastelli
+arrivano, ma anche a loro è sparita una via: tregua. Il tappo torna a Stecco, da ridare a Martina
+alla sagra. Nel parco, la panchina di Arturo non c'è più: solo briciole di gomma.
 
 ## Atto II: Tutti i giorni (quasi)
 

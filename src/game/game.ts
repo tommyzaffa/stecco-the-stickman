@@ -182,6 +182,7 @@ export class Game {
   // Per ogni pulsante: il testo da mostrare, oppure null per nasconderlo.
   touchMode: { fire?: string | null; use?: string | null; jump?: string | null } | null = null;
   hideNameTags = false; // niente nomi sopra le teste (es. in macchina, con Marco seduto accanto)
+  interactOff = false; // niente "parla con..." / "usa" (es. in macchina: il tasto serve ad altro)
 
   // c'è qualcosa con cui interagire davanti a te (per il pulsante USA)
   get hasFocus() {
@@ -315,6 +316,7 @@ export class Game {
     this.minigame = null;
     this.touchMode = null;
     this.hideNameTags = false;
+    this.interactOff = false;
     this.player.floor = 0;
     this.player.pos.y = 0;
     // interfacce dei capitoli (ballo, cruscotto...): spariscono con il capitolo
@@ -846,7 +848,7 @@ export class Game {
     for (const f of this.onUpdate) f(this, dt);
 
     this.damageFx = Math.max(0, this.damageFx - dt * 1.5);
-    this.updateFocus(playing && !this.dialogue.isOpen && !this.hud.diarioOpen && !this.minigame);
+    this.updateFocus(playing && !this.interactOff && !this.dialogue.isOpen && !this.hud.diarioOpen && !this.minigame);
     this.updateHud();
     this.post.render(this.time, this.damageFx);
     inp.endFrame();
