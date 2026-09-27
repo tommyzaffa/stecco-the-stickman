@@ -65,5 +65,6 @@ I tasti si possono cambiare da **Impostazioni** nel menu principale.
 
 Capitoli da 1 a 5 completi. Il piano dei capitoli è in [docs/CAPITOLI.md](docs/CAPITOLI.md).
 
-Dal menu principale, "Seleziona capitolo" permette di ripartire da un capitolo sbloccato
-(o sbloccarlo con la password mostrata a fine del capitolo precedente).
+Si gioca con un account (email o Google): la storia resta salvata e si riprende da qualsiasi
+dispositivo. Senza account si può provare il capitolo 1. Finita la storia si sblocca la modalità
+"Capitoli", per rigiocare il capitolo che si vuole.

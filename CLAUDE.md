@@ -107,18 +107,25 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   con Sì/No). Sul telefono i clic simulati dopo un tocco vanno ignorati (`Input` li scarta):
   un tocco = un'azione.
 
-## Capitoli e salvataggi
+## Capitoli, account e salvataggi
 
-- Si salva in `localStorage` all'inizio di ogni capitolo (stato del giocatore + capitolo).
-- All'avvio si apre il **menu principale** (`flow.ts`): Continua / Nuova partita / Seleziona
-  capitolo / Impostazioni. Nessun capitolo è caricato finché non si inizia (`Game.closeChapter`).
+- **Account** (`src/account.ts`, `ACCOUNT`): con Firebase configurato (`src/firebase-config.ts`)
+  si gioca solo con un account (email+password o Google); la storia sta in Firestore
+  (`users/{uid}`, regole in `firestore.rules`: ognuno legge/scrive solo il suo). Con la
+  configurazione a `null` il gioco è in modalità locale (salvataggi nel browser, nessun login).
+  In sviluppo la schermata di accesso ha "Entra in locale". Firebase si carica solo se serve.
+- **Storia** (una per account): si salva all'inizio di ogni capitolo (`Game.saveHook`, stato +
+  capitolo). "Continua" riparte da lì, "Nuova partita" azzera. Finiti i 20 capitoli si sblocca
+  la **modalità Capitoli**: un capitolo a scelta con il suo `startState` (**solo lo stretto
+  necessario**); finito, si torna alla lista e la storia non cambia.
+- **Demo**: senza account si gioca solo il capitolo 1, senza salvare; accedendo dopo la demo,
+  quel capitolo diventa l'inizio della storia.
+- All'avvio: schermata di accesso (o menu principale, se sei già dentro). Nessun capitolo è
+  caricato finché non si inizia (`Game.closeChapter`). Mai `confirm()` del browser: `ask()`.
 - **Impostazioni** (`src/settings.ts`): tasti riassegnabili, sensibilità del mouse, volumi.
   Nel codice non usare mai codici tasto fissi per le azioni: `input.isDown('jump')`,
   `input.wasPressed('interact')`, e nei testi `keyName('interact')`.
-- Menu "Seleziona capitolo": un capitolo si sblocca finendo il precedente o con la sua
-  `password` (mostrata a fine del capitolo prima). Saltando a un capitolo si parte con il suo
-  `startState`: **solo lo stretto necessario** (es. capitolo 2: 50 monete, niente di più).
-- `?cap=N` nell'indirizzo aggiunge al menu il pulsante "Test: capitolo N" (scorciatoia per i test).
+- `?cap=N` nell'indirizzo aggiunge al menu il pulsante "Test: capitolo N" (solo in sviluppo).
 - Gli id delle missioni sono globali (lo stato di tutte le missioni resta): la missione
   principale del capitolo N si chiama `cN`. `QUEST_DONE = 999`.
 - Quando un capitolo viene scaricato, tutto il suo contenuto sparisce (PNG, oggetti, suoni,

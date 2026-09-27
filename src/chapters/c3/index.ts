@@ -18,7 +18,6 @@ export const chapter3: Chapter = {
     setupStory(g);
   },
   start: startChapter3,
-  password: 'BIRO',
   // saltando qui: statistiche di base, niente oggetti, niente monete (non servono)
   startState: {
     flags: ['metMarco'],

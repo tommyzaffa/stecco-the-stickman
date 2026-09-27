@@ -1,36 +1,25 @@
-import { Game } from './game';
+import { Game, deserializeState, serializeState, type RawState } from './game';
 import { CHAPTERS } from '../chapters';
 import { ACTIONS, QUALITY_LABEL, SETTINGS, bindKey, codeLabel, keyName, resetKeys, saveSettings, type Quality } from '../settings';
 import { TOUCH } from '../touch';
+import { ACCOUNT, authError, type Progress } from '../account';
 
 // ---------------------------------------------------------------------------
-// Schermate fuori dal gioco: menu principale, capitoli, impostazioni, pausa,
+// Schermate fuori dal gioco: accesso, menu principale, capitoli, impostazioni, pausa,
 // game over, fine capitolo. E il passaggio tra capitoli.
+//
+// Modalità:
+//  - storia: una sola per account. Si salva all'inizio di ogni capitolo; "Continua" riparte da lì,
+//    "Nuova partita" azzera tutto.
+//  - capitoli: si sblocca finendo la storia. Capitolo a scelta, con lo stretto necessario; finito
+//    il capitolo si torna alla lista, e la storia non cambia.
+//  - demo: senza account si gioca solo il capitolo 1 (senza salvare).
+//  - test: ?cap=N, solo in sviluppo.
 // ---------------------------------------------------------------------------
-
-const UNLOCK_KEY = 'stilizzato.unlocked.v1';
 
 const TOTAL_CHAPTERS = 20;
-
-export function unlockedChapters(): Set<number> {
-  const s = new Set<number>([1]);
-  try {
-    for (const n of JSON.parse(localStorage.getItem(UNLOCK_KEY) ?? '[]')) s.add(n);
-  } catch {
-    /* niente */
-  }
-  return s;
-}
-
-export function unlockChapter(n: number) {
-  const s = unlockedChapters();
-  s.add(n);
-  try {
-    localStorage.setItem(UNLOCK_KEY, JSON.stringify([...s]));
-  } catch {
-    /* niente */
-  }
-}
+const DEV = import.meta.env.DEV;
+type Mode = 'story' | 'chapters' | 'demo' | 'test';
 
 // Riepilogo dei comandi con i tasti scelti nelle impostazioni (o i pulsanti a schermo sul telefono)
 const controls = () => TOUCH ? `
@@ -65,6 +54,9 @@ type Btn = HTMLButtonElement;
 
 export function setupFlow(g: Game) {
   const screen = g.hud.screen;
+  let mode: Mode = 'story';
+  let progress: Progress = { story: null, finished: false };
+  let pendingDemo: RawState | null = null; // la demo appena finita: diventa l'inizio della storia
   const show = (html: string, onClick: ((e: MouseEvent) => void) | null, kind: 'menu' | 'overlay' = 'overlay') => {
     screen.innerHTML = html;
     screen.className = `screen ${kind}`;
@@ -118,8 +110,13 @@ export function setupFlow(g: Game) {
   // ?cap=N nell'indirizzo: scorciatoia per i test (compare come primo pulsante del menu)
   const capParam = Number(new URLSearchParams(location.search).get('cap'));
 
+  // salva la storia (solo in modalità storia)
+  const saveStory = (chapter: number, state: RawState) => {
+    progress.story = { chapter, state };
+    ACCOUNT.save(progress).catch(() => g.toast('Salvataggio non riuscito: controlla la connessione.', 'bad', 5000));
+  };
+
   const begin = () => {
-    unlockChapter(g.chapterNum); // un capitolo che hai giocato resta sbloccato nel menu
     g.audio.init(); // i browser sbloccano l'audio solo dopo un click
     g.audio.resume();
     g.mode = 'play';
@@ -137,11 +134,143 @@ export function setupFlow(g: Game) {
     }
   };
 
-  const startChapter = (num: number, fresh: boolean) => {
+  const play = (m: Mode, num: number, state: 'fresh' | 'minimal' | RawState) => {
+    mode = m;
     const c = CHAPTERS[num - 1];
-    if (fresh) g.resetState(c.startState);
+    if (state === 'fresh') g.resetState();
+    else if (state === 'minimal') g.resetState(c.startState);
+    else g.state = deserializeState(state);
+    g.saveHook = m === 'story' ? saveStory : null;
     g.loadChapter(c);
     begin();
+  };
+
+  // =========================================================================
+  // ACCESSO (con Firebase): email e password, Google, oppure la demo del capitolo 1
+  // =========================================================================
+  const loginScreen = (msg = '') => {
+    g.mode = 'title';
+    g.input.unlock();
+    g.closeChapter();
+    show(
+      `<div class="menu-page">
+        ${WAVING_STICKMAN}
+        <div class="menu-main login">
+          <div class="title big">STILIZZATO</div>
+          <div class="sub">Per giocare serve un account: la tua storia ti segue su ogni dispositivo.</div>
+          <div class="buttons menu-buttons">
+            <button class="primary" data-a="google">Accedi con Google</button>
+          </div>
+          <div class="or">oppure con l'email</div>
+          <div class="fields">
+            <input type="email" name="email" placeholder="email" autocomplete="email" spellcheck="false" />
+            <input type="password" name="password" placeholder="password" autocomplete="current-password" />
+          </div>
+          <div class="buttons row">
+            <button data-a="login">Accedi</button>
+            <button data-a="signup">Crea account</button>
+          </div>
+          <button class="link" data-a="forgot">Password dimenticata?</button>
+          <div class="msg">${msg}</div>
+          <div class="buttons menu-buttons demo">
+            <button data-a="demo">Prova il capitolo 1<small>senza account, senza salvare</small></button>
+            ${DEV ? '<button data-a="local">Entra in locale<small>solo in sviluppo: salvataggi nel browser</small></button>' : ''}
+          </div>
+          <button class="link" data-a="privacy">Privacy</button>
+        </div>
+      </div>`,
+      async (e) => {
+        const a = action(e)?.dataset.a;
+        if (!a) return;
+        const email = (screen.querySelector('input[name="email"]') as HTMLInputElement).value.trim();
+        const password = (screen.querySelector('input[name="password"]') as HTMLInputElement).value;
+        const busy = (text: string) => {
+          screen.querySelectorAll('button').forEach((b) => (b.disabled = true));
+          (screen.querySelector('.msg') as HTMLElement).textContent = text;
+        };
+        try {
+          if (a === 'google') {
+            busy('Un attimo…');
+            await ACCOUNT.signInGoogle();
+            return afterLogin();
+          }
+          if (a === 'login') {
+            busy('Accesso…');
+            await ACCOUNT.signInEmail(email, password);
+            return afterLogin();
+          }
+          if (a === 'signup') {
+            busy('Creo il tuo account…');
+            await ACCOUNT.signUpEmail(email, password);
+            return afterLogin();
+          }
+          if (a === 'forgot') {
+            if (!email) return loginScreen("Scrivi la tua email qui sopra, poi premi di nuovo \"Password dimenticata?\".");
+            busy('Un attimo…');
+            await ACCOUNT.resetPassword(email);
+            return loginScreen(`Ti ho mandato un'email a ${email} per scegliere una nuova password.`);
+          }
+        } catch (err) {
+          return loginScreen(authError(err));
+        }
+        if (a === 'demo') return play('demo', 1, 'fresh');
+        if (a === 'local') {
+          ACCOUNT.useLocal();
+          return afterLogin();
+        }
+        if (a === 'privacy') return privacyScreen(() => loginScreen());
+      },
+      'menu',
+    );
+    screen.querySelectorAll('input').forEach((inp) =>
+      inp.addEventListener('keydown', (ev) => {
+        ev.stopPropagation(); // i tasti scritti non arrivano al gioco
+        if (ev.key === 'Enter') (screen.querySelector('[data-a="login"]') as Btn).click();
+      }),
+    );
+  };
+
+  // Appena dentro: se c'era una demo appena giocata e non hai ancora una storia, la storia parte da lì
+  const afterLogin = async () => {
+    try {
+      progress = await ACCOUNT.load();
+    } catch {
+      progress = { story: null, finished: false };
+      return loginScreen('Non riesco a leggere il salvataggio: controlla la connessione e riprova.');
+    }
+    if (pendingDemo) {
+      if (!progress.story) {
+        progress.story = { chapter: 2, state: pendingDemo };
+        ACCOUNT.save(progress).catch(() => {});
+        g.toast('Il capitolo 1 che hai giocato è salvato nella tua storia.', 'reward', 5000);
+      } else g.toast('Hai già una storia: la demo non la sostituisce.', 'info', 5000);
+      pendingDemo = null;
+    }
+    mainMenu();
+  };
+
+  const privacyScreen = (back: () => void) => {
+    show(
+      `<div class="card paper privacy">
+        <div class="title small">Privacy</div>
+        <div class="sub">
+          Stilizzato è un progetto personale, senza scopo di lucro.<br><br>
+          <b>Cosa salviamo:</b> l'email (o l'account Google) che usi per accedere e i progressi del gioco
+          (capitolo, statistiche, scelte fatte).<br>
+          <b>Perché:</b> solo per farti ritrovare la partita su qualunque dispositivo.<br>
+          <b>Dove:</b> su Firebase (Google), che gestisce l'accesso e il database. I dati possono essere
+          trattati anche fuori dalla Svizzera e dall'UE, con le garanzie di Google.<br>
+          Niente pubblicità, niente tracciamento, niente dati a terzi.<br><br>
+          Puoi eliminare l'account e tutti i dati quando vuoi: Impostazioni → Elimina account.
+          Per qualsiasi domanda: la pagina del progetto su GitHub.
+        </div>
+        <div class="buttons"><button class="primary" data-a="back">Indietro</button></div>
+      </div>`,
+      (e) => {
+        if (action(e)?.dataset.a === 'back') back();
+      },
+      'menu',
+    );
   };
 
   // =========================================================================
@@ -151,8 +280,10 @@ export function setupFlow(g: Game) {
     g.mode = 'title';
     g.input.unlock();
     g.closeChapter();
-    const save = Game.loadSave();
-    const saved = save && CHAPTERS[save.chapter - 1];
+    if (!ACCOUNT.loggedIn) return loginScreen();
+    const story = progress.story;
+    const storyCh = story ? CHAPTERS[story.chapter - 1] : null;
+    const chaptersOpen = progress.finished || DEV;
     show(
       `<div class="menu-page">
         ${WAVING_STICKMAN}
@@ -160,33 +291,37 @@ export function setupFlow(g: Game) {
           <div class="title big">STILIZZATO</div>
           <div class="sub">un gioco disegnato a matita</div>
           <div class="buttons menu-buttons">
-            ${capParam && CHAPTERS[capParam - 1] ? `<button class="primary" data-a="test">Test: capitolo ${capParam}<small>parte con lo stretto necessario</small></button>` : ''}
-            ${saved ? `<button class="${capParam ? '' : 'primary'}" data-a="continue">Continua<small>Capitolo ${saved.num}: ${saved.title}</small></button>` : ''}
-            <button class="${saved || capParam ? '' : 'primary'}" data-a="new">${saved ? 'Nuova partita' : 'Inizia partita'}</button>
-            <button data-a="chapters">Seleziona capitolo</button>
+            ${DEV && capParam && CHAPTERS[capParam - 1] ? `<button class="primary" data-a="test">Test: capitolo ${capParam}<small>parte con lo stretto necessario</small></button>` : ''}
+            ${
+              story
+                ? storyCh
+                  ? `<button class="${capParam ? '' : 'primary'}" data-a="continue">Continua<small>Capitolo ${storyCh.num}: ${storyCh.title}</small></button>`
+                  : `<button class="locked" disabled>Continua<small>il capitolo ${story.chapter} non è ancora disegnato</small></button>`
+                : ''
+            }
+            <button class="${storyCh || capParam ? '' : 'primary'}" data-a="new">${story ? 'Nuova partita' : progress.finished ? 'Nuova storia' : 'Inizia la storia'}</button>
+            ${chaptersOpen ? '<button data-a="chapters">Capitoli<small>gioca un capitolo a scelta</small></button>' : ''}
             <button data-a="settings">Impostazioni</button>
           </div>
-          <div class="menu-foot">Capitoli disegnati: ${CHAPTERS.length} su ${TOTAL_CHAPTERS}</div>
+          <div class="menu-foot">Capitoli disegnati: ${CHAPTERS.length} su ${TOTAL_CHAPTERS}${
+            ACCOUNT.cloud && ACCOUNT.user ? `<br><small>${ACCOUNT.user.email ?? ACCOUNT.user.name ?? 'account'}</small>` : ''
+          }</div>
         </div>
       </div>`,
       (e) => {
         const b = action(e);
         const a = b?.dataset.a;
         if (!a) return;
-        if (a === 'test') return startChapter(capParam, true);
-        if (a === 'continue' && save) {
-          g.state = save.state;
-          g.loadChapter(CHAPTERS[save.chapter - 1]);
-          return begin();
-        }
+        if (a === 'test') return play('test', capParam, 'minimal');
+        if (a === 'continue' && story && storyCh) return play('story', story.chapter, story.state);
         if (a === 'new') {
-          if (!saved) return startChapter(1, true);
+          if (!story) return play('story', 1, 'fresh');
           return ask({
             title: 'Nuova partita?',
-            text: 'Si ricomincia dal capitolo 1 e il salvataggio di adesso viene sostituito.',
+            text: 'Si ricomincia dal capitolo 1 e la storia di adesso viene cancellata.',
             yes: 'Sì, ricomincia',
             no: 'No, torna indietro',
-            onYes: () => startChapter(1, true),
+            onYes: () => play('story', 1, 'fresh'),
             onNo: mainMenu,
             kind: 'menu',
           });
@@ -199,26 +334,19 @@ export function setupFlow(g: Game) {
   };
 
   // =========================================================================
-  // CAPITOLI: si sbloccano finendo il precedente o con la password
+  // CAPITOLI (dopo aver finito la storia): un capitolo a scelta, la storia non cambia
   // =========================================================================
-  const chaptersMenu = (msg = '') => {
-    const open = unlockedChapters();
-    const rows = CHAPTERS.map((c) =>
-      open.has(c.num)
-        ? `<button data-a="ch" data-n="${c.num}">Capitolo ${c.num}<small>${c.title}</small></button>`
-        : `<button class="locked" disabled>🔒 Capitolo ${c.num}<small>bloccato</small></button>`,
-    ).join('');
+  const chaptersMenu = () => {
+    g.mode = 'title';
+    g.input.unlock();
+    g.closeChapter();
+    const rows = CHAPTERS.map((c) => `<button data-a="ch" data-n="${c.num}">Capitolo ${c.num}<small>${c.title}</small></button>`).join('');
     show(
       `<div class="menu-page">
         <div class="menu-main wide">
-          <div class="title small">Seleziona capitolo</div>
-          <div class="sub">Se salti un capitolo, parti con lo stretto necessario.</div>
+          <div class="title small">Capitoli</div>
+          <div class="sub">Un capitolo a scelta, con lo stretto necessario. La tua storia non cambia.</div>
           <div class="buttons chapter-grid">${rows}</div>
-          <div class="password">
-            <input type="text" placeholder="password" maxlength="24" autocomplete="off" spellcheck="false" />
-            <button data-a="pwd">Sblocca</button>
-          </div>
-          <div class="msg">${msg}</div>
           <div class="buttons"><button data-a="back">Indietro</button></div>
         </div>
       </div>`,
@@ -227,34 +355,10 @@ export function setupFlow(g: Game) {
         const a = b?.dataset.a;
         if (!a) return;
         if (a === 'back') return mainMenu();
-        if (a === 'ch') {
-          const n = Number(b!.dataset.n);
-          if (!Game.loadSave()) return startChapter(n, true);
-          return ask({
-            title: `Capitolo ${n}?`,
-            text: 'Parti con lo stretto necessario e il salvataggio di adesso viene sostituito.',
-            yes: 'Sì, inizia',
-            no: 'No, torna indietro',
-            onYes: () => startChapter(n, true),
-            onNo: () => chaptersMenu(),
-            kind: 'menu',
-          });
-        }
-        if (a === 'pwd') {
-          const val = (screen.querySelector('.password input') as HTMLInputElement).value.trim().toUpperCase();
-          const c = CHAPTERS.find((c) => c.password && c.password === val);
-          if (!c) return chaptersMenu('Password sbagliata. O scritta male. O disegnata male.');
-          unlockChapter(c.num);
-          return chaptersMenu(`Capitolo ${c.num} sbloccato!`);
-        }
+        if (a === 'ch') return play('chapters', Number(b!.dataset.n), 'minimal');
       },
       'menu',
     );
-    const input = screen.querySelector('.password input') as HTMLInputElement;
-    input.addEventListener('keydown', (ev) => {
-      ev.stopPropagation(); // non far arrivare i tasti al gioco
-      if (ev.key === 'Enter') (screen.querySelector('[data-a="pwd"]') as Btn).click();
-    });
   };
 
   // =========================================================================
@@ -288,6 +392,12 @@ export function setupFlow(g: Game) {
           ${TOUCH ? '' : `<div class="sub">Comandi: clicca su un tasto e premi quello nuovo (Esc per annullare).</div>
           <div class="binds">${rows}</div>
           <div class="sub fixed">Fissi: <b>Click</b> colpisci · <b>Tasto destro</b> para · <b>Esc</b> pausa · <b>frecce</b> muoviti</div>`}
+          ${
+            ACCOUNT.cloud && ACCOUNT.user && kind === 'menu'
+              ? `<div class="sub fixed account">Account: <b>${ACCOUNT.user.email ?? ACCOUNT.user.name ?? ''}</b></div>
+          <div class="buttons row"><button data-a="logout">Esci</button><button data-a="delete">Elimina account</button><button data-a="privacy">Privacy</button></div>`
+              : ''
+          }
           <div class="msg">${msg}</div>
           <div class="buttons row">
             ${TOUCH ? '' : '<button data-a="reset">Ripristina comandi</button>'}
@@ -302,6 +412,29 @@ export function setupFlow(g: Game) {
         if (a === 'back') {
           g.input.captureKey = null;
           return back();
+        }
+        if (a === 'logout') {
+          ACCOUNT.signOut().then(() => loginScreen());
+          return;
+        }
+        if (a === 'privacy') return privacyScreen(() => settingsMenu(back, kind));
+        if (a === 'delete') {
+          return ask({
+            title: "Eliminare l'account?",
+            text: 'Si cancellano l\'account e tutta la storia salvata. Non si può tornare indietro.',
+            yes: 'Sì, elimina tutto',
+            no: 'No',
+            kind: 'menu',
+            onNo: () => settingsMenu(back, kind),
+            onYes: () => {
+              ACCOUNT.deleteAccount()
+                .then(() => {
+                  progress = { story: null, finished: false };
+                  loginScreen("Account eliminato. Ciao ciao, e grazie d'aver disegnato con noi.");
+                })
+                .catch((err) => settingsMenu(back, kind, authError(err)));
+            },
+          });
         }
         if (a === 'quality') {
           const order: Quality[] = ['leggera', 'normale', 'alta'];
@@ -374,10 +507,15 @@ export function setupFlow(g: Game) {
         } else if (a === 'menu') {
           ask({
             title: 'Tornare al menu?',
-            text: "Quando continuerai, ripartirai dall'inizio di questo capitolo.",
+            text:
+              mode === 'story'
+                ? "Quando continuerai, ripartirai dall'inizio di questo capitolo."
+                : mode === 'demo'
+                  ? 'La demo ricomincerà da capo.'
+                  : 'Il capitolo ricomincerà da capo.',
             yes: 'Sì, torna al menu',
             no: 'No, resto qui',
-            onYes: mainMenu,
+            onYes: () => (mode === 'demo' ? loginScreen() : mode === 'chapters' ? chaptersMenu() : mainMenu()),
             onNo: pauseMenu,
           });
         }
@@ -419,45 +557,67 @@ export function setupFlow(g: Game) {
   // FINE CAPITOLO
   // =========================================================================
   g.onChapterComplete = (g, next) => {
-    unlockChapter(next);
     g.input.unlock();
     g.audio.jingle();
     const c = g.chapterDef;
     const side = c.sideQuests.filter((q) => g.questDone(q)).length;
     const mins = Math.floor(g.chapterTime / 60), secs = Math.floor(g.chapterTime % 60);
     const nextCh = CHAPTERS[next - 1];
+    // la storia va avanti: si salva subito l'inizio del capitolo dopo (o la fine della storia)
+    if (mode === 'story') {
+      if (next > TOTAL_CHAPTERS) {
+        progress = { story: null, finished: true };
+        ACCOUNT.save(progress).catch(() => {});
+      } else saveStory(next, serializeState(g.state));
+    }
+    if (mode === 'demo') pendingDemo = serializeState(g.state);
+    const stats = `<div class="stats-end">
+          <div>Tempo: <b>${mins}m ${secs}s</b></div>
+          <div>Livello: <b>${g.state.level}</b> · Monete: <b>${g.state.coins}</b></div>
+          <div>Missioni secondarie: <b>${side}/${c.sideQuests.length}</b></div>
+        </div>`;
+    const buttons =
+      mode === 'demo'
+        ? `<div class="sub">Fine della demo. Per continuare la storia (e non perdere quello che hai fatto) serve un account.</div>
+          <button class="primary" data-a="account">Crea un account e continua</button>`
+        : mode === 'story'
+          ? next > TOTAL_CHAPTERS
+            ? `<div class="sub">Hai finito la storia! Adesso puoi rigiocare i capitoli che vuoi, o iniziarne una nuova.</div>
+              <button class="primary" data-a="menu">Menu principale</button>`
+            : `${
+                nextCh
+                  ? `<button class="primary" data-a="next">Capitolo ${nextCh.num}<small>${nextCh.title}</small></button>`
+                  : `<div class="sub">Il capitolo ${next} non è ancora stato disegnato. La tua storia è salvata: la riprendi da qui.</div>`
+              }
+              <button ${nextCh ? '' : 'class="primary" '}data-a="menu">Menu principale</button>`
+          : `<button class="primary" data-a="list">Torna ai capitoli</button><button data-a="menu">Menu principale</button>`;
     show(
       `<div class="card paper">
         <div class="title small">Capitolo ${c.num} completato</div>
         <div class="sub">${c.title}</div>
-        <div class="stats-end">
-          <div>Tempo: <b>${mins}m ${secs}s</b></div>
-          <div>Livello: <b>${g.state.level}</b> · Monete: <b>${g.state.coins}</b></div>
-          <div>Missioni secondarie: <b>${side}/${c.sideQuests.length}</b></div>
-        </div>
+        ${stats}
         <div class="sub"><i>${g.lastTeaser}</i></div>
-        ${nextCh?.password ? `<div class="pwd-show">Password del capitolo ${next}: <b>${nextCh.password}</b></div>` : ''}
-        <div class="buttons">
-          ${
-            nextCh
-              ? `<button class="primary" data-a="next">Capitolo ${nextCh.num}<small>${nextCh.title}</small></button>`
-              : `<div class="sub">Il capitolo ${next} non è ancora stato disegnato.</div>`
-          }
-          <button ${nextCh ? '' : 'class="primary" '}data-a="menu">Menu principale</button>
-        </div>
+        <div class="buttons">${buttons}</div>
       </div>`,
       (e) => {
         const a = action(e)?.dataset.a;
         if (!a) return;
-        if (a === 'next' && nextCh) {
-          g.loadChapter(nextCh);
-          begin();
-        } else if (a === 'menu') {
-          mainMenu();
-        }
+        if (a === 'next' && nextCh) return play('story', next, serializeState(g.state));
+        if (a === 'account') return loginScreen('Crea un account (o accedi): il capitolo 1 che hai appena giocato finisce nella tua storia.');
+        if (a === 'list') return mode === 'test' ? mainMenu() : chaptersMenu();
+        if (a === 'menu') return mainMenu();
       },
     );
   };
 
-  mainMenu();
+  // se esci da un'altra scheda (o ti scade la sessione) si torna alla schermata di accesso
+  ACCOUNT.onChange = () => {
+    if (ACCOUNT.cloud && !ACCOUNT.loggedIn && g.mode !== 'play') loginScreen();
+  };
+
+  // Avvio: un attimo per sapere se sei già dentro, poi menu (o accesso)
+  show('<div class="card paper"><div class="sub">un attimo…</div></div>', null, 'menu');
+  ACCOUNT.init()
+    .then(() => (ACCOUNT.loggedIn ? afterLogin() : loginScreen()))
+    .catch(() => loginScreen('Non riesco a collegarmi. Controlla la connessione e ricarica la pagina.'));
 }

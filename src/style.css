@@ -471,3 +471,22 @@ body.touch .meter-pop { top: 100px; }
 .meter-pop.bad { color: var(--ink); }
 @keyframes meterpop { 0% { opacity: 0; transform: translate(-50%, 10px) scale(.8); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -30px) scale(1); } }
 html.compact #hud .meter { zoom: .75; }
+
+/* schermata di accesso */
+.menu-main.login .or { margin: 14px 0 6px; font-size: 16px; opacity: .6; }
+.menu-main.login .fields { display: flex; flex-direction: column; gap: 8px; width: min(360px, calc(var(--gw, 100vw) * 0.9)); }
+.menu-main.login .fields input {
+  font-family: var(--hand); font-size: 20px; padding: 7px 14px; color: var(--ink); background: #fff;
+  border: 2.5px solid var(--ink); border-radius: var(--sketch-radius); outline: none;
+}
+.menu-main.login .fields input:focus { border-color: var(--blue); }
+.menu-main.login .buttons.row { display: flex; gap: 10px; margin-top: 10px; }
+.menu-main.login .demo { margin-top: 14px; }
+.menu-main .msg { min-height: 22px; margin-top: 8px; font-size: 17px; color: var(--red); max-width: 360px; }
+.menu-main button.link, .card button.link {
+  border: none; background: none; box-shadow: none; padding: 4px; font-family: var(--hand); font-size: 16px;
+  text-decoration: underline; opacity: .7; cursor: pointer;
+}
+.menu-main button:disabled { opacity: .5; cursor: default; }
+.card.privacy .sub { font-size: 17px; text-align: left; line-height: 1.35; }
+.menu-main .sub.fixed.account { margin-top: 14px; }

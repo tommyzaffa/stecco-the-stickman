@@ -18,7 +18,6 @@ export const chapter2: Chapter = {
     setupStory(g);
   },
   start: startChapter2,
-  password: 'PSST',
   // se si salta direttamente qui: statistiche di base e solo lo stretto necessario
   // (le 50 monete per entrare al club, niente di più)
   startState: {

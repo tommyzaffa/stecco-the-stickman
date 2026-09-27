@@ -17,8 +17,6 @@ export interface Chapter {
   setup(g: Game): void;
   // Chiamato quando il giocatore inizia davvero a giocare il capitolo (dopo il click).
   start(g: Game): void;
-  // Password per sbloccare il capitolo dal menu (compare alla fine del capitolo precedente)
-  password?: string;
-  // Stato di partenza se si salta direttamente a questo capitolo: solo lo stretto necessario.
+  // Stato di partenza nella modalità capitoli (e nei test): solo lo stretto necessario.
   startState?: Partial<Omit<GameState, 'flags'>> & { flags?: string[] };
 }

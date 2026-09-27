@@ -18,7 +18,6 @@ export const chapter4: Chapter = {
     setupStory(g);
   },
   start: startChapter4,
-  password: 'CERA',
   // saltando qui: niente monete e niente armi (la pistola si prende nel capitolo)
   startState: {
     flags: ['metMarco'],

@@ -81,8 +81,12 @@ export interface GameState {
   quests: Record<string, number>;
 }
 
-const SAVE_KEY = 'stilizzato.save.v1';
 export const QUEST_DONE = 999;
+
+// Lo stato come si salva (i flag diventano un elenco)
+export type RawState = Omit<GameState, 'flags'> & { flags: string[] };
+export const serializeState = (s: GameState): RawState => ({ ...s, items: [...s.items], quests: { ...s.quests }, flags: [...s.flags] });
+export const deserializeState = (raw: Partial<RawState>): GameState => ({ ...freshState(), ...raw, flags: new Set(raw.flags ?? []) });
 
 const freshState = (): GameState => ({
   hp: 60,
@@ -308,27 +312,12 @@ export class Game {
     document.querySelectorAll('.dance').forEach((e) => e.remove());
   }
 
-  save() {
-    try {
-      const s = this.state;
-      localStorage.setItem(
-        SAVE_KEY,
-        JSON.stringify({ chapter: this.chapterNum, state: { ...s, flags: [...s.flags] } }),
-      );
-    } catch {
-      /* salvataggi non disponibili (navigazione privata): pazienza */
-    }
-  }
+  // Salvataggio all'inizio di ogni capitolo: dove finisce lo decide il flusso (account o niente,
+  // nella modalità capitoli e nella demo non si salva)
+  saveHook: ((chapter: number, state: RawState) => void) | null = null;
 
-  static loadSave(): { chapter: number; state: GameState } | null {
-    try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      if (!raw) return null;
-      const d = JSON.parse(raw);
-      return { chapter: d.chapter, state: { ...freshState(), ...d.state, flags: new Set(d.state.flags ?? []) } };
-    } catch {
-      return null;
-    }
+  save() {
+    this.saveHook?.(this.chapterNum, serializeState(this.state));
   }
 
   resetState(partial?: Chapter['startState']) {
