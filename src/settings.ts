@@ -68,7 +68,7 @@ export function qualityParams(q: Quality, touch: boolean) {
   return table[q];
 }
 
-const KEY = 'stilizzato.settings.v1';
+const KEY = 'stecco.settings.v1';
 
 export const SETTINGS: Settings = load();
 

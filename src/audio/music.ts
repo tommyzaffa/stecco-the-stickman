@@ -485,6 +485,54 @@ const valzer = (violin: boolean): Track => ({
   },
 });
 
+// "Consegna": polka da inseguimento in re minore (capitolo 6, la discesa con i Pastelli dietro)
+const CONSEGNA_PROG = [
+  { root: 38, chord: [62, 65, 69] }, // Dm
+  { root: 38, chord: [62, 65, 69] }, // Dm
+  { root: 34, chord: [62, 65, 70] }, // Bb
+  { root: 33, chord: [61, 64, 69] }, // A
+  { root: 38, chord: [62, 65, 69] }, // Dm
+  { root: 38, chord: [62, 65, 69] }, // Dm
+  { root: 43, chord: [62, 67, 70] }, // Gm
+  { root: 33, chord: [61, 64, 69] }, // A
+];
+const CONSEGNA_TEMA: number[][] = [
+  [74, _, 72, 74, 77, _, 74, _],
+  [72, 69, _, 65, 69, _, _, 0],
+  [70, _, 74, _, 77, 76, 74, _],
+  [73, _, 76, _, 81, _, _, 0],
+  [74, 77, 81, 77, 74, _, 72, _],
+  [69, _, 72, _, 74, _, _, 0],
+  [70, _, 74, 79, 77, _, 74, _],
+  [73, _, 69, _, 74, _, _, 0],
+];
+export const CONSEGNA: Track = {
+  bpm: 168,
+  stepsPerBeat: 2,
+  play(m, step, t) {
+    const bar = Math.floor(step / 8) % 8;
+    const slot = step % 8;
+    const section = Math.floor(step / 64) % 3; // 0: base, 1: +tema, 2: tema un'ottava sopra
+    const c = CONSEGNA_PROG[bar];
+    // oom-pah: basso sui tempi, accordo in levare
+    if (slot % 4 === 0) m.bass(mtof(c.root), t, 0.22, 0.15);
+    if (slot % 4 === 2) m.bass(mtof(c.root + 7), t, 0.18, 0.11);
+    if (slot % 2 === 1) m.stab(c.chord, t, 0.016, 0.09);
+    if (slot % 4 === 0) m.kick(t, 0.1, 100, 45, 0.1);
+    if (slot % 4 === 2) m.hit(t, 0.045, 1900, 'bandpass', 0.07, 1);
+    if (slot % 2 === 1) m.hit(t, 0.014, 6000, 'highpass');
+    if (section > 0) {
+      const row = CONSEGNA_TEMA[bar];
+      const n = row[slot];
+      if (n > 0) {
+        let len = 1;
+        while (slot + len < 8 && row[slot + len] === _) len++;
+        m.lead(mtof(n + (section === 2 ? 12 : 0)), t, len * (60 / 168 / 2) * 0.9, section === 2 ? 0.026 : 0.032);
+      }
+    }
+  },
+};
+
 export const TRACKS = {
   paese: PAESE,
   club: disco(false),
@@ -494,5 +542,6 @@ export const TRACKS = {
   sparatoria: SPARATORIA,
   cena: valzer(false),
   violino: valzer(true),
+  consegna: CONSEGNA,
 };
 export type TrackName = keyof typeof TRACKS;

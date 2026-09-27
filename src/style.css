@@ -304,7 +304,9 @@ b.blue { color: var(--blue); }
 .menu-main { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 560px; }
 .menu-main.wide { max-width: 860px; width: 100%; }
 .menu-main .title { font-family: var(--marker); line-height: 1; }
-.menu-main .title.big { font-size: clamp(56px, calc(var(--gw, 100vw) * 0.1), 120px); letter-spacing: 3px; transform: rotate(-2deg); }
+.menu-main .title.big { font-size: clamp(56px, calc(var(--gw, 100vw) * 0.1), 120px); letter-spacing: 3px; transform: rotate(-2deg); line-height: 1; }
+/* "the Stickman": sotto il titolo, scritto più piccolo e storto, come aggiunto dopo */
+.menu-main .title-tag { font-family: var(--marker); font-size: clamp(22px, calc(var(--gw, 100vw) * 0.032), 38px); transform: rotate(-4deg) translateX(18%); margin-top: -4px; opacity: .85; }
 .menu-main .title.small { font-size: clamp(34px, calc(var(--gw, 100vw) * 0.05), 52px); margin-bottom: 6px; }
 .menu-main .sub { font-size: 22px; opacity: .8; margin: 8px 0 18px; }
 .menu-main .sub.fixed { font-size: 17px; margin: 10px 0 0; }
@@ -443,6 +445,7 @@ html.need-lock .lock-need { display: flex; }
 html.compact .menu-page { padding-top: 10px; padding-bottom: 10px; }
 /* schermi bassi: menu più essenziali, così restano grandi da toccare */
 html.compact .menu-main .title.big { font-size: 64px; }
+html.compact .menu-main .title-tag { font-size: 22px; }
 html.compact .menu-main .sub { margin: 4px 0 10px; }
 html.compact .menu-foot { margin-top: 10px; }
 html.compact body.touch .card .controls { display: none; }
@@ -490,3 +493,30 @@ html.compact #hud .meter { zoom: .75; }
 .menu-main button:disabled { opacity: .5; cursor: default; }
 .card.privacy .sub { font-size: 17px; text-align: left; line-height: 1.35; }
 .menu-main .sub.fixed.account { margin-top: 14px; }
+
+/* capitolo 6: in macchina (parabrezza, tergicristallo, cruscotto, battute dei passeggeri) */
+.windshield { position: absolute; left: 0; top: 0; width: var(--gw, 100vw); height: var(--gh, 100vh); pointer-events: none; }
+.wiper {
+  position: absolute; left: 50%; bottom: calc(var(--gh, 100vh) * -0.05); width: 9px; height: calc(var(--gh, 100vh) * 1.02);
+  background: var(--ink); border-radius: 5px; transform-origin: 50% 100%; display: none; pointer-events: none;
+}
+.drive-hud { position: absolute; left: 18px; bottom: 18px; padding: 8px 14px; font-size: 17px; line-height: 1.25; min-width: 180px; pointer-events: none; }
+.drive-hud .speed { font-family: var(--marker); font-size: 20px; }
+.drive-hud .speed b { font-size: 32px; }
+.drive-hud .pz { letter-spacing: 2px; }
+.drive-hud .push { color: var(--red); font-size: 15px; }
+body.touch .drive-hud {
+  left: 50%; bottom: auto; top: 98px; transform: translateX(-50%); display: flex; gap: 12px; align-items: baseline;
+  padding: 3px 12px; font-size: 14px; min-width: 0; white-space: nowrap;
+}
+body.touch .drive-hud .speed { font-size: 15px; }
+body.touch .drive-hud .speed b { font-size: 21px; }
+.drive-sub {
+  position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); max-width: min(760px, 80%); text-align: center;
+  font-size: 23px; background: rgba(250, 247, 238, .88); border: 2px solid var(--ink); border-radius: var(--sketch-radius);
+  padding: 5px 16px; opacity: 0; transition: opacity .25s; pointer-events: none;
+}
+.drive-sub b { font-family: var(--marker); font-size: 16px; margin-right: 6px; }
+body.touch .drive-sub { bottom: 34%; font-size: 18px; }
+html.compact body.touch .drive-hud { top: 72px; zoom: .85; }
+html.compact .drive-sub { font-size: 16px; }

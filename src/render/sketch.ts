@@ -49,6 +49,7 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
         uStrength: { value: opts.strength ?? 0.55 },
         uGrid: { value: THEME.grid?.size ?? 0 },
         uGridColor: { value: new THREE.Color(THEME.grid?.color ?? '#000000') },
+        uGridMajor: { value: THEME.grid?.major ?? 0 },
       },
     ]),
     vertexShader: /* glsl */ `
@@ -72,6 +73,7 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
       uniform float uStrength;
       uniform float uGrid;
       uniform vec3 uGridColor;
+      uniform float uGridMajor;
       varying vec3 vN;
       varying vec3 vW;
       #include <fog_pars_fragment>
@@ -102,7 +104,17 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
           vec2 d = abs(fract(g - 0.5) - 0.5) / max(w, vec2(1e-4));
           float line = 1.0 - clamp(min(d.x, d.y) - 0.3, 0.0, 1.0);
           float fade = 1.0 - clamp(max(w.x, w.y) * 3.0, 0.0, 1.0);
-          base = mix(base, uGridColor, line * fade * 0.8);
+          float a = line * fade * (uGridMajor > 0.0 ? 0.4 : 0.8);
+          if (uGridMajor > 0.0) {
+            // carta millimetrata: ogni N righe una più marcata, che si vede anche da lontano
+            vec2 G = p / (uGrid * uGridMajor);
+            vec2 W = fwidth(G);
+            vec2 D = abs(fract(G - 0.5) - 0.5) / max(W, vec2(1e-4));
+            float L = 1.0 - clamp(min(D.x, D.y) - 0.7, 0.0, 1.0);
+            float F = 1.0 - clamp(max(W.x, W.y) * 2.5, 0.0, 1.0);
+            a = max(a, L * F * 0.85);
+          }
+          base = mix(base, uGridColor, a);
         }
         gl_FragColor = vec4(mix(base, uInk, ink * uStrength), 1.0);
         #include <fog_fragment>

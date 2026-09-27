@@ -10,7 +10,7 @@ Documento di lavoro: si può cambiare tutto. Serve a non improvvisare capitolo p
 
 ## L'idea che tiene insieme tutto
 
-Il mondo di Stilizzato è **un quaderno**, e ogni capitolo è una pagina diversa: foglio bianco,
+Il mondo di Stecco the Stickman è **un quaderno**, e ogni capitolo è una pagina diversa: foglio bianco,
 quadretti, righe, il margine rosso, la copertina.
 
 **Il tono: la vita di tutti i giorni, resa assurda.** Traslochi, sagre, il pub con gli amici, il
@@ -152,8 +152,8 @@ Da rivedere a gioco finito, ma da rispettare già adesso:
    anche per chi ha fatto tutto.
 4. **Monete:** servono per cure, munizioni, armi migliori e cappelli (solo estetici).
    Non bloccano mai la trama.
-5. **Nella modalità capitoli** (dopo aver finito la storia) si parte con lo stato che avevi
-   all'inizio di quel capitolo nella tua storia.
+5. **Nella modalità capitoli** (dopo aver finito la storia) si parte con lo stretto necessario
+   per quel capitolo, non con lo stato della tua storia.
 6. **Ogni capitolo ha 3-5 missioni secondarie** e qualche segreto da trovare.
 
 ## Risse

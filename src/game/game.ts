@@ -178,6 +178,10 @@ export class Game {
   onLine: ((l: ParsedLine) => void) | null = null; // ogni nuova riga di dialogo (per effetti sonori a tempo)
 
   touch: TouchUI | null = null;
+  // comandi a schermo speciali di un capitolo (capitolo 6: in macchina). null = quelli normali.
+  // Per ogni pulsante: il testo da mostrare, oppure null per nasconderlo.
+  touchMode: { fire?: string | null; use?: string | null; jump?: string | null } | null = null;
+  hideNameTags = false; // niente nomi sopra le teste (es. in macchina, con Marco seduto accanto)
 
   // c'è qualcosa con cui interagire davanti a te (per il pulsante USA)
   get hasFocus() {
@@ -309,7 +313,12 @@ export class Game {
     this.fainting = false;
     this.hud.showDiario(null);
     this.minigame = null;
-    document.querySelectorAll('.dance').forEach((e) => e.remove());
+    this.touchMode = null;
+    this.hideNameTags = false;
+    this.player.floor = 0;
+    this.player.pos.y = 0;
+    // interfacce dei capitoli (ballo, cruscotto...): spariscono con il capitolo
+    document.querySelectorAll('.dance, .chapter-ui').forEach((e) => e.remove());
   }
 
   // Salvataggio all'inizio di ogni capitolo: dove finisce lo decide il flusso (account o niente,
@@ -938,7 +947,8 @@ export class Game {
       const hd = Math.hypot(it.pos.x - e.x, it.pos.z - e.z);
       if (hd > r) continue;
       tmp.copy(it.pos);
-      if (tmp.y < 0.3) tmp.y = 1.2; // gli NPC hanno pos a terra: mira al busto
+      const floor = this.player.floor;
+      if (tmp.y - floor < 0.3) tmp.y = floor + 1.2; // gli NPC hanno pos a terra: mira al busto
       tmp.sub(e);
       const ang = tmp.angleTo(f);
       const flat = Math.acos(Math.max(-1, Math.min(1, (tmp.x * f.x + tmp.z * f.z) / (Math.hypot(tmp.x, tmp.z) * Math.hypot(f.x, f.z) || 1))));
@@ -1001,7 +1011,7 @@ export class Game {
         if (icon && !talking && !this.minigame) this.hud.npcIcon(tmp.set(n.pos.x, n.topY + 0.45, n.pos.z), cam, icon, f?.suspicion);
         if (n.bubble && !talking) this.hud.bubble(tmp.set(n.pos.x, n.topY + (icon ? 0.85 : 0.3), n.pos.z), cam, n.bubble);
         if (f && f.hostile && !f.ko && f.hp < f.maxHp) this.hud.enemyBar(tmp.set(n.pos.x, n.topY + 0.2, n.pos.z), cam, f.hp / f.maxHp);
-        else if (d < 7 && !this.dialogue.isOpen && !f?.ko) this.hud.nameTag(tmp.set(n.pos.x, n.topY + 0.12, n.pos.z), cam, n.name);
+        else if (d < 7 && !this.hideNameTags && !this.dialogue.isOpen && !f?.ko) this.hud.nameTag(tmp.set(n.pos.x, n.topY + 0.12, n.pos.z), cam, n.name);
       }
       for (const it of this.interactables) {
         const ic = it.icon?.(this);

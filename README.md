@@ -1,4 +1,4 @@
-# Stilizzato
+# Stecco the Stickman
 
 Un videogioco in prima persona dove tutto è disegnato a matita: gli abitanti sono omini
 stilizzati, gli edifici sono linee d'inchiostro su un foglio di carta, e l'unica cosa colorata
@@ -25,7 +25,7 @@ meta-ironia sul fatto di essere disegnati (niente mani, niente tasche, niente co
 
 ## Gioca
 
-**https://tommyzaffa.github.io/stilizzato/** (si aggiorna da solo a ogni push su `main`).
+**https://tommyzaffa.github.io/stecco-the-stickman/** (si aggiorna da solo a ogni push su `main`).
 
 Funziona anche da telefono, in orizzontale: joystick a sinistra, trascina a destra per guardarti
 intorno, COLPISCI/SPARA (premi per colpire, trascinalo per mirare), pulsanti trasparenti per

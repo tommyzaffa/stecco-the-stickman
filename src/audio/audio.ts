@@ -155,6 +155,7 @@ export class Sound {
   clearEmitters() {
     for (const e of this.emitters) e.nodes?.stop();
     this.emitters = [];
+    this.stopCar();
   }
 
   // --- primitive ------------------------------------------------------------------
@@ -546,6 +547,150 @@ export class Sound {
       this.tone(520, 0.07, { type: 'square', to: 300, vol: 0.09 * s.vol, pan: s.pan, delay: i * 0.16, filter: { type: 'lowpass', freq: 1400 } });
       this.noise(0.06, 0.05 * s.vol, { type: 'bandpass', freq: 900 }, { delay: i * 0.16, pan: s.pan });
     }
+  }
+
+  // --- macchina (capitolo 6) ------------------------------------------------------------
+  // La macchina di Luca non ha il motore: si sentono solo le ruote di cartone, il vento e i freni.
+  private carNodes: { roll: GainNode; rollF: BiquadFilterNode; tuk: OscillatorNode; squeal: GainNode; squealO: OscillatorNode; wind: GainNode; windF: BiquadFilterNode; stop: () => void } | null = null;
+
+  // v = velocità (m/s), brake 0..1 (freno tirato), skid 0..1 (gomme che non tengono)
+  car(v: number, brake: number, skid: number) {
+    if (!this.ready) return;
+    const ctx = this.ctx!;
+    if (!this.carNodes) {
+      // rotolamento: rumore filtrato, con un "tu-tu-tu" che segue il giro delle ruote
+      const rollF = ctx.createBiquadFilter();
+      rollF.type = 'bandpass';
+      rollF.Q.value = 0.8;
+      const trem = ctx.createGain();
+      trem.gain.value = 0.7;
+      const tuk = ctx.createOscillator();
+      tuk.type = 'square';
+      const tg = ctx.createGain();
+      tg.gain.value = 0.3;
+      tuk.connect(tg).connect(trem.gain);
+      const roll = ctx.createGain();
+      roll.gain.value = 0;
+      const n1 = this.loopNoise();
+      n1.connect(rollF).connect(trem).connect(roll).connect(this.sfx);
+      // freni e gomme che strisciano
+      const squealO = ctx.createOscillator();
+      squealO.type = 'sawtooth';
+      squealO.frequency.value = 900;
+      const vib = ctx.createOscillator();
+      vib.frequency.value = 23;
+      const vg = ctx.createGain();
+      vg.gain.value = 40;
+      vib.connect(vg).connect(squealO.frequency);
+      const sf = ctx.createBiquadFilter();
+      sf.type = 'bandpass';
+      sf.frequency.value = 1500;
+      sf.Q.value = 3;
+      const squeal = ctx.createGain();
+      squeal.gain.value = 0;
+      squealO.connect(sf).connect(squeal).connect(this.sfx);
+      // vento: più vai forte più fischia
+      const windF = ctx.createBiquadFilter();
+      windF.type = 'lowpass';
+      const wind = ctx.createGain();
+      wind.gain.value = 0;
+      const n2 = this.loopNoise();
+      n2.connect(windF).connect(wind).connect(this.amb);
+      for (const o of [tuk, squealO, vib]) o.start();
+      this.carNodes = {
+        roll, rollF, tuk, squeal, squealO, wind, windF,
+        stop: () => {
+          for (const o of [n1, n2, tuk, squealO, vib]) o.stop();
+          roll.disconnect();
+          squeal.disconnect();
+          wind.disconnect();
+        },
+      };
+    }
+    const c = this.carNodes;
+    const t = ctx.currentTime;
+    const a = Math.abs(v);
+    c.roll.gain.setTargetAtTime(Math.min(0.16, a * 0.012), t, 0.08);
+    c.rollF.frequency.setTargetAtTime(160 + a * 28, t, 0.1);
+    c.tuk.frequency.setTargetAtTime(Math.max(0.5, a * 0.9), t, 0.1);
+    const sq = (a > 1.5 ? brake * 0.035 : 0) + skid * 0.05;
+    c.squeal.gain.setTargetAtTime(sq, t, 0.05);
+    c.squealO.frequency.setTargetAtTime(700 + a * 18, t, 0.1);
+    c.wind.gain.setTargetAtTime(Math.min(0.1, a * a * 0.00028), t, 0.2);
+    c.windF.frequency.setTargetAtTime(250 + a * 45, t, 0.2);
+  }
+
+  stopCar() {
+    this.carNodes?.stop();
+    this.carNodes = null;
+  }
+
+  // SBAM: la macchina contro un muro (perde un pezzo)
+  crash() {
+    this.noise(0.4, 0.4, { type: 'lowpass', freq: 1400, to: 180 });
+    this.tone(95, 0.3, { type: 'square', to: 38, vol: 0.14, filter: { type: 'lowpass', freq: 600 } });
+    for (let i = 0; i < 4; i++) this.noise(0.05, 0.07, { type: 'bandpass', freq: 2500 + Math.random() * 2000, q: 2 }, { delay: 0.12 + i * 0.07 + Math.random() * 0.04 });
+  }
+
+  // colpo leggero (sponda, cono, pecora)
+  bump(k = 1) {
+    this.noise(0.12, 0.12 * k, { type: 'lowpass', freq: 700, to: 200 });
+    this.tone(120, 0.1, { to: 70, vol: 0.08 * k });
+  }
+
+  // strisciata contro il muro
+  scrape() {
+    this.noise(0.28, 0.09, { type: 'bandpass', freq: 2300, to: 1600, q: 1.2 });
+  }
+
+  // il clacson non c'è: Stecco dice "bip"
+  horn() {
+    this.tone(640, 0.14, { type: 'square', vol: 0.06, filter: { type: 'lowpass', freq: 1900 } });
+    this.tone(640, 0.2, { type: 'square', vol: 0.06, delay: 0.19, filter: { type: 'lowpass', freq: 1900 } });
+  }
+
+  // tergicristallo: il braccio di Marco sul vetro
+  wiper() {
+    this.tone(1300, 0.16, { to: 1900, vol: 0.03, type: 'triangle' });
+    this.noise(0.35, 0.05, { type: 'bandpass', freq: 1700, q: 1.5 });
+    this.tone(1800, 0.14, { to: 1250, vol: 0.025, type: 'triangle', delay: 0.3 });
+  }
+
+  // lettera lanciata / arrivata nella cassetta
+  whoosh() {
+    this.noise(0.18, 0.06, { type: 'bandpass', freq: 800, to: 2600, q: 1.1 });
+  }
+
+  mailbox() {
+    this.tone(1320, 0.12, { vol: 0.07, type: 'triangle' });
+    this.tone(1760, 0.2, { vol: 0.07, type: 'triangle', delay: 0.1 });
+  }
+
+  // tappo raccolto: "pop"
+  pop() {
+    this.tone(700, 0.06, { to: 1500, vol: 0.09, type: 'sine' });
+    this.noise(0.03, 0.06, { type: 'highpass', freq: 3000 });
+  }
+
+  // pecora (una nuvola con le gambe)
+  bleat(pos: THREE.Vector3) {
+    const s = this.spatial(pos, 30);
+    if (s.vol < 0.01) return;
+    const f = 340 + Math.random() * 90;
+    this.tone(f, 0.45, { type: 'sawtooth', vol: 0.06 * s.vol, pan: s.pan, vibrato: [7, 22], filter: { type: 'lowpass', freq: 1400 } });
+  }
+
+  // Don Fluo torna evidente: ronzio che sale
+  glow() {
+    this.tone(180, 1.3, { type: 'sawtooth', to: 1400, vol: 0.05, attack: 0.3, filter: { type: 'lowpass', freq: 2500 } });
+    this.tone(2400, 0.9, { vol: 0.03, delay: 1.1, vibrato: [11, 60] });
+  }
+
+  // la gomma che strofina, lontano
+  erase(vol = 1) {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== 'running') return;
+    for (let i = 0; i < 6; i++) this.noise(0.14, 0.05 * vol, { type: 'bandpass', freq: 1400 + (i % 2) * 500, q: 1.2 }, { delay: i * 0.16, attack: 0.04 });
   }
 
   // --- ambiente ----------------------------------------------------------------------

@@ -1,4 +1,5 @@
-# Stilizzato
+# Stecco the Stickman
+
 
 Videogioco in prima persona in stile "disegno a matita": omini stilizzati, mondo fatto di linee
 d'inchiostro su carta, tono ironico e satirico. Lingua del gioco: **italiano**.
@@ -83,7 +84,7 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 
 ## Pubblicazione e telefono
 
-- Il gioco è online su https://tommyzaffa.github.io/stilizzato/ : `.github/workflows/deploy.yml`
+- Il gioco è online su https://tommyzaffa.github.io/stecco-the-stickman/ : `.github/workflows/deploy.yml`
   lo ricostruisce e lo pubblica a ogni push su `main` (repo pubblico, `vite.config.ts` con
   `base: './'`).
 - **Telefono** (`src/touch.ts` rileva il touch; `?touch=1` lo forza su computer per provarlo):

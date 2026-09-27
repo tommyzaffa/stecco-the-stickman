@@ -1,7 +1,8 @@
 export type ItemId =
   | 'pacco' | 'righello' | 'libro' | 'tappo' | 'sottobicchiere' | 'calzino' | 'chiave'
   | 'gomma' | 'guanti' | 'fiore' | 'poesia' | 'sospiri'
-  | 'pistola' | 'profumo' | 'ombra' | 'scusa' | 'tappoVero';
+  | 'pistola' | 'profumo' | 'ombra' | 'scusa' | 'tappoVero'
+  | 'lettere' | 'torta' | 'freccetta';
 
 export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolean }> = {
   pacco: {
@@ -73,5 +74,17 @@ export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolea
   scusa: {
     name: '"Scusa" (parola usata)',
     desc: 'Dalla bancarella delle parole usate. Praticamente nuova: nessuno la usa mai. Potrebbe servire.',
+  },
+  lettere: {
+    name: 'La posta della discesa',
+    desc: 'Dieci lettere per otto cassette blu. Si lanciano dal finestrino, guardando la cassetta.',
+  },
+  torta: {
+    name: 'Torta quadrata (tre piani)',
+    desc: 'Della Pasticceria Squadrata, per Nonna Pina. Ogni botta forte, un piano in meno.',
+  },
+  freccetta: {
+    name: 'Una freccetta di Barnie',
+    desc: 'Disegnata benissimo: la punta è davvero appuntita. Da Dario si gioca a freccette.',
   },
 };

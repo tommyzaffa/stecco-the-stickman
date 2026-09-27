@@ -156,7 +156,8 @@ export function setupFlow(g: Game) {
       `<div class="menu-page">
         ${WAVING_STICKMAN}
         <div class="menu-main login">
-          <div class="title big">STILIZZATO</div>
+          <div class="title big">STECCO</div>
+          <div class="title-tag">the Stickman</div>
           <div class="sub">Per giocare serve un account: la tua storia ti segue su ogni dispositivo.</div>
           <div class="buttons menu-buttons">
             <button class="primary" data-a="google">Accedi con Google</button>
@@ -254,7 +255,7 @@ export function setupFlow(g: Game) {
       `<div class="card paper privacy">
         <div class="title small">Privacy</div>
         <div class="sub">
-          Stilizzato è un progetto personale, senza scopo di lucro.<br><br>
+          Stecco the Stickman è un progetto personale, senza scopo di lucro.<br><br>
           <b>Cosa salviamo:</b> l'email (o l'account Google) che usi per accedere e i progressi del gioco
           (capitolo, statistiche, scelte fatte).<br>
           <b>Perché:</b> solo per farti ritrovare la partita su qualunque dispositivo.<br>
@@ -288,7 +289,8 @@ export function setupFlow(g: Game) {
       `<div class="menu-page">
         ${WAVING_STICKMAN}
         <div class="menu-main">
-          <div class="title big">STILIZZATO</div>
+          <div class="title big">STECCO</div>
+          <div class="title-tag">the Stickman</div>
           <div class="sub">un gioco disegnato a matita</div>
           <div class="buttons menu-buttons">
             ${DEV && capParam && CHAPTERS[capParam - 1] ? `<button class="primary" data-a="test">Test: capitolo ${capParam}<small>parte con lo stretto necessario</small></button>` : ''}

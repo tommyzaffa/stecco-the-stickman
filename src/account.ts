@@ -26,8 +26,7 @@ export interface User {
   name: string | null;
 }
 
-const LOCAL_KEY = 'stilizzato.story.v2';
-const OLD_KEY = 'stilizzato.save.v1'; // salvataggio di prima degli account
+const LOCAL_KEY = 'stecco.story.v1';
 
 // le funzioni di Firebase, caricate solo se serve (il gioco resta leggero)
 type FB = {
@@ -55,7 +54,7 @@ class AccountService {
     const fbApp = app.initializeApp(FIREBASE_CONFIG!);
     const auth = A.getAuth(fbApp);
     auth.languageCode = 'it';
-    this.fb = { auth, db: F.getFirestore(fbApp), A, F };
+    this.fb = { auth, db: F.getFirestore(fbApp, FIREBASE_CONFIG!.databaseId ?? '(default)'), A, F };
     await new Promise<void>((resolve) => {
       let first = true;
       A.onAuthStateChanged(auth, (u) => {
@@ -132,12 +131,6 @@ class AccountService {
     try {
       const raw = localStorage.getItem(LOCAL_KEY);
       if (raw) return JSON.parse(raw) as Progress;
-      // prima degli account si salvava così: lo recuperiamo
-      const old = localStorage.getItem(OLD_KEY);
-      if (old) {
-        const d = JSON.parse(old);
-        return { story: { chapter: d.chapter, state: d.state }, finished: false };
-      }
     } catch {
       /* niente */
     }

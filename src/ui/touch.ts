@@ -259,7 +259,24 @@ export class TouchUI {
     r.toggle('seated', p.seated);
     for (const id of ['jump', 'crouch', 'parry', 'weapon']) this.btn[id].classList.toggle('hide', p.seated || (id === 'weapon' && !(g.has('righello') || g.has('pistola'))));
     if (p.seated) this.btn.reload.classList.add('hide');
-    const fireLabel = p.seated ? 'SCIÒ!' : p.weapon === 'pistol' ? 'SPARA' : 'COLPISCI';
+    let fireLabel = p.seated ? 'SCIÒ!' : p.weapon === 'pistol' ? 'SPARA' : 'COLPISCI';
+    // comandi speciali del capitolo (es. in macchina: LANCIA, TERGI, BIP)
+    const tm = g.touchMode;
+    if (tm) {
+      for (const id of ['crouch', 'parry', 'weapon', 'reload']) this.btn[id].classList.add('hide');
+      for (const id of ['fire', 'use', 'jump'] as const) {
+        const label = tm[id];
+        if (label === undefined) continue;
+        this.btn[id].classList.toggle('hide', label === null);
+        if (label === null) continue;
+        if (id === 'fire') fireLabel = label;
+        else if (this.btn[id].textContent !== label) this.btn[id].textContent = label;
+      }
+    } else {
+      if (this.btn.jump.textContent !== 'SALTA') this.btn.jump.textContent = 'SALTA';
+      if (this.btn.use.textContent !== 'USA') this.btn.use.textContent = 'USA';
+      this.btn.fire.classList.remove('hide');
+    }
     if (this.btn.fire.textContent !== fireLabel) this.btn.fire.textContent = fireLabel;
     if (!free) {
       if (this.stickId !== null) {

@@ -370,9 +370,12 @@ export class Stickman {
         tg.armLZ = 0.15;
         tg.armRZ = -0.15;
         tg.elbowLX = tg.elbowRX = -0.1;
-        tg.legLX = -0.35;
-        tg.legRX = 0.55 + k * 2;
-        tg.kneeLX = 0.3;
+        // spinge da fermo: gambe puntate. Se la macchina si muove, le gambe corrono
+        if (!moving) {
+          tg.legLX = -0.35;
+          tg.legRX = 0.55 + k * 2;
+          tg.kneeLX = 0.3;
+        }
         tg.hipsY = HIP_Y - 0.06;
         break;
       }

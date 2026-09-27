@@ -9,4 +9,13 @@ export const FIREBASE_CONFIG: {
   appId: string;
   storageBucket?: string;
   messagingSenderId?: string;
-} | null = null;
+  databaseId?: string; // nome del database Firestore (se non è quello standard, "(default)")
+} | null = {
+  apiKey: 'AIzaSyA4J5xildZ0xY35P12BtYpeN9EA6TDeeso',
+  authDomain: 'stickman-9cfa1.firebaseapp.com',
+  projectId: 'stickman-9cfa1',
+  storageBucket: 'stickman-9cfa1.firebasestorage.app',
+  messagingSenderId: '192702124128',
+  appId: '1:192702124128:web:5f31d8b957d38f20beb305',
+  databaseId: 'default',
+};

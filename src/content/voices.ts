@@ -94,3 +94,16 @@ Object.assign(VOICES, {
 for (let i = 0; i < 6; i++) {
   for (const s of ['a', 'b']) VOICES[`cliente${i}${s}`] = { base: 200 + Math.random() * 140, type: 'sawtooth', spread: 7, every: 2, vol: 0.04 };
 }
+
+// Capitolo 6
+Object.assign(VOICES, {
+  postino: { base: 190, type: 'square', spread: 5, every: 2 },
+  pasticcera: { base: 360, type: 'triangle', spread: 6, every: 2 },
+  geometra: { base: 150, type: 'triangle', spread: 3, every: 3 },
+  pVerdeGiornale: { base: 240, type: 'sawtooth', spread: 8, every: 1, vol: 0.045 },
+  bimbo: { base: 430, type: 'square', spread: 8, every: 1, vol: 0.04 },
+  barnie: { base: 72, type: 'triangle', spread: 2, every: 4, vol: 0.12 },
+  dario: { base: 180, type: 'square', spread: 6, every: 2 },
+  nonnaMercato: { base: 400, type: 'triangle', spread: 7, every: 2, vibrato: 20 },
+});
+for (const id of ['px0', 'px1', 'px2', 'px3', 'px4', 'px5']) VOICES[id] = { base: 230 + Math.random() * 80, type: 'sawtooth', spread: 9, every: 1, vol: 0.045 };

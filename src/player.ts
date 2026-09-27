@@ -27,6 +27,7 @@ export class Player {
   crouching = false;
   seated = false; // seduto (scene): occhi più bassi, niente passi
   stillT = 0; // da quanti secondi sei fermo (chi spara ti inquadra meglio)
+  floor = 0; // altezza del pavimento sotto i piedi (capitolo 6: in macchina si scende sotto lo zero)
   private eyeH = EYE;
   private armMat: THREE.MeshBasicMaterial;
   private fistMat: THREE.SpriteMaterial;
@@ -197,7 +198,7 @@ export class Player {
   update(dt: number, input: Input, col: Colliders, canMove: boolean) {
     let hit = false;
     let jumped = false, landed = false, stepped = false;
-    const wasAir = this.pos.y > 0.001;
+    const wasAir = this.pos.y > this.floor + 0.001;
     const fallSpeed = this.vy;
     if (canMove) {
       const sens = 0.0022 * SETTINGS.sensitivity;
@@ -239,14 +240,14 @@ export class Player {
     this.pos.z += (vz + this.knock.z) * dt;
     this.knock.multiplyScalar(Math.max(0, 1 - dt * 6));
 
-    if (canMove && !this.seated && input.wasPressed('jump') && this.pos.y <= 0.001 && !this.crouching) {
+    if (canMove && !this.seated && input.wasPressed('jump') && this.pos.y <= this.floor + 0.001 && !this.crouching) {
       this.vy = JUMP;
       jumped = true;
     }
     this.vy -= GRAVITY * dt;
     this.pos.y += this.vy * dt;
-    if (this.pos.y < 0) {
-      this.pos.y = 0;
+    if (this.pos.y < this.floor) {
+      this.pos.y = this.floor;
       this.vy = 0;
       if (wasAir && fallSpeed < -2) landed = true;
     }
@@ -255,7 +256,7 @@ export class Player {
     this.stillT = this.speed > 0 ? 0 : this.stillT + dt;
 
     // camera + dondolio della camminata
-    const onGround = this.pos.y <= 0.001;
+    const onGround = this.pos.y <= this.floor + 0.001;
     const prevBob = this.bob;
     if (len > 0 && onGround) this.bob += dt * (running ? 13 : 9);
     if (Math.floor(prevBob / Math.PI) !== Math.floor(this.bob / Math.PI)) stepped = true;

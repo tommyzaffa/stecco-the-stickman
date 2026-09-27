@@ -15,7 +15,7 @@ export const HIGHLIGHT_YELLOW_HEX = '#e8f53a';
 export interface Theme {
   paper: string;
   ink: string;
-  grid?: { size: number; color: string }; // carta a quadretti
+  grid?: { size: number; color: string; major?: number }; // carta a quadretti (major: una riga più marcata ogni N)
 }
 export const THEME: { paperHex: string; inkHex: string; night: boolean; grid: Theme['grid'] | null } = {
   paperHex: PAPER_HEX,
@@ -30,6 +30,9 @@ export const DAY: Theme = { paper: PAPER_HEX, ink: INK_HEX };
 export const NIGHT: Theme = { paper: '#1b1a21', ink: '#ebe6d8' };
 // Quadropoli: carta a quadretti, un po' più fredda, inchiostro blu scuro
 export const QUADRETTI: Theme = { paper: '#f2f3f0', ink: '#1d2233', grid: { size: 1, color: '#9fb8d6' } };
+
+// Capitolo 6, le strade in discesa: carta millimetrata, come il progetto di un geometra
+export const MILLIMETRATA: Theme = { paper: '#f7f2e4', ink: '#2a2530', grid: { size: 1, color: '#eba47a', major: 5 } };
 
 // Mercato Nero: carta da pacchi. Tutto quello che si vende qui sotto è incartato.
 export const PACCHI: Theme = { paper: '#d8c29d', ink: '#2a2119' };
