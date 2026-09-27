@@ -1,6 +1,6 @@
 import { Game } from './game';
 import { CHAPTERS } from '../chapters';
-import { ACTIONS, SETTINGS, bindKey, codeLabel, keyName, resetKeys, saveSettings } from '../settings';
+import { ACTIONS, QUALITY_LABEL, SETTINGS, bindKey, codeLabel, keyName, resetKeys, saveSettings, type Quality } from '../settings';
 import { TOUCH } from '../touch';
 
 // ---------------------------------------------------------------------------
@@ -275,6 +275,14 @@ export function setupFlow(g: Game) {
             ${slider('music', 'Volume musica', 0, 1, 0.05, SETTINGS.music)}
             ${slider('sfx', 'Volume effetti e voci', 0, 1, 0.05, SETTINGS.sfx)}
           </div>
+          <div class="buttons row"><button data-a="quality">Grafica: ${QUALITY_LABEL[SETTINGS.quality]}</button></div>
+          <div class="sub fixed">${
+            SETTINGS.quality === 'leggera'
+              ? 'Leggera: meno pixel, niente antialiasing, 30 fps. Scalda poco.'
+              : SETTINGS.quality === 'alta'
+                ? 'Alta: più nitida, ma scalda e può far partire la ventola.'
+                : 'Normale: il giusto. Se il computer scalda, prova Leggera.'
+          }</div>
           ${TOUCH ? `<div class="buttons row"><button data-a="flip">Capovolgi lo schermo${SETTINGS.flip ? ' ✓' : ''}</button></div>
           <div class="sub fixed">Se tieni il telefono girato dall'altra parte (con lo schermo bloccato in verticale).</div>` : ''}
           ${TOUCH ? '' : `<div class="sub">Comandi: clicca su un tasto e premi quello nuovo (Esc per annullare).</div>
@@ -294,6 +302,13 @@ export function setupFlow(g: Game) {
         if (a === 'back') {
           g.input.captureKey = null;
           return back();
+        }
+        if (a === 'quality') {
+          const order: Quality[] = ['leggera', 'normale', 'alta'];
+          SETTINGS.quality = order[(order.indexOf(SETTINGS.quality) + 1) % order.length];
+          saveSettings();
+          g.resize();
+          return settingsMenu(back, kind);
         }
         if (a === 'flip') {
           SETTINGS.flip = !SETTINGS.flip;
@@ -428,8 +443,7 @@ export function setupFlow(g: Game) {
               ? `<button class="primary" data-a="next">Capitolo ${nextCh.num}<small>${nextCh.title}</small></button>`
               : `<div class="sub">Il capitolo ${next} non è ancora stato disegnato.</div>`
           }
-          <button data-a="stay">Continua a esplorare qui</button>
-          <button data-a="menu">Menu principale</button>
+          <button ${nextCh ? '' : 'class="primary" '}data-a="menu">Menu principale</button>
         </div>
       </div>`,
       (e) => {
@@ -440,10 +454,6 @@ export function setupFlow(g: Game) {
           begin();
         } else if (a === 'menu') {
           mainMenu();
-        } else {
-          g.mode = 'play';
-          hide();
-          g.input.lock();
         }
       },
     );

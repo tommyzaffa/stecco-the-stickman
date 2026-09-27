@@ -73,6 +73,15 @@ export class PaperPost {
     this.composer.addPass(this.paper);
   }
 
+  // antialiasing (MSAA): cambiarlo ricrea le superfici di disegno
+  setSamples(n: number) {
+    for (const rt of [this.composer.renderTarget1, this.composer.renderTarget2]) {
+      if (rt.samples === n) continue;
+      rt.samples = n;
+      rt.dispose();
+    }
+  }
+
   setSize(w: number, h: number, pixelRatio: number) {
     this.composer.setPixelRatio(pixelRatio);
     this.composer.setSize(w, h);

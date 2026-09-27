@@ -150,6 +150,8 @@ export function buildPastello(): World {
   A('seat', 0, 0, 2.95);
   A('martina', 0, 0, 5.05);
   A('tableSide', 1.15, 0, 4.2);
+  A('maitreTable', -1.2, 0, 4.1); // il maître quando viene al tavolo
+  A('maitrePost', 8.6, 0, -2.2); // il maître dentro, vicino all'ingresso
   A('violinSpot', -1.25, 0, 5.2);
   // gli altri tavoli (coppie di Pastelli)
   const others: [number, number][] = [[-6, 1], [6, 1], [-6, 8], [6, 8.5], [-4, 12.5], [4, 12.5]];

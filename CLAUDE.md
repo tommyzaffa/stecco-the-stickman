@@ -126,10 +126,12 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 
 ## Prestazioni
 
-Il gioco è limitato a 60 fps (10 fps su titolo/pausa) in `src/main.ts` e la risoluzione interna è
-limitata a ~2.4 MP in `Game.resize()`. Il post-processing è un solo passaggio (`postfx.ts`) che
-scrive direttamente a schermo. Non togliere questi limiti senza misurare: su un Mac Retina a
-120 Hz facevano andare la ventola al massimo.
+Impostazione **Grafica** (`SETTINGS.quality`, `qualityParams()` in `settings.ts`): Leggera
+(1 MP, niente antialiasing, 30 fps), **Normale** (predefinita: 1,5 MP, MSAA 2x, 60 fps), Alta
+(2,4 MP, MSAA 4x). Sul telefono valori più bassi. 10 fps su titolo/pausa (`src/main.ts`). Il
+post-processing è un solo passaggio (`postfx.ts`) che scrive direttamente a schermo. Il renderer
+non chiede la scheda grafica potente (`powerPreference: 'default'`): sui portatili con due schede
+scaldava. Non alzare questi limiti senza misurare: su un Mac Retina facevano partire la ventola.
 
 ## Obiettivo e metodo di lavoro
 

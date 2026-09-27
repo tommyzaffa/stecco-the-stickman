@@ -71,6 +71,13 @@ function sitDown(g: Game) {
     g.player.setWeapon('fist');
     g.player.setLook(MARTINA_LOOK);
     g.setHidden(g.npc('marco'), true);
+    // il maître è entrato con te: sta dentro, vicino all'ingresso
+    const b = g.npc('bianco');
+    b.pos.set(A.maitrePost.x, 0, A.maitrePost.z);
+    b.setBehavior({ type: 'stand' });
+    b.homeRot = Math.PI;
+    b.body.root.rotation.y = Math.PI;
+    b.faceWhenNear = false;
     g.setStep('c5', 1, true);
     g.setCheckpoint(A.seat, MARTINA_LOOK, 'Riprendi fiato');
     g.fade(false);

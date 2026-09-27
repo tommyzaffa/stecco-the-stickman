@@ -137,11 +137,15 @@ const arrivo = (): Dialogue => ({
     },
     p1: node(['Madame Boccetta parla troppo. Però ha ragione.'], 'menu'),
     p2: node(['Bugiardo. Ma profumato.'], 'menu'),
-    menu: node([
-      '@Pastello Bianco| I menù. Stasera lo chef consiglia la cera fusa al sugo.',
-      "Vediamo cosa c'è. Tu intanto guardati intorno: il posto è carino.",
-      '> (Speriamo che Marco non si faccia vedere.)',
-    ]),
+    menu: node(
+      [
+        '@Pastello Bianco| I menù. Stasera lo chef consiglia la cera fusa al sugo.',
+        "Vediamo cosa c'è. Tu intanto guardati intorno: il posto è carino.",
+        '> (Speriamo che Marco non si faccia vedere.)',
+      ],
+      undefined,
+      { do: (g) => maitreComes(g) },
+    ),
   },
 });
 
@@ -325,8 +329,10 @@ const ritorno = (): Dialogue => ({
     r0: node(['> ...', 'Non te ne sei accorto. Mi sono temperata. Vabbè.'], 'dolce'),
     r1: node(['Te ne sei accorto! Nessuno se ne accorge mai.'], 'dolce'),
     r2: node(["C'era la fila. Anche per incipriarsi il naso che non c'è."], 'dolce'),
-    dolce: node(['@Pastello Bianco| Il dolce: torta di gomma pane. Si cancella in bocca.'], (g) =>
-      g.has('poesia') || g.has('sospiri') || g.has('guanti') ? 'regalo' : 'fine',
+    dolce: node(
+      ['@Pastello Bianco| Il dolce: torta di gomma pane. Si cancella in bocca.'],
+      (g) => (g.has('poesia') || g.has('sospiri') || g.has('guanti') ? 'regalo' : 'fine'),
+      { do: (g) => maitreComes(g) },
     ),
     regalo: {
       say: ['* (Hai qualcosa per lei. Il momento è adesso. O mai più. O dopo.)'],
@@ -416,6 +422,7 @@ const conto = (): Dialogue => ({
   start: 'a',
   nodes: {
     a: {
+      do: (g) => maitreComes(g),
       say: ['@Pastello Bianco| Il conto: trenta monete. La cera fusa è cara: la sciogliamo a mano. Cioè, senza mani.'],
       choices: [
         { t: 'Pago io. (30 monete)', if: (g) => g.state.coins >= 30, next: 'c1', do: (g) => (g.addCoins(-30), love(g, 10)) },
@@ -533,6 +540,7 @@ function runBeat(g: Game, i: number) {
   }
   STATUS.text = `Cena con Martina · ${DATE.course}`;
   const gen = DATE.gen;
+  if (!(b.kind === 'talk' && b.d === finale)) maitreBack(g);
   if (b.kind === 'talk') {
     g.talk(b.d(), g.npc('martina'), () => {
       if (!DATE.leaving) g.after(0.6, () => gen === DATE.gen && !DATE.leaving && runBeat(g, i + 1));
@@ -744,6 +752,26 @@ export function seatMartina(g: Game) {
   m.homeRot = Math.PI;
   m.body.root.rotation.y = Math.PI;
   m.baseAction = 'none';
+}
+
+// il maître viene al tavolo quando c'è da parlare, poi torna al suo posto vicino all'ingresso
+function maitreComes(g: Game) {
+  const n = g.npc('bianco');
+  const W = g.world.anchors;
+  n.pos.set(W.maitreTable.x, 0, W.maitreTable.z);
+  n.setBehavior({ type: 'stand' });
+  n.homeRot = Math.atan2(0 - W.maitreTable.x, 4 - W.maitreTable.z);
+  n.body.root.rotation.y = n.homeRot;
+  n.faceWhenNear = false;
+}
+
+export function maitreBack(g: Game) {
+  const n = g.npc('bianco');
+  const W = g.world.anchors;
+  if (n.pos.distanceTo(W.maitrePost) < 0.5) return;
+  n.faceWhenNear = false;
+  n.homeRot = Math.PI;
+  n.setBehavior({ type: 'patrol', path: [[W.maitrePost.x, W.maitrePost.z]], speed: 1.6, once: true });
 }
 
 function showMarcello(g: Game) {

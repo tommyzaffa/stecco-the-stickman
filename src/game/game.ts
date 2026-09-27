@@ -17,7 +17,7 @@ import { ITEMS, type ItemId } from '../content/items';
 import { VOICES } from '../content/voices';
 import { Sound } from '../audio/audio';
 import type { Chapter } from '../chapters/types';
-import { keyName } from '../settings';
+import { SETTINGS, keyName, qualityParams } from '../settings';
 import { TOUCH } from '../touch';
 import { VIEW, updateView } from '../view';
 import { TouchUI } from '../ui/touch';
@@ -187,7 +187,9 @@ export class Game {
 
   constructor(canvas: HTMLCanvasElement) {
     updateView();
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+    // niente 'high-performance': sui portatili con due schede grafiche accendeva quella potente
+    // (calore e ventola). Il gioco gira bene anche su quella integrata.
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'default' });
     this.renderer.setSize(VIEW.w, VIEW.h);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.scene.fog = new THREE.Fog(PAPER.clone(), 30, 115);
@@ -196,7 +198,7 @@ export class Game {
     this.player = new Player(VIEW.w / VIEW.h);
     this.scene.add(this.player.camera);
     // sul telefono niente antialiasing e meno pixel: il tratto a matita regge lo stesso
-    this.post = new PaperPost(this.renderer, this.scene, this.player.camera, TOUCH ? 0 : 4);
+    this.post = new PaperPost(this.renderer, this.scene, this.player.camera, qualityParams(SETTINGS.quality, TOUCH).samples);
     this.dialogue = new DialogueRunner(this);
     this.combat = new Combat(this);
     this.guns = new Guns(this);
@@ -217,7 +219,10 @@ export class Game {
   resize() {
     updateView();
     const w = VIEW.w, h = VIEW.h;
-    const MAX_PIXELS = TOUCH ? 1.0e6 : 2.4e6;
+    // quanti pixel disegnare dipende dalla qualità scelta (vedi settings.ts)
+    const q = qualityParams(SETTINGS.quality, TOUCH);
+    this.post.setSamples(q.samples);
+    const MAX_PIXELS = q.pixels;
     const pr = Math.max(1, Math.min(window.devicePixelRatio, Math.sqrt(MAX_PIXELS / (w * h))));
     this.renderer.setPixelRatio(pr);
     this.renderer.setSize(w, h);

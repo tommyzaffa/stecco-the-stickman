@@ -51,6 +51,21 @@ export interface Settings {
   music: number; // 0..1
   sfx: number; // 0..1
   flip: boolean; // telefono: schermo girato dall'altra parte
+  quality: Quality; // grafica: leggera consuma (e scalda) meno
+}
+
+export type Quality = 'leggera' | 'normale' | 'alta';
+export const QUALITY_LABEL: Record<Quality, string> = { leggera: 'Leggera', normale: 'Normale', alta: 'Alta' };
+
+// Quanto costa disegnare: pixel massimi per frame, antialiasing (campioni) e fps.
+// Il tratto a matita regge bene anche a risoluzione ridotta.
+export function qualityParams(q: Quality, touch: boolean) {
+  const table = {
+    leggera: { pixels: touch ? 0.7e6 : 1.0e6, samples: 0, fps: 30 },
+    normale: { pixels: touch ? 1.0e6 : 1.5e6, samples: touch ? 0 : 2, fps: 60 },
+    alta: { pixels: touch ? 1.4e6 : 2.4e6, samples: touch ? 2 : 4, fps: 60 },
+  };
+  return table[q];
 }
 
 const KEY = 'stilizzato.settings.v1';
@@ -58,7 +73,7 @@ const KEY = 'stilizzato.settings.v1';
 export const SETTINGS: Settings = load();
 
 function load(): Settings {
-  const s: Settings = { keys: { ...DEFAULT_KEYS }, sensitivity: 1, music: 0.8, sfx: 0.9, flip: false };
+  const s: Settings = { keys: { ...DEFAULT_KEYS }, sensitivity: 1, music: 0.8, sfx: 0.9, flip: false, quality: 'normale' };
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null');
     if (raw) {
@@ -67,6 +82,7 @@ function load(): Settings {
       if (typeof raw.music === 'number') s.music = raw.music;
       if (typeof raw.sfx === 'number') s.sfx = raw.sfx;
       if (typeof raw.flip === 'boolean') s.flip = raw.flip;
+      if (raw.quality === 'leggera' || raw.quality === 'normale' || raw.quality === 'alta') s.quality = raw.quality;
     }
   } catch {
     /* impostazioni predefinite */
