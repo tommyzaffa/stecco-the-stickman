@@ -35,14 +35,24 @@ export function createCharacters(g: Game) {
     pos: at('marco'),
     face: [0, 34],
     look: { hat: 'cap' },
-    icon: (g) => (g.quest('pesce') === 1 && g.has('pesce') ? 'turnin' : g.is('c8Intro') && g.quest('pesce') === -1 && g.quest('c8') >= 1 ? 'side' : null),
+    icon: (g) => (g.has('pesce') && !g.questDone('pesce') ? 'turnin' : g.is('c8Intro') && g.quest('pesce') === -1 && g.quest('c8') >= 1 ? 'side' : null),
     barks: (g) =>
       g.is('c8Intro')
         ? ['La giuria ha detto che non sono della giuria. Io ho detto: e allora chi assaggia?', 'Questa è al limone. Questa è al limone. Anche questa. È una gara di torte al limone?', 'Se vinci un pesce, è mio. Cioè, se vinci un pesce, dimmelo.']
         : [],
     dialogue: {
       name: 'Marco',
-      start: (g) => (!g.is('c8IntroFatta') ? 'intro' : g.quest('pesce') === 1 && g.has('pesce') ? 'pesceDato' : g.quest('pesce') === -1 && g.quest('c8') >= 1 ? 'pesce' : 'dopo'),
+      // il pesce si può dargli sempre: anche se l'hai comprato prima che te lo chiedesse
+      start: (g) =>
+        !g.is('c8IntroFatta')
+          ? 'intro'
+          : g.has('pesce') && !g.questDone('pesce')
+            ? g.quest('pesce') === -1
+              ? 'pesceSorpresa'
+              : 'pesceDato'
+            : g.quest('pesce') === -1 && g.quest('c8') >= 1
+              ? 'pesce'
+              : 'dopo',
       nodes: {
         intro: {
           say: [
@@ -74,10 +84,21 @@ export function createCharacters(g: Game) {
           ],
           do: (g) => g.startQuest('pesce'),
         },
-        pesceDato: {
+        pesceSorpresa: {
           say: [
-            '> Tieni. Il tuo pesce.',
-            'Il mio pesce! Guardalo: è grigio! È bellissimo!',
+            '> Tieni. Un pesce. Per te.',
+            'Per me? Un pesce? Come facevi a sapere che volevo un animale che non parla?',
+            '> Hai la faccia di uno che vuole un animale che non parla.',
+            'È vero. Ce l\'ho da sempre, questa faccia. Guardalo: è grigio! È bellissimo!',
+          ],
+          next: 'nome',
+        },
+        pesceDato: {
+          say: ['> Tieni. Il tuo pesce.', 'Il mio pesce! Guardalo: è grigio! È bellissimo!'],
+          next: 'nome',
+        },
+        nome: {
+          say: [
             'Lo chiamo... Stecco Secondo.',
             '> Perché?',
             'Perché è grigio, sta zitto e fa tutto quello che faccio io. Cioè, niente. Ma con impegno.',
@@ -96,7 +117,9 @@ export function createCharacters(g: Game) {
             (g) =>
               g.quest('c8') >= 3
                 ? 'La fontana? Che ha la fontana? È lì. Con i suoi tre zampilli.'
-                : pick(['Le torte della giuria sono buonissime. Anche quelle degli altri concorrenti. Mi hanno cacciato.', 'Hai visto Martina? Te lo chiedo per te, non per me.', 'Il pesce, Stecco. Il pesce.']),
+                : g.questDone('pesce')
+                  ? pick(['Stecco Secondo ti saluta. Cioè, non fa niente. Ma lo fa verso di te.', 'Le torte della giuria sono buonissime. Anche quelle degli altri concorrenti. Mi hanno cacciato.'])
+                  : pick(['Le torte della giuria sono buonissime. Anche quelle degli altri concorrenti. Mi hanno cacciato.', 'Hai visto Martina? Te lo chiedo per te, non per me.', 'Il pesce, Stecco. Il pesce.']),
           ],
         },
       },
@@ -112,15 +135,16 @@ export function createCharacters(g: Game) {
     pos: at('martina'),
     face: [A.martina.x - 2, A.martina.z - 1.5],
     look: { highlighter: ROSA_PASTELLO, hat: 'pencil', eyes: true },
-    icon: (g) => (g.quest('c8') === 0 ? 'main' : g.quest('stella') === 1 && g.has('tappoStella') ? 'turnin' : null),
+    icon: (g) => (g.quest('c8') === 0 ? 'main' : g.has('tappoStella') ? 'turnin' : null),
     barks: (g) =>
       g.quest('c8') === 0
         ? ['Stecco! Qui!', 'Tappi, tappi, tappi...']
         : ['Quello con la stella gira al bordo. Veloce. Come le cose belle.', 'Ogni tappo ha una storia. Questa pesca ne ha dodici.', 'Tre sagre che lo inseguo.'],
     dialogue: {
       name: 'Martina',
+      // il tappo con la stella lo prende appena glielo porti (prima o dopo la ruota)
       start: (g) =>
-        g.quest('c8') === 0 ? 'ciao' : g.quest('stella') === 1 && g.has('tappoStella') && g.quest('c8') >= 3 ? 'stellaDopo' : g.quest('c8') >= 3 ? 'dopo' : g.quest('c8') === 2 ? 'andiamo' : 'intanto',
+        g.quest('c8') === 0 ? 'ciao' : g.has('tappoStella') ? 'stellaDopo' : g.quest('c8') >= 3 ? 'dopo' : g.quest('c8') === 2 ? 'andiamo' : 'intanto',
       nodes: {
         ciao: {
           say: [
@@ -136,10 +160,8 @@ export function createCharacters(g: Game) {
           do: (g) => {
             g.setStep('c8', 1);
             if (Q8.tokens >= RIDE_COST) g.setStep('c8', 2);
-            if (g.quest('stella') === -1) {
-              g.startQuest('stella');
-              if (g.has('tappoStella')) g.setStep('stella', 1, true);
-            }
+            // se l'hai già pescato, niente missione: glielo dai subito
+            if (g.quest('stella') === -1 && !g.has('tappoStella')) g.startQuest('stella');
           },
           next: (g) => (g.has('tappoStella') ? 'giaStella' : undefined),
         },
@@ -147,9 +169,17 @@ export function createCharacters(g: Game) {
           say: [
             '> Il tappo con la stella? Questo?',
             '...',
-            'Ce l\'hai GIÀ? E me lo dici adesso?',
-            'No. Non darmelo. Dammelo sulla ruota, insieme all\'altro. Due momenti in uno.',
+            'Ce l\'hai GIÀ? Tre sagre che lo inseguo, e tu lo peschi prima ancora di salutarmi.',
+            '* Martina prende il tappo con la stella. Lo guarda. Lo riguarda.',
+            'Grazie. Lo metto da parte: il centro della collezione è per le occasioni.',
+            'Il tappo giallo invece no: quello me lo ridai lassù, in cima alla ruota. È un altro momento.',
           ],
+          do: (g) => {
+            g.take('tappoStella');
+            g.flag('stellaMartina');
+            g.addXp(40);
+            g.completeQuest('stella');
+          },
         },
         intanto: {
           say: [
@@ -166,7 +196,10 @@ export function createCharacters(g: Game) {
           say: [
             '> Ho pescato il tappo con la stella. È tuo.',
             'Il tappo con la stella... Sono tre sagre che lo inseguo, Stecco. Tre.',
+            'L\'hai pescato tu? Con l\'amo? Senza mani?',
+            '> Non ho mani. Ho talento.',
             'Lo metto al centro della collezione. No: da parte. Il centro è per le occasioni.',
+            (g) => (g.quest('c8') <= 2 ? 'E adesso la ruota. Sei gettoni, e il tappo giallo me lo ridai lassù.' : 'Oggi è la giornata dei tappi. E dei momenti.'),
           ],
           do: (g) => {
             g.take('tappoStella');
@@ -177,10 +210,11 @@ export function createCharacters(g: Game) {
         },
         dopo: {
           say: [
-            pick([
-              'Grazie per il momento. Adesso sono un po\' imbarazzata. Pesco per non pensarci.',
-              'Il tappo sta benissimo nella collezione. Giallo tra i grigi. Come te tra... no, niente.',
-            ]),
+            () =>
+              pick([
+                'Grazie per il momento. Adesso sono un po\' imbarazzata. Pesco per non pensarci.',
+                'Il tappo sta benissimo nella collezione. Giallo tra i grigi. Come te tra... no, niente.',
+              ]),
           ],
         },
       },

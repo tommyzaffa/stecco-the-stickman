@@ -14,7 +14,9 @@ import { BOOTH, finishBooth, fireName, type Booth } from './booth';
 const LH = 0.13; // altezza di un piano
 const BASE = 0.62;
 const RANGE = 0.8; // quanto scorre il piano, da una parte e dall'altra
-const MAX = 20;
+// Sopra il tavolo c'è il tendone (a 2,74 m nel punto più basso in cui scorre il piano): con 12 piani
+// più la base la torta arriva a 2,65 m. Il dodicesimo piano tocca quasi la tela: lì la gara finisce.
+const MAX = 12;
 const TABLE_Y = CAKE.y - 0.03;
 
 interface Layer {
@@ -236,7 +238,7 @@ export const CAKE_BOOTH: Booth = {
         const n = cakeHeight();
         if (n === 5) g.npc('pina').say('Cinque piani! Come la mia prima torta. Poi è caduta.', 3);
         else if (n === 10) g.npc('pina').say('DIECI! La maestra Crostata è diventata bianca! Cioè, è sempre bianca. Ma di più!', 4);
-        if (n >= MAX) finish(g, 'La torta tocca il tendone!');
+        if (n >= MAX) finish(g, 'La torta tocca il tendone! Più alta di così, solo bucando il tetto.');
         else nextLayer(g);
       }
     }
@@ -271,7 +273,7 @@ export const CAKE_BOOTH: Booth = {
     const t = top();
     if (t) BOOTH.lookAt.set(CAKE.x, t.y + 0.1, CAKE.z);
   },
-  status: () => `piani: <b>${cakeHeight()}</b>${S.best ? ` · record: ${S.best}` : ''}${S.perfect > 1 ? ` · perfetti di fila: ${S.perfect}` : ''}`,
+  status: () => `piani: <b>${cakeHeight()}</b>/${MAX} (poi c'è il tendone)${S.best ? ` · record: ${S.best}` : ''}${S.perfect > 1 ? ` · perfetti di fila: ${S.perfect}` : ''}`,
   stop() {
     if (S.cur) {
       S.cur.m.removeFromParent();

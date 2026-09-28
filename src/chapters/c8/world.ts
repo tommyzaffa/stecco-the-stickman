@@ -144,14 +144,17 @@ export function buildSagra(): World {
   b.building({ x0: 29, x1: 42, z0: 1.5, z1: 26, h: 7, face: '-z', roof: 'flat', door: 35 });
   // la via d'ingresso: finisce contro una transenna ("strada chiusa per la sagra")
   G.seg(-4.3, y, 26, -4.3, y, 40).seg(4.3, y, 26, 4.3, y, 40);
-  col.rect(-5, 40, 5, 42);
   S.box(0, 0, 39.6, 7, 1.0, 0.12);
   for (const x of [-3.4, 3.4]) S.seg(x, 0, 39.6, x, 1.0, 39.6);
   sign('STRADA CHIUSA\nper sagra', 0, 1.45, 39.5, 2.4, 0.7, '-z', { font: HAND_FONT });
-  col.rect(-40, -44, 40, -42);
-  // i bordi della piazza (dove non ci sono case)
-  col.rect(-44, -44, -42, 44);
-  col.rect(42, -44, 44, 44);
+  // muri invisibili: la sagra finisce dove finisce la piazza (davanti alle case: niente varchi tra
+  // un palazzo e l'altro) e la via finisce alla transenna
+  col.rect(-46, -46, 46, -27); // nord (municipio, scuola, e il palazzo dietro la ruota)
+  col.rect(-46, -46, -29, 46); // ovest
+  col.rect(29, -46, 46, 46); // est
+  col.rect(-46, 26.9, -4.4, 46); // sud, a sinistra della via
+  col.rect(4.4, 26.9, 46, 46); // sud, a destra della via
+  col.rect(-5, 39.5, 5, 46); // la transenna in fondo alla via
 
   // l'arco d'ingresso con lo striscione
   for (const x of [-3.7, 3.7]) {
@@ -543,9 +546,9 @@ export function buildSagra(): World {
   A('pastellone', -20.9, 0, -5.5);
   A('pastello', -20.9, 0, -2.5);
   A('penna', 7.5, 0, 12);
-  A('pina', 19.0, 0, -1.6);
+  A('pina', 18.3, 0, -2.3); // dentro la bancarella, lontana dal telo di lato (z -1,8)
   A('pallino', 16.5, 0, -1.2);
-  A('crostata', 21.0, 0, -6.7);
+  A('crostata', 21.2, 0, -5.8); // dietro il tavolo, dentro la bancarella
   A('fluo', 19.6, 0, 10);
   A('bruno', 15.6, 0, 13.2);
   A('perno', 1.7, 0, WHEEL.z + 3.7);
