@@ -319,6 +319,8 @@ export class Game {
     this.interactOff = false;
     this.player.floor = 0;
     this.player.pos.y = 0;
+    this.player.carrying = false;
+    this.player.speedMul = 1;
     // interfacce dei capitoli (ballo, cruscotto...): spariscono con il capitolo
     document.querySelectorAll('.dance, .chapter-ui').forEach((e) => e.remove());
   }
@@ -767,17 +769,18 @@ export class Game {
       } else {
         if (inp.wasPressed('interact') && this.focus) this.focus.use(this);
         if (inp.wasPressed('journal') || inp.pressed.has('Tab')) this.hud.showDiario(this.diarioHtml());
-        if (inp.clicked && !this.player.blocking && !this.player.seated) {
+        const hands = !this.player.seated && !this.player.carrying;
+        if (inp.clicked && !this.player.blocking && hands) {
           if (this.player.weapon === 'pistol') this.fire();
           else if (this.player.attack()) this.audio.swing(this.player.weapon);
         }
         if (inp.wasPressed('reload')) this.reload();
         if (inp.wasPressed('music')) this.toast(this.audio.toggleMusic() ? 'Musica: accesa' : 'Musica: spenta', 'info', 1800);
-        if (inp.wasPressed('crouch') && !this.player.seated) this.player.setCrouch(!this.player.crouching);
-        if (inp.wasPressed('weapon1')) this.player.setWeapon('fist');
-        if (inp.wasPressed('weapon2') && this.has('righello')) this.player.setWeapon('ruler');
-        if (inp.wasPressed('weapon3') && this.has('pistola') && this.player.weapon !== 'pistol') this.equipPistol();
-        if (inp.cycleWeapon) {
+        if (inp.wasPressed('crouch') && hands) this.player.setCrouch(!this.player.crouching);
+        if (inp.wasPressed('weapon1') && hands) this.player.setWeapon('fist');
+        if (inp.wasPressed('weapon2') && hands && this.has('righello')) this.player.setWeapon('ruler');
+        if (inp.wasPressed('weapon3') && hands && this.has('pistola') && this.player.weapon !== 'pistol') this.equipPistol();
+        if (inp.cycleWeapon && hands) {
           // pulsante ARMA (telefono): la prossima arma che hai
           const owned = (['fist', 'ruler', 'pistol'] as const).filter((w) => w === 'fist' || (w === 'ruler' ? this.has('righello') : this.has('pistola')));
           const next = owned[(owned.indexOf(this.player.weapon) + 1) % owned.length];

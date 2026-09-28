@@ -50,6 +50,7 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
         uGrid: { value: THEME.grid?.size ?? 0 },
         uGridColor: { value: new THREE.Color(THEME.grid?.color ?? '#000000') },
         uGridMajor: { value: THEME.grid?.major ?? 0 },
+        uGridRows: { value: THEME.grid?.rows ? 1 : 0 },
       },
     ]),
     vertexShader: /* glsl */ `
@@ -74,6 +75,7 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
       uniform float uGrid;
       uniform vec3 uGridColor;
       uniform float uGridMajor;
+      uniform float uGridRows;
       varying vec3 vN;
       varying vec3 vW;
       #include <fog_pars_fragment>
@@ -102,6 +104,8 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
           vec2 g = p / uGrid;
           vec2 w = fwidth(g);
           vec2 d = abs(fract(g - 0.5) - 0.5) / max(w, vec2(1e-4));
+          // quaderno a righe: solo le righe "orizzontali" (per terra lungo z, sui muri in altezza)
+          if (uGridRows > 0.5) d.x = 1e4;
           float line = 1.0 - clamp(min(d.x, d.y) - 0.3, 0.0, 1.0);
           float fade = 1.0 - clamp(max(w.x, w.y) * 3.0, 0.0, 1.0);
           float a = line * fade * (uGridMajor > 0.0 ? 0.4 : 0.8);

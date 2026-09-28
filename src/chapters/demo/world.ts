@@ -156,8 +156,9 @@ export function buildDemo(): World {
     DREFS.targets.push({ pivot, x, z: Z.targets, down: false, fall: 0 });
   }
   // il bancone del tiro a segno
-  S.box(0, 0, Z.pistol - 3.2, HALF * 2 - 0.4, 1.0, 0.5);
-  const counter = col.box(0, Z.pistol - 3.2, HALF * 2 - 0.4, 0.5);
+  // il bancone del tiro a segno: a destra resta un passaggio per andare al traguardo
+  S.box(-1.1, 0, Z.pistol - 3.2, 5.8, 1.0, 0.5);
+  const counter = col.box(-1.1, Z.pistol - 3.2, 5.8, 0.5);
   counter.low = true;
   counter.h = 1.0; // basso: i colpi ci passano sopra
 
