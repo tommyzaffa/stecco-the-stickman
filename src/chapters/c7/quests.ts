@@ -40,7 +40,15 @@ export const QUESTS: Record<string, QuestDef> = {
     title: 'Il Vicolo Storto',
     steps: [
       { text: 'Parla con chi è rimasto nel Vicolo Storto (quello con la porta)', target: npcHead('stipite') },
-      { text: () => `Guarda cosa resta del vicolo (${Q7.clues.size}/2): il cartello e le briciole` },
+      {
+        text: () => `Guarda cosa resta del vicolo (${Q7.clues.size}/2): il cartello e le briciole rosa`,
+        // la freccia indica la prossima cosa da guardare
+        target: (g) => {
+          const A = g.world.anchors;
+          const p = !Q7.clues.has('cartello') ? A.vicoloCartello : !Q7.clues.has('briciole') ? A.vicoloBriciole : null;
+          return p ? p.clone().setY(p.y + 1.4) : null;
+        },
+      },
       { text: 'Racconta tutto ad Arturo', target: npcHead('filosofo') },
     ],
   },

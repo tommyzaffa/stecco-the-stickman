@@ -268,7 +268,24 @@ export function buildTrasloco(): World {
     col.rect(-40, -22, -34, 22);
     A('vicoloPorta', -23, 1.2, 9.4);
     A('vicoloCartello', -18, 1.2, 1);
-    A('vicoloBriciole', -27, 0.3, -6);
+    // il mucchietto di briciole rosa (quelle da esaminare): si vede da lontano sul bianco
+    const bx = -20.5, bz = 4.2;
+    const heap = new Sketch();
+    heap.style = { jitter: 0.01, over: 0 };
+    for (let i = 0; i < 40; i++) {
+      const a = rng() * Math.PI * 2, rad = Math.sqrt(rng()) * 0.75;
+      const px = bx + Math.cos(a) * rad, pz = bz + Math.sin(a) * rad;
+      const s = 0.05 + rng() * 0.05;
+      const pts: [number, number, number][] = [];
+      for (let k = 0; k < 8; k++) pts.push([px + Math.cos(k * 1.1) * s * (1 + k * 0.25), y + 0.02 + rng() * 0.03, pz + Math.sin(k * 1.1) * s * (1 + k * 0.25)]);
+      heap.curve(pts);
+    }
+    b.group.add(heap.build(b.lineMat(2.2, '#e8839f'), b.fill));
+    const smudge = new THREE.Mesh(new THREE.CircleGeometry(0.9, 20), new THREE.MeshBasicMaterial({ color: '#f6c9d6', transparent: true, opacity: 0.55, depthWrite: false }));
+    smudge.rotation.x = -Math.PI / 2;
+    smudge.position.set(bx, 0.025, bz);
+    b.group.add(smudge);
+    A('vicoloBriciole', bx, 0.35, bz);
   }
 
   // =========================================================================

@@ -47,7 +47,8 @@ export function setupStory(g: Game) {
   const clue = (id: string, pos: THREE.Vector3, label: string, lines: string[], give?: () => void) =>
     g.addInteractable({
       pos,
-      radius: 2.6,
+      radius: 2.8,
+      icon: (g) => (g.quest('vicolo') === 1 && !Q7.clues.has(id) ? 'clue' : null),
       label: (g) => (g.quest('vicolo') === 1 && !Q7.clues.has(id) ? label : null),
       use: (g) =>
         g.talk(narr(lines), null, () => {
@@ -60,8 +61,8 @@ export function setupStory(g: Game) {
     'Il cartello dice "VICOLO ST". Il resto è cancellato.',
     'Chi cancella va di fretta: comincia dalle cose grandi e lascia le parole a metà.',
   ]);
-  clue('briciole', A.vicoloBriciole, 'Guarda le briciole', [
-    'Briciole di gomma. Rosa, arricciate, ancora tiepide.',
+  clue('briciole', A.vicoloBriciole, 'Guarda le briciole rosa', [
+    'Un mucchietto di briciole di gomma. Rosa, arricciate, ancora tiepide.',
     'Ne raccogli una. Profuma di fragola.',
   ], () => g.give('briciola'));
   g.addInteractable({

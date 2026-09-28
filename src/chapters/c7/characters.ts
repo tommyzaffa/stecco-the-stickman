@@ -276,6 +276,7 @@ export function createCharacters(g: Game) {
             'E un profumo. Dolce. Di fragola.',
             '> Fragola?',
             'Le gomme alla fragola. Quelle delle elementari. Io non la mangiavo. Gli altri sì.',
+            'Se vuoi vedere, per terra ci sono ancora le briciole. Rosa. Lì, tra la mia porta e il cartello.',
           ],
           do: (g) => g.setStep('vicolo', 1),
         },
