@@ -4,7 +4,8 @@ import { Sketch } from '../../render/sketch';
 import { CERA, THEME } from '../../render/palette';
 import { TOUCH } from '../../touch';
 import { CANS, REFS8 } from './world';
-import { dots, finishBooth, fireName, type Booth } from './booth';
+import { dots, fireName, type Booth } from '../../game/booth';
+import { finishTokens, tokenFooter } from './tokens';
 
 // ---------------------------------------------------------------------------
 // TIRO AI BARATTOLI (i Pastelli a Cera): sei barattoli a piramide su una mensola, tre palline
@@ -335,6 +336,7 @@ export const CANS_BOOTH: Booth = {
   id: 'cans',
   title: 'TIRO AI BARATTOLI',
   fire: 'LANCIA',
+  footer: tokenFooter,
   help: () => `${TOUCH ? 'Trascina per mirare' : 'Mira col mouse'} (la pallina scende: mira un po' sopra) · <b>${fireName(CANS_BOOTH)}</b> per lanciare`,
   spot: CANS.spot,
   look: new THREE.Vector3(CANS.x, CANS.y + 0.55, CANS.z),
@@ -398,7 +400,7 @@ export const CANS_BOOTH: Booth = {
         const down = count();
         const tokens = down >= 6 ? 3 : down >= 4 ? 2 : down >= 2 ? 1 : 0;
         const glueNote = S.glued && !S.cans[1].down && g.is('c8Tonk') ? '<br><small>Quello di mezzo non si è mosso. Ha fatto TONK.</small>' : '';
-        finishBooth(g, `${down === 6 ? '<b>TUTTI GIÙ!</b>' : `<b>${down}</b> barattoli giù su 6`}${glueNote}`, tokens);
+        finishTokens(g, `${down === 6 ? '<b>TUTTI GIÙ!</b>' : `<b>${down}</b> barattoli giù su 6`}${glueNote}`, tokens);
         const pl = g.npc('pastellone');
         pl.say(down >= 6 ? 'Tutti?! Chi ti ha insegnato? Un Evidenziatore?' : down === 0 ? 'Zero! Il mio numero preferito.' : 'Bravo. Cioè, abbastanza. Cioè, torna.', 3.5);
       }

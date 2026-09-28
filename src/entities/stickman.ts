@@ -10,7 +10,7 @@ import { headTexture, shadowTexture } from '../render/textures';
 export type Hat = 'none' | 'cap' | 'top' | 'beanie' | 'bun' | 'police' | 'party' | 'beret' | 'hair' | 'crayon' | 'pencil';
 export type Action =
   | 'none' | 'wave' | 'talk' | 'push' | 'carry' | 'phone' | 'paint' | 'speech' | 'cane' | 'crossed' | 'think'
-  | 'dance' | 'drink' | 'guard' | 'windup' | 'strike' | 'dj' | 'dizzy'
+  | 'dance' | 'drink' | 'guard' | 'windup' | 'strike' | 'dj' | 'dizzy' | 'tipsy'
   | 'aim' | 'cover' | 'gavel' | 'sharpen' | 'violin' | 'read';
 
 export interface StickmanOpts {
@@ -534,6 +534,19 @@ export class Stickman {
         tg.torsoX = -0.1;
         tg.torsoZ = -0.12;
         break;
+      case 'tipsy': {
+        // troppe bollicine (capitolo 9): ondeggia piano, braccia larghe per stare in equilibrio
+        const w = t * 1.7;
+        tg.torsoZ = Math.sin(w) * 0.14;
+        tg.torsoX += Math.sin(w * 0.7 + 1) * 0.06;
+        tg.armLZ = 0.45 + Math.sin(w + 0.5) * 0.15;
+        tg.armRZ = -0.45 + Math.sin(w + 0.5) * 0.15;
+        if (!moving && !this.seated) {
+          tg.kneeLX = tg.kneeRX = 0.12;
+          tg.hipsY -= 0.02;
+        }
+        break;
+      }
       case 'dizzy': {
         // stordito: braccia molli, gira su se stesso col busto
         const w = t * 5;

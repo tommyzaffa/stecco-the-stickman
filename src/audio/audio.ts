@@ -742,6 +742,47 @@ export class Sound {
     this.tone(230, 0.7, { type: 'sawtooth', to: 170, vol: 0.035, vibrato: [13, 18], filter: { type: 'bandpass', freq: 900, q: 3 } });
   }
 
+  // --- il pub (capitolo 9) ------------------------------------------------------------
+  // freccetta nel sughero (TOC) o contro il muro (TAC, più secco)
+  dart(hit: boolean) {
+    if (hit) {
+      this.noise(0.035, 0.14, { type: 'bandpass', freq: 1100, q: 2 });
+      this.tone(210, 0.06, { type: 'triangle', to: 150, vol: 0.08 });
+    } else {
+      this.noise(0.03, 0.12, { type: 'highpass', freq: 2500 });
+      this.tone(900, 0.04, { type: 'square', vol: 0.02 });
+    }
+  }
+
+  // bollicine: la gazzosa appena versata (k = quanta)
+  fizz(k = 1) {
+    this.noise(0.6 + 0.6 * k, 0.05 * k, { type: 'highpass', freq: 5200 });
+    for (let i = 0; i < 10 * k; i++) this.tone(2400 + Math.random() * 2600, 0.02, { vol: 0.012, delay: Math.random() * 0.9 * k });
+  }
+
+  // sorso dalla cannuccia: glu glu glu
+  glug(n = 3) {
+    for (let i = 0; i < n; i++) this.tone(260 - i * 18, 0.1, { type: 'triangle', to: 150, vol: 0.07, delay: i * 0.2 });
+  }
+
+  // singhiozzo da bollicine
+  hic() {
+    this.tone(520, 0.08, { type: 'triangle', to: 900, vol: 0.06 });
+    this.noise(0.04, 0.03, { type: 'bandpass', freq: 1600, q: 3 });
+  }
+
+  // bicchieri che si toccano (o il vassoio che trema)
+  clink(k = 1) {
+    this.tone(2350 + Math.random() * 300, 0.25, { vol: 0.03 * k });
+    this.tone(3700 + Math.random() * 300, 0.18, { vol: 0.018 * k, delay: 0.01 });
+  }
+
+  // disco che gratta: il jukebox si inceppa (o riparte)
+  scratch() {
+    this.noise(0.25, 0.08, { type: 'bandpass', freq: 900, to: 2600, q: 2 });
+    this.tone(180, 0.25, { type: 'sawtooth', to: 420, vol: 0.03 });
+  }
+
   // --- ambiente ----------------------------------------------------------------------
   private loopNoise() {
     const s = this.ctx!.createBufferSource();

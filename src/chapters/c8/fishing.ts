@@ -5,7 +5,8 @@ import type { Game } from '../../game/game';
 import { Sketch } from '../../render/sketch';
 import { TOUCH } from '../../touch';
 import { FISH, REFS8 } from './world';
-import { dots, finishBooth, fireName, type Booth } from './booth';
+import { dots, fireName, type Booth } from '../../game/booth';
+import { finishTokens, tokenFooter } from './tokens';
 
 // ---------------------------------------------------------------------------
 // PESCA DEI TAPPI: nella vasca girano i tappi a corona, ognuno su un suo giro e a una sua
@@ -182,6 +183,7 @@ export const FISH_BOOTH: Booth = {
   id: 'fish',
   title: 'PESCA DEI TAPPI',
   fire: 'PESCA',
+  footer: tokenFooter,
   help: () => `${TOUCH ? 'Trascina' : 'Muovi il mouse'}: l'amo va dove guardi · <b>${fireName(FISH_BOOTH)}</b>: giù e su (anticipa il tappo!)`,
   spot: FISH.spot,
   look: new THREE.Vector3(FISH.x, FISH.water, FISH.z),
@@ -270,7 +272,7 @@ export const FISH_BOOTH: Booth = {
           g.give('tappoStella');
           if (g.questActive('stella')) g.setStep('stella', 1);
         }
-        finishBooth(g, S.got ? `<b>${S.got}</b> tappi pescati${S.star ? '<br><small>...e c\'è quello con la stella!</small>' : ''}` : 'Niente. I tappi ti hanno visto arrivare.', S.tokens);
+        finishTokens(g, S.got ? `<b>${S.got}</b> tappi pescati${S.star ? '<br><small>...e c\'è quello con la stella!</small>' : ''}` : 'Niente. I tappi ti hanno visto arrivare.', S.tokens);
       }
     }
   },

@@ -1,22 +1,24 @@
 import * as THREE from 'three';
-import type { Game } from '../../game/game';
-import { attackName, keyName } from '../../settings';
-import { TOUCH } from '../../touch';
-import { Q8 } from './quests';
+import type { Game } from './game';
+import { attackName, keyName } from '../settings';
+import { TOUCH } from '../touch';
 
 // ---------------------------------------------------------------------------
-// LE BANCARELLE (capitolo 8): ti metti davanti al bancone e giochi. Non cammini, non salti,
-// non tiri pugni: ti guardi intorno (entro un certo angolo) e clicchi. Ogni partita finisce con
-// un risultato e dei gettoni; USA (E) per andartene prima.
-// Ogni minigioco (barattoli, tappi, torta) implementa Booth; qui c'è quello che hanno in comune:
-// il posto, la visuale, il riquadro in alto con titolo, stato e comandi, i gettoni.
+// BANCONI (minigiochi "da fermo": le bancarelle della sagra, le freccette del pub...).
+// Ti metti in un punto e giochi: non cammini, non salti, non tiri pugni; ti guardi intorno
+// (entro un certo angolo, o la visuale la guida il gioco) e clicchi. Ogni partita finisce con
+// un risultato; USA (E) / ESCI per andartene prima.
+// Ogni minigioco implementa Booth; qui c'è quello che hanno in comune: il posto, la visuale,
+// il riquadro in alto con titolo, stato e comandi, i pulsanti sul telefono.
 // ---------------------------------------------------------------------------
 
 export interface Booth {
-  id: 'cans' | 'fish' | 'cake';
+  id: string;
   title: string;
-  fire: string; // testo del pulsante sul telefono
+  fire: string; // testo del pulsante COLPISCI sul telefono
+  parry?: string; // se c'è: il pulsante PARA sul telefono, con questo testo (il tasto destro sul computer)
   help: () => string;
+  footer?: () => string; // riga in fondo al riquadro (es. i gettoni della sagra)
   spot: THREE.Vector3; // dove ti metti
   look: THREE.Vector3; // dove guardi all'inizio
   cone?: { yaw: number; up: number; down: number }; // quanto ti puoi girare (radianti)
@@ -35,12 +37,20 @@ export const BOOTH = {
   baseYaw: 0,
   basePitch: 0,
   lookAt: new THREE.Vector3(), // per le visuali ferme
-  onEnd: null as ((tokens: number) => void) | null,
+  onEnd: null as ((result: number) => void) | null,
   lastHtml: '',
   age: 0, // secondi da quando sei al bancone (il tasto che ha chiuso il dialogo non deve farti uscire o tirare)
 };
 
-export function openBooth(g: Game, b: Booth, onEnd: (tokens: number) => void) {
+// il capitolo viene scaricato: niente bancone a metà
+export function resetBooth() {
+  BOOTH.cur = null;
+  BOOTH.el = null;
+  BOOTH.onEnd = null;
+  BOOTH.endT = -1;
+}
+
+export function openBooth(g: Game, b: Booth, onEnd: (result: number) => void) {
   if (BOOTH.cur) return;
   const p = g.player;
   BOOTH.cur = b;
@@ -56,7 +66,7 @@ export function openBooth(g: Game, b: Booth, onEnd: (tokens: number) => void) {
   BOOTH.baseYaw = p.yaw;
   BOOTH.basePitch = p.pitch;
   BOOTH.lookAt.copy(b.look);
-  g.touchMode = { fire: b.fire, use: 'ESCI', jump: null, crouch: null };
+  g.touchMode = { fire: b.fire, use: 'ESCI', jump: null, crouch: null, parry: b.parry ?? null };
   g.interactOff = true;
   g.hideNameTags = true;
   g.hud.root.classList.add('in-booth');
@@ -64,24 +74,19 @@ export function openBooth(g: Game, b: Booth, onEnd: (tokens: number) => void) {
   el.className = 'chapter-ui booth paper';
   g.hud.root.appendChild(el);
   BOOTH.el = el;
-  Q8.played.add(b.id);
   b.start(g);
   g.audio.select();
 }
 
-// fine della partita: risultato, gettoni, e dopo un attimo si torna in piazza
-export function finishBooth(g: Game, html: string, tokens: number) {
+// fine della partita: il risultato (html) resta nel riquadro un attimo, poi si torna a girare.
+// "result" arriva a onEnd (es. i gettoni vinti, i punti fatti).
+export function finishBooth(g: Game, html: string, result = 0) {
   if (!BOOTH.cur || BOOTH.endT >= 0) return;
-  BOOTH.result = `${html}<div class="win">${tokens > 1 ? `+${tokens} gettoni` : tokens === 1 ? '+1 gettone' : 'niente gettoni'}</div>`;
+  BOOTH.result = html;
   BOOTH.endT = 2.8;
-  if (tokens > 0) {
-    Q8.tokens += tokens;
-    Q8.won += tokens;
-    g.audio.tokens(tokens);
-  } else g.audio.miss();
   const cb = BOOTH.onEnd;
   BOOTH.onEnd = null;
-  cb?.(tokens);
+  cb?.(result);
 }
 
 export function leaveBooth(g: Game) {
@@ -122,7 +127,7 @@ export function updateBooth(g: Game, dt: number) {
     p.yaw = BOOTH.baseYaw + Math.max(-c.yaw, Math.min(c.yaw, d));
     p.pitch = Math.max(BOOTH.basePitch - c.down, Math.min(BOOTH.basePitch + c.up, p.pitch));
   }
-  p.camera.rotation.set(p.pitch, p.yaw, 0);
+  p.applyView();
   if (BOOTH.endT >= 0) {
     b.update(g, dt, false);
     BOOTH.endT -= dt;
@@ -133,7 +138,8 @@ export function updateBooth(g: Game, dt: number) {
   }
   // riquadro: titolo, stato (o risultato), comandi
   const help = BOOTH.endT >= 0 ? '' : `<div class="h">${b.help()} · <b>${TOUCH ? 'ESCI' : keyName('interact')}</b> per andartene</div>`;
-  const html = `<div class="t">${b.title}</div><div class="s">${BOOTH.endT >= 0 ? BOOTH.result : b.status()}</div>${help}<div class="g">gettoni: <b>${Q8.tokens}</b></div>`;
+  const foot = b.footer ? `<div class="g">${b.footer()}</div>` : '';
+  const html = `<div class="t">${b.title}</div><div class="s">${BOOTH.endT >= 0 ? BOOTH.result : b.status()}</div>${help}${foot}`;
   if (html !== BOOTH.lastHtml && BOOTH.el) {
     BOOTH.el.innerHTML = html;
     BOOTH.lastHtml = html;

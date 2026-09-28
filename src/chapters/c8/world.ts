@@ -412,7 +412,7 @@ export function buildSagra(): World {
     S.box(6.8, 0, z + 4.2, 1.6, 2.3, 1.4);
     S.roof(6.8, 2.3, z + 4.2, 1.8, 1.6, 0.6, 'x', 0.1);
     col.rect(6, z + 3.5, 7.6, z + 4.9);
-    sign('RUOTA PANORAMICA\n6 gettoni (in due)', 6.8, 1.7, z + 4.95, 1.5, 0.75, '+z', { font: HAND_FONT });
+    sign('RUOTA PANORAMICA\n10 gettoni (in due)', 6.8, 1.7, z + 4.95, 1.5, 0.75, '+z', { font: HAND_FONT });
   }
 
   // =========================================================================
@@ -467,7 +467,8 @@ export function buildSagra(): World {
       D.circle(CAKE.x, CAKE.y - 0.03 + h + 0.01, cz, rr * 0.6, 'y', 10);
     }
     wallText('vince la torta più alta', bx + 4.1, 2.0, bz, 2.4, 0.5, '-x');
-    sign('Giuria:\nla maestra Crostata', 19.7, 1.35, bz + 1.95, 1.1, 0.5, '-x', { font: HAND_FONT });
+    // appeso al telo di fondo (prima sporgeva dal telo di lato)
+    sign('Giuria:\nla maestra Crostata', bx + 4.12, 1.35, bz + 1.55, 1.0, 0.5, '-x', { font: HAND_FONT });
   }
   // --- banco dei premi (Don Fluo) ---
   {
@@ -531,7 +532,9 @@ export function buildSagra(): World {
   // --- il kebab di Rocco (anche alla sagra) ---
   {
     stall(10, 20.5, '-z', 2.6, 1.8, 'KEBAB ESISTENZIALE', CERA.marrone);
-    S.cylinder(10, 1.0, 21.6, 0.2, 0.8, 10);
+    // lo spiedo sta di lato, dietro il bancone: Rocco è in mezzo (prima gli stava dentro)
+    S.cylinder(10.75, 1.0, 21.85, 0.2, 0.8, 10);
+    S.seg(10.75, 1.8, 21.85, 10.75, 2.05, 21.85);
   }
 
   // =========================================================================
@@ -541,7 +544,7 @@ export function buildSagra(): World {
   A('spawnLook', 0, 3, 10);
   A('marco', 1.6, 0, 27.5);
   A('marcoTorte', 16.2, 0, -6.4);
-  A('martina', -17.3, 0, 10.9);
+  A('martina', -18.2, 0, 10.15); // dentro la bancarella, accanto alla vasca (non sul palo del tendone)
   // i Pastelli stanno ai lati, in fondo: non in mezzo al tiro
   A('pastellone', -20.9, 0, -5.5);
   A('pastello', -20.9, 0, -2.5);
@@ -560,7 +563,7 @@ export function buildSagra(): World {
   A('banda2', 17, 1.0, -16.2);
   A('filosofo', -6.5, 0, 9.5);
   A('fabio', FOUNTAIN.x, 0, FOUNTAIN.z);
-  A('rocco', 10, 0, 21.5);
+  A('rocco', 9.7, 0, 21.45);
   A('ruotaIn', 0, 0, WHEEL.z + 4.6);
   A('ruotaLook', 0, 6, WHEEL.z);
   A('fontanaLook', FOUNTAIN.x, 0.8, FOUNTAIN.z);

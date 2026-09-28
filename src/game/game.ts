@@ -21,6 +21,7 @@ import { SETTINGS, keyName, qualityParams } from '../settings';
 import { TOUCH } from '../touch';
 import { VIEW, updateView } from '../view';
 import { TouchUI } from '../ui/touch';
+import { resetBooth } from './booth';
 
 export interface Interactable {
   pos: THREE.Vector3;
@@ -180,7 +181,7 @@ export class Game {
   touch: TouchUI | null = null;
   // comandi a schermo speciali di un capitolo (capitolo 6: in macchina). null = quelli normali.
   // Per ogni pulsante: il testo da mostrare, oppure null per nasconderlo.
-  touchMode: { fire?: string | null; use?: string | null; jump?: string | null; crouch?: string | null } | null = null;
+  touchMode: { fire?: string | null; use?: string | null; jump?: string | null; crouch?: string | null; parry?: string | null } | null = null;
   hideNameTags = false; // niente nomi sopra le teste (es. in macchina, con Marco seduto accanto)
   interactOff = false; // niente "parla con..." / "usa" (es. in macchina: il tasto serve ad altro)
 
@@ -307,6 +308,7 @@ export class Game {
     this.combat.nav = [];
     this.audio.clearEmitters();
     this.audio.stopMusic();
+    this.audio.setMusicMuffle(20000);
     this.player.setCrouch(false);
     this.player.seated = false;
     // i timer spariscono con il capitolo: niente schermo nero o svenimenti rimasti a metà
@@ -321,7 +323,10 @@ export class Game {
     this.player.pos.y = 0;
     this.player.carrying = false;
     this.player.rooted = false;
+    this.player.dizzy = 0;
+    this.player.steady = 0;
     this.player.speedMul = 1;
+    resetBooth();
     // interfacce dei capitoli (ballo, cruscotto...): spariscono con il capitolo
     document.querySelectorAll('.dance, .chapter-ui').forEach((e) => e.remove());
     this.hud.root.classList.remove('packing', 'in-booth');
@@ -817,8 +822,8 @@ export class Game {
         pp.x = n.pos.x + (dx / d) * min;
         pp.z = n.pos.z + (dz / d) * min;
       }
-      // battute spontanee
-      if (playing && !n.talking && !n.fighter?.hostile && !n.fighter?.ko && d < 8) {
+      // battute spontanee (non mentre si parla con qualcuno: si sovrapporrebbero al dialogo)
+      if (playing && !n.talking && !this.dialogue.isOpen && !n.fighter?.hostile && !n.fighter?.ko && d < 8) {
         n.nextBark -= dt;
         if (n.nextBark <= 0) {
           const barks = this.specs.get(n.id)?.barks?.(this) ?? [];
@@ -855,7 +860,7 @@ export class Game {
     this.damageFx = Math.max(0, this.damageFx - dt * 1.5);
     this.updateFocus(playing && !this.interactOff && !this.dialogue.isOpen && !this.hud.diarioOpen && !this.minigame);
     this.updateHud();
-    this.post.render(this.time, this.damageFx);
+    this.post.render(this.time, this.damageFx, this.player.dizzy * (1 - 0.6 * this.player.steady));
     inp.endFrame();
   }
 

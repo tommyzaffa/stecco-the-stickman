@@ -29,7 +29,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
     `PACCHI` carta da pacchi, `CARTONCINO` cartoncino prugna a lume di candela, `MILLIMETRATA`
     carta millimetrata: `grid.major` = una riga più marcata ogni N, `RIGHE` quaderno a righe:
     `grid.rows` = solo righe orizzontali, anche sui muri, `PUNTINI` carta a puntini: `grid.dots` =
-    solo un puntino a ogni incrocio). `CERA` = colori dei Pastelli a Cera.
+    solo un puntino a ogni incrocio, `PENTAGRAMMA` carta da musica: `grid.staff` = righe a gruppi di
+    cinque). `CERA` = colori dei Pastelli a Cera.
     Il tema va impostato prima di costruire un capitolo (lo fa `Game.loadChapter`).
 - `src/world/` — `builder.ts` (`WorldBuilder`: muri, porte, edifici, cartelli, neon, alberi,
   `ceiling` per gli interni, `wallText` per le scritte sui muri...; `finish()` restituisce un
@@ -50,10 +51,12 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 - `src/audio/` — audio tutto sintetizzato con Web Audio (nessun file): `audio.ts` effetti, voci a
   bip, sorgenti nel mondo (`addEmitter`), filtro "musica ovattata" (`setMusicMuffle`);
   `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`, `indagine`, `mercato`, `sparatoria`,
-  `cena`, `violino`, `consegna`, `trasloco`, `sagra`, `giostra`; strumento `accordion` = fisarmonica).
+  `cena`, `violino`, `consegna`, `trasloco`, `sagra`, `giostra`, `pub`, `pubRotto` (disco rigato che
+  salta), `notte`; strumento `accordion` = fisarmonica).
   Suoni della macchina (capitolo 6): `car(v, freno, sbandata)` continuo, `crash`, `bump`, `scrape`,
   `horn`, `wiper`, `bleat`, `glow`, `erase`. Sagra (capitolo 8): `clang`, `canDrop`, `tonk`, `splash`,
-  `plop`, `ding`, `tokens`, `creak`.
+  `plop`, `ding`, `tokens`, `creak`. Pub (capitolo 9): `dart(nelSughero)`, `fizz`, `glug`, `hic`,
+  `clink`, `scratch`.
   L'AudioContext si sblocca solo con un click (schermata del titolo).
 
 ## Sistemi riusabili
@@ -105,17 +108,28 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   (minigioco: puntatore finto mosso dal mouse; sul telefono si trascina), niente aiuti (una
   soluzione è scritta in cima a `pack.ts`). Il divano in piedi si disegna in trasparenza (copriva tutto);
   Marco tiene l'altro capo con l'azione `carry` di `Stickman` (mani su `grip`, non dentro il mobile).
-- **Bancarelle** (capitolo 8, `c8/booth.ts`): `openBooth(g, booth, onEnd)` ti mette al bancone
-  (`player.rooted` = ti guardi intorno ma non cammini, non salti, non colpisci), visuale libera entro
-  `Booth.cone` o guidata (`fixed` + `BOOTH.lookAt`), riquadro in alto (`.booth`) con titolo, stato e
-  comandi; `finishBooth(g, html, gettoni)` chiude la partita e dà i gettoni (`Q8.tokens`, solo del
-  capitolo). USA/ESCI per andarsene. Minigiochi: `cans.ts` (tiro ai barattoli: palline con la
+- **Banconi** (minigiochi da fermo, `src/game/booth.ts`, capitoli 8 e 9): `openBooth(g, booth, onEnd)`
+  ti mette al bancone (`player.rooted` = ti guardi intorno ma non cammini, non salti, non colpisci),
+  visuale libera entro `Booth.cone` o guidata (`fixed` + `BOOTH.lookAt`), riquadro in alto (`.booth`)
+  con titolo, stato, comandi e `footer`; `Booth.parry` = testo del pulsante PARA sul telefono (il tasto
+  destro sul computer); `finishBooth(g, html, risultato)` chiude la partita e `onEnd(risultato)` (-1 se
+  te ne vai). USA/ESCI per andarsene. Capitolo 8 (`c8/tokens.ts`: i gettoni della sagra, `Q8.tokens`,
+  la ruota ne costa 10). Minigiochi: `cans.ts` (tiro ai barattoli: palline con la
   parabola, barattoli con urti e rotazioni, quello incollato), `fishing.ts` (pesca dei tappi: l'amo
   va dove guardi), `cake.ts` (torta a piani: il pezzo che sporge si taglia e cade). La ruota
   panoramica (`wheel.ts`) porta su il giocatore seduto con Martina; `startErase` = un pezzo di piazza
   che sparisce (foglio bianco che si allarga) e torna ridisegnato diverso.
+- **Capogiro** (capitolo 9): `player.dizzy` (0..1) = la visuale ondeggia (`applyView()`, e il
+  post-processing la fa ondulare con un'ombra doppia), i comandi scivolano (la direzione gira da sola,
+  inerzia) e ogni tanto si barcolla (`player.lurched`); `player.steady` (0..1) = concentrazione (PARA
+  tenuto): visuale ferma e passi dritti. Il capitolo aggiorna entrambi a ogni frame (`Q9.fizz` =
+  bollicine, scendono piano; l'acqua le abbassa). Azione `tipsy` di `Stickman` per chi ondeggia.
+  Freccette (`c9/darts.ts`): bersaglio vero (settori, doppio, triplo, centro), tre turni contro
+  Barnie, fiato limitato per stare fermi; ogni rivincita persa lo stanca. Vassoio (`c9/tray.ts`):
+  `player.carrying` + tre bicchieri che si svuotano se il vassoio si inclina (accelerazioni, curve,
+  capogiro). Quiz a squadre con `DNode.timer` (se non rispondi risponde Marco).
 - **Opzioni del capitolo sul Game** (tornano normali allo scarico): `g.touchMode` = pulsanti a
-  schermo speciali (`{fire, use, jump, crouch}`: testo o `null` per nasconderlo), `g.hideNameTags`,
+  schermo speciali (`{fire, use, jump, crouch, parry}`: testo o `null` per nasconderlo), `g.hideNameTags`,
   `g.interactOff` (niente "parla con"/"usa"). Gli elementi HTML con classe `chapter-ui` spariscono
   da soli con il capitolo.
 
@@ -196,7 +210,8 @@ Completati: capitolo 1 (San Scarabocchio), 2 (Il Parallelepipedo), 3 (Il Banco d
 5 (L'appuntamento: cena a portate con Martina, interesse, risposte a tempo, Marco da scacciare),
 6 (Consegna a domicilio: la macchina senza motore di Luca giù per 1300 metri, i Pastelli dietro),
 7 (Il trasloco: mobili giù per la scala a U con Marco, incastro nel cassone del furgone),
-8 (La sagra: bancarelle a minigiochi e gettoni, la ruota panoramica con Martina, la fontana ridisegnata).
+8 (La sagra: bancarelle a minigiochi e gettoni, la ruota panoramica con Martina, la fontana ridisegnata),
+9 (Da Dario: quiz a squadre, Gazzosa Gigante e capogiro, freccette contro Barnie, il vassoio, a casa a piedi).
 Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 
 ## Convenzioni per i contenuti

@@ -129,3 +129,11 @@ Object.assign(VOICES, {
   paesano2: { base: 160, type: 'square', spread: 4, every: 2 },
   paesano3: { base: 270, type: 'square', spread: 7, every: 2 },
 });
+
+// Capitolo 9
+Object.assign(VOICES, {
+  pGiallo: { base: 290, type: 'sawtooth', spread: 9, every: 1, vol: 0.05 },
+  pennino: { base: 260, type: 'square', spread: 3, every: 2, vol: 0.045 },
+  righetti: { base: 160, type: 'square', spread: 4, every: 2 },
+  mamma: { base: 330, type: 'triangle', spread: 5, every: 2, vibrato: 6 },
+});

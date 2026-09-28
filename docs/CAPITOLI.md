@@ -85,7 +85,7 @@ alla sagra. Nel parco, la panchina di Arturo non c'è più: solo briciole di gom
 |---|---|---|---|
 | 7 ✅ | Il trasloco | Casa di Nonna Pina (quaderno a righe) | **Incastri**: portare i mobili giù per le scale con Marco e incastrarli nel furgone |
 | 8 ✅ | La sagra | La piazza di San Scarabocchio in festa (carta a puntini) | **Bancarelle**: tanti minigiochi, gettoni e premi |
-| 9 | Da Dario | Il pub, di sera | **Capogiro da bollicine**: visuale e comandi che ondeggiano, freccette con Barnie |
+| 9 ✅ | Da Dario | Il pub, di sera (carta pentagrammata) | **Capogiro da bollicine**: visuale e comandi che ondeggiano, freccette con Barnie |
 | 10 | Il condominio | Una palazzina, di notte | **Furtività col rumore**: pavimenti che scricchiolano, vicini che dormono |
 | 11 | Modulo 27-B | L'Ufficio Protocollo di Quadropoli | **Burocrazia a tempo**: code, sportelli che chiudono, timbri |
 | 12 | Il pranzo della domenica | A casa della famiglia di Martina | **Fare tutto insieme**: piatti, parenti e domande, niente disastri |
@@ -99,7 +99,7 @@ Fratelli Squadra, dove Marco "aiuta" caricando una cassetta della posta, il gatt
 cartello STOP. Il superstite del vicolo ricorda un profumo: fragola (la Gomma è una gomma per
 bambini). Missioni: il Vicolo Storto (con Arturo), l'album di Nonna Pina, il gatto di Tacchetto.
 **8. La sagra.** La festa del paese, su carta a puntini. Martina vuole il tappo restituito in cima
-alla ruota panoramica, e la ruota costa sei gettoni: si vincono alle bancarelle, ognuna un minigioco
+alla ruota panoramica, e la ruota costa dieci gettoni: si vincono alle bancarelle, ognuna un minigioco
 diverso. Tiro ai barattoli dei Pastelli a Cera (palline di carta a parabola, uno è incollato: verbale
 dell'Ispettore Penna), pesca dei tappi (quello con la stella, per Martina), la torta a piani per Nonna
 Pina (dieci piani battono la maestra Crostata), il banco dei premi di Don Fluo (pesce grigio per Marco,
@@ -107,10 +107,17 @@ fischietto, palloncino, orsacchiotto gigante). In cima alla ruota, il tappo; poi
 Stecco, la fontana sparisce e torna ridisegnata con tre zampilli invece di quattro. Tutti dicono che
 sono sempre stati tre, tranne Arturo: chi cancella è la gomma alla fragola, ma chi ridisegna "ha la mano
 che trema". Dario invita tutti al pub.
-**9. Da Dario.** Serata al pub con Marco e Martina: quiz e freccette. La squadra esagera con la
-Gazzosa Gigante ("tre litri, una cannuccia") e a tutti gira la testa: la visuale ondeggia e i
-comandi scivolano. Bisogna vincere la finale di freccette contro Barnie e riportare tutti a casa.
-Dario racconta che nel quartiere vicino sono sparite tre case.
+**9. Da Dario.** Serata al pub con Marco e Martina, su carta da musica. Quiz a squadre contro le Biro
+Blu ("Verbale Unico") e i Pastelli ("I Temperati"), cinque domande a tempo (se non rispondi urla
+Marco): per vincere bisogna dire che la fontana ha tre zampilli, anche se Stecco ne ricorda quattro.
+Poi la Gazzosa Gigante ("tre litri, una cannuccia": quanto bere lo scegli tu) e il capogiro: la
+visuale ondeggia, i comandi scivolano, singhiozzi; tenendo PARA ci si concentra. Finale di freccette
+contro Barnie (bersaglio vero, fiato limitato; ogni rivincita persa lo stanca). Missioni: il jukebox
+col disco rigato (un pugno di lato), tre bicchieri d'acqua sul vassoio fino al tavolo, il tavolo in
+fondo con le briciole rosa (una cliente alla fragola ha chiesto di Via dei Temperini). Dario chiude e
+racconta: le case ai numeri 4, 6 e 8 di Via dei Temperini sono sparite, e nessuno se lo ricorda. A
+piedi per Via del Pentagramma: Martina a casa, i tre lotti bianchi (Marco ricorda un compagno di banco,
+o forse no), Marco consegnato a sua mamma.
 **10. Il condominio.** Stecco si trasferisce in una palazzina. Un pacco è finito al piano sbagliato,
 di notte: bisogna recuperarlo senza svegliare nessuno (il neonato del terzo piano, il signore
 col martello, il cane). Ogni passo fa rumore; i pavimenti di carta scricchiolano.

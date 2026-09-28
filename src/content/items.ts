@@ -4,7 +4,8 @@ export type ItemId =
   | 'pistola' | 'profumo' | 'ombra' | 'scusa' | 'tappoVero'
   | 'lettere' | 'torta' | 'freccetta'
   | 'album' | 'briciola'
-  | 'tappoStella' | 'pesce' | 'fischietto' | 'palloncino' | 'orsetto';
+  | 'tappoStella' | 'pesce' | 'fischietto' | 'palloncino' | 'orsetto'
+  | 'sottobicchiereOro' | 'mezzoSottobicchiere';
 
 export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolean }> = {
   pacco: {
@@ -117,5 +118,14 @@ export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolea
   orsetto: {
     name: 'Orsacchiotto gigante',
     desc: 'Il premio più grande della sagra. Senza tasche, lo porti sotto il braccio. Cioè, sotto la linea.',
+  },
+  // capitolo 9: da Dario
+  sottobicchiereOro: {
+    name: 'Il Sottobicchiere d\'Oro',
+    desc: 'Il trofeo delle freccette di Dario: cartone dipinto d\'oro con la vernice di Don Fluo. Barnie lo aveva da undici serate.',
+  },
+  mezzoSottobicchiere: {
+    name: 'Mezzo sottobicchiere',
+    desc: 'Dal tavolo in fondo del pub. L\'altra metà non è rotta: non c\'è. Profuma di fragola.',
   },
 };

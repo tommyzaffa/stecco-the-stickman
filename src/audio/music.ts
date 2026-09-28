@@ -713,6 +713,79 @@ export const GIOSTRA: Track = {
   },
 };
 
+// "Da Dario": blues del jukebox, pianoforte a cadenza shuffle, contrabbasso che cammina, spazzole.
+// stuck = il disco è rigato: ripete lo stesso mezzo giro con un "tic" (finché non gli dai un pugno)
+const PUB_PROG = [55, 60, 55, 55, 60, 60, 55, 55, 62, 60, 55, 62]; // blues in sol (radici)
+const PUB_TEMA: number[][] = [
+  [74, _, 77, 74, 72, 70], [67, _, _, _, 0, 0],
+  [72, _, 75, 72, 70, 67], [70, _, _, _, 0, 0],
+  [74, _, 77, 79, 77, 74], [72, _, 70, _, 67, _],
+  [72, _, 75, 72, 70, 67], [65, _, _, 67, _, _],
+  [74, _, 77, 74, 72, 70], [67, _, 70, _, 67, _],
+  [74, _, _, 72, 69, _], [67, _, _, _, 0, 0],
+];
+function pub(stuck: boolean): Track {
+  const beat = 60 / 112 / 2;
+  return {
+    bpm: 112,
+    stepsPerBeat: 2,
+    swing: 0.09,
+    play(m, step, t) {
+      let s = step;
+      if (stuck) {
+        s = step % 5; // cinque passi e ricomincia: il disco salta
+        if (s === 0 && step > 0) m.hit(t, 0.05, 3500, 'highpass', 0.02, 0.7);
+      }
+      const bar = Math.floor(s / 8) % 12;
+      const slot = s % 8;
+      const r = PUB_PROG[bar];
+      // contrabbasso che cammina: radice, terza, quinta, sesta
+      if (slot % 2 === 0) m.bass(mtof(r - 24 + [0, 4, 7, 9][slot / 2]), t, 0.3, 0.13);
+      // pianoforte: accordo (settima) sul due e sul quattro
+      if (slot === 2 || slot === 6) for (const n of [r + 4, r + 7, r + 10]) m.pluck(mtof(n), t, 0.02, 0.25);
+      if (slot === 5 && bar % 2) for (const n of [r + 4, r + 10]) m.pluck(mtof(n), t, 0.012, 0.15);
+      // spazzole
+      m.hit(t, slot % 2 ? 0.012 : 0.02, 6000, 'highpass', 0.06, 0.6);
+      if (slot === 2 || slot === 6) m.hit(t, 0.03, 1800, 'bandpass', 0.08, 0.8);
+      if (slot === 0) m.kick(t, 0.05, 80, 45, 0.1);
+      // la melodia: dal secondo giro, sassofono (un lead scuro)
+      if (!stuck && Math.floor(step / 96) % 2 === 1) {
+        const row = PUB_TEMA[bar];
+        const k = slot < 6 ? row[slot] : 0;
+        if (k > 0) {
+          let len = 1;
+          while (slot + len < 6 && row[slot + len] === _) len++;
+          m.lead(mtof(k - 12), t, len * beat * 0.95, 0.028);
+        }
+      }
+    },
+  };
+}
+
+// "Notte": ninna nanna per tornare a casa (arpeggio lento e fischio lontano)
+const NOTTE_PROG = [[48, 64, 67, 72], [45, 64, 69, 72], [41, 65, 69, 72], [43, 62, 67, 71]];
+const NOTTE_TEMA = [79, _, 76, 77, _, 79, 81, _, 79, 77, _, 76, 74, _, _, 76, _, 72, 74, _, _, 0, 0, 0];
+export const NOTTE: Track = {
+  bpm: 84,
+  stepsPerBeat: 2,
+  play(m, step, t) {
+    const bar = Math.floor(step / 6) % 4;
+    const slot = step % 6;
+    const c = NOTTE_PROG[bar];
+    if (slot === 0) m.bass(mtof(c[0] - 12), t, 1.4, 0.1);
+    m.pluck(mtof(c[1 + (slot % 3)] + (slot >= 3 ? 12 : 0)), t, 0.014, 0.6);
+    if (Math.floor(step / 24) % 2 === 1) {
+      const i = step % 24;
+      const n = NOTTE_TEMA[i];
+      if (n > 0) {
+        let len = 1;
+        while (i + len < 24 && NOTTE_TEMA[i + len] === _) len++;
+        m.whistle(mtof(n), t, len * (60 / 84 / 2) * 0.9, 0.03);
+      }
+    }
+  },
+};
+
 export const TRACKS = {
   paese: PAESE,
   club: disco(false),
@@ -726,5 +799,8 @@ export const TRACKS = {
   trasloco: TRASLOCO,
   sagra: SAGRA,
   giostra: GIOSTRA,
+  pub: pub(false),
+  pubRotto: pub(true),
+  notte: NOTTE,
 };
 export type TrackName = keyof typeof TRACKS;

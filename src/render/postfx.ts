@@ -13,6 +13,7 @@ const PaperShader = {
     uRes: { value: new THREE.Vector2(1, 1) },
     uBoil: { value: 1.3 },
     uDamage: { value: 0 },
+    uDizzy: { value: 0 },
   },
   vertexShader: /* glsl */ `
     varying vec2 vUv;
@@ -24,6 +25,7 @@ const PaperShader = {
     uniform vec2 uRes;
     uniform float uBoil;
     uniform float uDamage;
+    uniform float uDizzy;
     varying vec2 vUv;
 
     float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -37,7 +39,17 @@ const PaperShader = {
       float t = floor(uTime * 8.0);
       vec2 px = vUv * uRes;
       vec2 off = vec2(noise(px * 0.012 + t * 17.13), noise(px * 0.012 + t * 9.71 + 40.0)) - 0.5;
-      vec3 c = texture2D(tDiffuse, vUv + off * uBoil * 2.0 / uRes).rgb;
+      vec2 uv = vUv;
+      // capogiro: il foglio ondeggia e l'inchiostro si sdoppia (si tiene il più scuro dei due)
+      if (uDizzy > 0.0) {
+        uv.x += sin(uv.y * 9.0 + uTime * 1.7) * 0.004 * uDizzy;
+        uv.y += sin(uv.x * 7.0 + uTime * 1.3) * 0.003 * uDizzy;
+      }
+      vec3 c = texture2D(tDiffuse, uv + off * uBoil * 2.0 / uRes).rgb;
+      if (uDizzy > 0.0) {
+        vec2 gh = vec2(sin(uTime * 0.9), cos(uTime * 0.7)) * 0.011 * uDizzy;
+        c = mix(c, min(c, texture2D(tDiffuse, uv + gh).rgb), 0.55 * uDizzy);
+      }
 
       // grana della carta
       float g = noise(px * 0.9) * 0.4 + noise(px * 0.18) * 0.35 + noise(px * 0.03) * 0.25;
@@ -88,9 +100,10 @@ export class PaperPost {
     this.paper.uniforms.uRes.value.set(w * pixelRatio, h * pixelRatio);
   }
 
-  render(time: number, damage: number) {
+  render(time: number, damage: number, dizzy = 0) {
     this.paper.uniforms.uTime.value = time;
     this.paper.uniforms.uDamage.value = damage;
+    this.paper.uniforms.uDizzy.value = dizzy;
     this.composer.render();
   }
 }

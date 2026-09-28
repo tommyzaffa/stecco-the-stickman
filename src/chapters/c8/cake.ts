@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import type { Game } from '../../game/game';
 import { Sketch } from '../../render/sketch';
 import { CAKE, REFS8 } from './world';
-import { BOOTH, finishBooth, fireName, type Booth } from './booth';
+import { BOOTH, fireName, type Booth } from '../../game/booth';
+import { finishTokens, tokenFooter } from './tokens';
 
 // ---------------------------------------------------------------------------
 // LA TORTA A PIANI (gara di torte, per Nonna Pina): il piano nuovo scorre avanti e indietro
@@ -172,13 +173,14 @@ function finish(g: Game, why: string) {
   g.world.group.add(ch);
   S.cherry = ch;
   const tokens = n >= 12 ? 3 : n >= 8 ? 2 : n >= 4 ? 1 : 0;
-  finishBooth(g, `${why}<br><b>${n}</b> piani${n >= 10 ? ' · <b>la più alta della sagra!</b>' : ''}`, tokens);
+  finishTokens(g, `${why}<br><b>${n}</b> piani${n >= 10 ? ' · <b>la più alta della sagra!</b>' : ''}`, tokens);
 }
 
 export const CAKE_BOOTH: Booth = {
   id: 'cake',
   title: 'LA TORTA A PIANI',
   fire: 'METTI',
+  footer: tokenFooter,
   help: () => `<b>${fireName(CAKE_BOOTH)}</b> quando il piano è sopra la torta: quello che sporge si taglia`,
   spot: CAKE.spot,
   look: new THREE.Vector3(CAKE.x, CAKE.y + 0.2, CAKE.z),

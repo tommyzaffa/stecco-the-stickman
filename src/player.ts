@@ -31,6 +31,14 @@ export class Player {
   carrying = false; // sta portando un mobile (capitolo 7): piano, niente salti né pugni
   rooted = false; // fermo a una bancarella (capitolo 8): ci si guarda intorno, ma niente passi, salti né pugni
   speedMul = 1;
+  // capogiro da bollicine (capitolo 9), 0..1: la visuale ondeggia, i comandi scivolano (la direzione
+  // gira da sola e c'è inerzia), ogni tanto si barcolla. steady (0..1) = concentrazione: tiene ferma la visuale.
+  dizzy = 0;
+  steady = 0;
+  lurched = false; // ha appena barcollato (il capitolo lo legge e lo rimette a false)
+  private vel = new THREE.Vector2();
+  private dzT = 0;
+  private lurchT = 3;
   private eyeH = EYE;
   private armMat: THREE.MeshBasicMaterial;
   private fistMat: THREE.SpriteMaterial;
@@ -173,6 +181,14 @@ export class Player {
     this.pitch = Math.atan2(dy, Math.hypot(dx, dz));
   }
 
+  // La visuale: dove guardi, più l'ondeggiare del capogiro (la concentrazione lo calma)
+  applyView() {
+    const d = this.dizzy * (1 - 0.8 * this.steady), t = this.dzT;
+    const sy = d * (0.06 * Math.sin(t * 0.9) + 0.03 * Math.sin(t * 2.3 + 1));
+    const sp = d * (0.04 * Math.sin(t * 1.13 + 2) + 0.02 * Math.sin(t * 2.9));
+    this.camera.rotation.set(this.pitch + sp, this.yaw + sy, d * 0.07 * Math.sin(t * 0.77));
+  }
+
   // Gira dolcemente la visuale verso un punto (durante i dialoghi).
   easeLook(target: THREE.Vector3, dt: number) {
     const e = this.eye;
@@ -239,6 +255,31 @@ export class Player {
       vx = (mx * c + mz * s) * sp;
       vz = (-mx * s + mz * c) * sp;
     }
+    this.dzT += dt;
+    if (this.dizzy > 0.001) {
+      // i comandi scivolano: la direzione gira da sola, e si parte e ci si ferma in ritardo
+      // (concentrandosi si va più dritti)
+      const dz = this.dizzy * (1 - 0.7 * this.steady);
+      const a = dz * (0.45 * Math.sin(this.dzT * 0.63) + 0.25 * Math.sin(this.dzT * 1.71 + 2));
+      const c = Math.cos(a), s = Math.sin(a);
+      [vx, vz] = [vx * c - vz * s, vx * s + vz * c];
+      const k = Math.min(1, dt * (12 - 9.5 * dz));
+      this.vel.x += (vx - this.vel.x) * k;
+      this.vel.y += (vz - this.vel.y) * k;
+      vx = this.vel.x;
+      vz = this.vel.y;
+      // e ogni tanto si barcolla di lato
+      this.lurchT -= dt;
+      if (this.lurchT <= 0) {
+        this.lurchT = 2.5 + Math.random() * 3.5;
+        if (dz > 0.35 && !this.seated && !this.rooted) {
+          const side = Math.random() < 0.5 ? -1 : 1;
+          this.knock.x += Math.cos(this.yaw) * side * 1.6 * dz;
+          this.knock.z += -Math.sin(this.yaw) * side * 1.6 * dz;
+          this.lurched = true;
+        }
+      }
+    } else this.vel.set(vx, vz);
     this.pos.x += (vx + this.knock.x) * dt;
     this.pos.z += (vz + this.knock.z) * dt;
     this.knock.multiplyScalar(Math.max(0, 1 - dt * 6));
@@ -267,7 +308,7 @@ export class Player {
     const eyeWant = this.seated ? EYE_SEATED : this.crouching ? EYE_CROUCH : EYE;
     this.eyeH += (eyeWant - this.eyeH) * Math.min(1, dt * (this.seated ? 4 : 10));
     this.camera.position.set(this.pos.x, this.pos.y + this.eyeH + bobY, this.pos.z);
-    this.camera.rotation.set(this.pitch, this.yaw, 0);
+    this.applyView();
 
     // braccio: oscillazione + attacco
     const swayK = 0.0004 * (TOUCH ? 0.4 : 1);

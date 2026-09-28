@@ -4,7 +4,7 @@ import { npcHead, type QuestDef } from '../../game/quests';
 import { CAKE, CANS, FISH } from './world';
 import { RIDE } from './wheel';
 
-export const RIDE_COST = 6;
+export const RIDE_COST = 10;
 
 // stato del capitolo (sparisce con il capitolo: quello che conta dopo va nei flag)
 export const Q8 = {

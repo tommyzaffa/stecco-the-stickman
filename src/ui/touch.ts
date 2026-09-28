@@ -272,7 +272,7 @@ export class TouchUI {
     const tm = g.touchMode;
     if (tm) {
       for (const id of ['crouch', 'parry', 'weapon', 'reload']) this.btn[id].classList.add('hide');
-      for (const id of ['fire', 'use', 'jump', 'crouch'] as const) {
+      for (const id of ['fire', 'use', 'jump', 'crouch', 'parry'] as const) {
         const label = tm[id];
         if (label === undefined) continue;
         this.btn[id].classList.toggle('hide', label === null);
@@ -284,6 +284,7 @@ export class TouchUI {
       if (this.btn.jump.textContent !== 'SALTA') this.btn.jump.textContent = 'SALTA';
       if (this.btn.use.textContent !== 'USA') this.btn.use.textContent = 'USA';
       if (this.btn.crouch.textContent !== 'GIÙ') this.btn.crouch.textContent = 'GIÙ';
+      if (this.btn.parry.textContent !== 'PARA') this.btn.parry.textContent = 'PARA';
       this.btn.fire.classList.remove('hide');
     }
     if (this.btn.fire.textContent !== fireLabel) this.btn.fire.textContent = fireLabel;

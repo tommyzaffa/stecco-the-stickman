@@ -52,6 +52,7 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
         uGridMajor: { value: THEME.grid?.major ?? 0 },
         uGridRows: { value: THEME.grid?.rows ? 1 : 0 },
         uGridDots: { value: THEME.grid?.dots ? 1 : 0 },
+        uGridStaff: { value: THEME.grid?.staff ? 1 : 0 },
       },
     ]),
     vertexShader: /* glsl */ `
@@ -78,6 +79,7 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
       uniform float uGridMajor;
       uniform float uGridRows;
       uniform float uGridDots;
+      uniform float uGridStaff;
       varying vec3 vN;
       varying vec3 vW;
       #include <fog_pars_fragment>
@@ -108,6 +110,8 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
           vec2 d = abs(fract(g - 0.5) - 0.5) / max(w, vec2(1e-4));
           // quaderno a righe: solo le righe "orizzontali" (per terra lungo z, sui muri in altezza)
           if (uGridRows > 0.5) d.x = 1e4;
+          // carta da musica: cinque righe, poi tre spazi vuoti (il pentagramma)
+          if (uGridStaff > 0.5 && mod(floor(g.y + 0.5), 8.0) > 4.5) d.y = 1e4;
           float line = 1.0 - clamp(min(d.x, d.y) - 0.3, 0.0, 1.0);
           float fade = 1.0 - clamp(max(w.x, w.y) * 3.0, 0.0, 1.0);
           float a = line * fade * (uGridMajor > 0.0 ? 0.4 : 0.8);

@@ -152,7 +152,7 @@ export function createCharacters(g: Game) {
             '> Ti ho portato il tappo. Quello giallo.',
             'Il mio tappo! Aspetta. Non darmelo qui.',
             'Sulla ruota panoramica. In cima. Me lo ridai lassù: così è un momento, e non una consegna.',
-            '> La ruota costa sei gettoni.',
+            '> La ruota costa dieci gettoni.',
             'Lo so. È il prezzo dei momenti.',
             'Io intanto pesco. Qui dentro c\'è un tappo con una stella sotto: il più raro della sagra. Sono tre anni che lo inseguo.',
             'Gira al bordo della vasca, velocissimo. Se lo peschi tu, ti sposo. Scherzo. Ti offro una gazzosa.',
@@ -190,7 +190,7 @@ export function createCharacters(g: Game) {
           ],
         },
         andiamo: {
-          say: ['Sei gettoni! Andiamo alla ruota? Ci vediamo là: dal signor Perno.'],
+          say: ['Dieci gettoni! Andiamo alla ruota? Ci vediamo là: dal signor Perno.'],
         },
         stellaDopo: {
           say: [
@@ -199,7 +199,7 @@ export function createCharacters(g: Game) {
             'L\'hai pescato tu? Con l\'amo? Senza mani?',
             '> Non ho mani. Ho talento.',
             'Lo metto al centro della collezione. No: da parte. Il centro è per le occasioni.',
-            (g) => (g.quest('c8') <= 2 ? 'E adesso la ruota. Sei gettoni, e il tappo giallo me lo ridai lassù.' : 'Oggi è la giornata dei tappi. E dei momenti.'),
+            (g) => (g.quest('c8') <= 2 ? 'E adesso la ruota. Dieci gettoni, e il tappo giallo me lo ridai lassù.' : 'Oggi è la giornata dei tappi. E dei momenti.'),
           ],
           do: (g) => {
             g.take('tappoStella');
@@ -231,7 +231,7 @@ export function createCharacters(g: Game) {
     face: [A.perno.x, A.perno.z + 6],
     look: { hat: 'cap', mustache: true },
     icon: (g) => (g.quest('c8') === 2 && RIDE.cabin < 0 ? 'main' : null),
-    barks: () => ['Ruota panoramica! Si vede tutto il paese! Cioè, tutta la piazza!', 'Gira da quarant\'anni. Si inceppa solo in cima. Per il panorama.', 'Sei gettoni in due. In uno solo, sei gettoni lo stesso.'],
+    barks: () => ['Ruota panoramica! Si vede tutto il paese! Cioè, tutta la piazza!', 'Gira da quarant\'anni. Si inceppa solo in cima. Per il panorama.', 'Dieci gettoni in due. In uno solo, dieci gettoni lo stesso.'],
     dialogue: {
       name: 'Il signor Perno',
       start: (g) => (g.quest('c8') === 2 ? (Q8.tokens >= RIDE_COST ? 'sali' : 'pochi') : g.is('c8Ruota') ? 'dopo' : 'a'),
@@ -239,15 +239,15 @@ export function createCharacters(g: Game) {
         a: {
           say: [
             'La ruota panoramica di San Scarabocchio. Otto cabine, un perno. Il perno sono io.',
-            `Sei gettoni, per due persone. Si sale, si guarda, si scende. In cima a volte si inceppa: la gente paga apposta.`,
+            `Dieci gettoni, per due persone. Si sale, si guarda, si scende. In cima a volte si inceppa: la gente paga apposta.`,
           ],
         },
         pochi: {
-          say: [(_g) => `Sei gettoni. Tu ne hai ${Q8.tokens}. La matematica non fa sconti, e nemmeno io.`],
+          say: [(_g) => `Dieci gettoni. Tu ne hai ${Q8.tokens}. La matematica non fa sconti, e nemmeno io.`],
         },
         sali: {
           say: [
-            'Sei gettoni? E la signorina?',
+            'Dieci gettoni? E la signorina?',
             '* Martina arriva di corsa. Ha visto i gettoni da lontano.',
             '@Martina| Eccomi! Eccomi.',
             'Prego. Cabina numero uno. Cioè, sono tutte la numero uno: non le ho mai numerate.',

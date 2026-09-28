@@ -4,7 +4,7 @@ import type { Dialogue } from '../../game/dialogue';
 import { Stickman } from '../../entities/stickman';
 import { TOUCH } from '../../touch';
 import { attackName } from '../../settings';
-import { BOOTH, openBooth, updateBooth } from './booth';
+import { BOOTH, openBooth, updateBooth } from '../../game/booth';
 import { CANS_BOOTH, CANS_DEBUG, cansGlued, setupCans } from './cans';
 import { FISH_BOOTH, setupFish, updateFishTub } from './fishing';
 import { CAKE_BOOTH, cakeHeight, setupCake } from './cake';
@@ -12,7 +12,7 @@ import { RIDE, martinaLooks, rideDown, setErased, setupWheel, startErase, startR
 import { Q8, RIDE_COST } from './quests';
 import { CAKE, CANS, FISH, FOUNTAIN, REFS8 } from './world';
 
-// Capitolo 8: la sagra. Martina vuole il tappo in cima alla ruota → sei gettoni dalle bancarelle
+// Capitolo 8: la sagra. Martina vuole il tappo in cima alla ruota → dieci gettoni dalle bancarelle
 // → la ruota → dalla cima, la fontana sparisce e torna ridisegnata → Arturo.
 
 const narr = (lines: string[]): Dialogue => ({ name: '', start: 'a', nodes: { a: { say: lines.map((l) => `* ${l}`) } } });
@@ -76,7 +76,7 @@ export function setupStory(g: Game) {
     // abbastanza gettoni: si va alla ruota
     if (g.quest('c8') === 1 && Q8.tokens >= RIDE_COST && !BOOTH.cur) {
       g.setStep('c8', 2);
-      g.after(1, () => g.npc('martina').say('Sei gettoni! Ti aspetto alla ruota. Cioè: vado io alla ruota? No: ci vediamo là.', 4));
+      g.after(1, () => g.npc('martina').say('Dieci gettoni! Ti aspetto alla ruota. Cioè: vado io alla ruota? No: ci vediamo là.', 4));
     }
     // fine
     if (g.is('c8Fine') && !g.dialogue.isOpen && !g.is('c8Via')) {
@@ -112,6 +112,7 @@ function booth(g: Game, pos: THREE.Vector3, label: string | ((g: Game) => string
 // LE PARTITE
 // =========================================================================
 export function playCans(g: Game) {
+  Q8.played.add('cans');
   const go = () =>
     openBooth(g, CANS_BOOTH, () => {
       // il barattolo di mezzo non cade mai: qualcuno se ne accorge
@@ -133,10 +134,12 @@ export function playFish(g: Game) {
   if (!Q8.played.has('fish')) {
     g.toast(`Il tappo gira: fai scendere l'amo <b>un po' prima</b> che ci passi sotto. Cinque tentativi, <b>${TOUCH ? 'PESCA' : attackName()}</b> per pescare.`, 'quest', 6500);
   }
+  Q8.played.add('fish');
   go();
 }
 
 export function playCake(g: Game) {
+  Q8.played.add('cake');
   const go = () =>
     openBooth(g, CAKE_BOOTH, (tokens) => {
       if (tokens < 0) return;

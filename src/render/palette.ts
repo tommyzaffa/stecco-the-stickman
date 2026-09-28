@@ -15,7 +15,7 @@ export const HIGHLIGHT_YELLOW_HEX = '#e8f53a';
 export interface Theme {
   paper: string;
   ink: string;
-  grid?: { size: number; color: string; major?: number; rows?: boolean; dots?: boolean }; // carta a quadretti (major: una riga più marcata ogni N; rows: solo righe orizzontali, quaderno a righe; dots: solo i puntini agli incroci)
+  grid?: { size: number; color: string; major?: number; rows?: boolean; dots?: boolean; staff?: boolean }; // carta a quadretti (major: una riga più marcata ogni N; rows: solo righe orizzontali, quaderno a righe; dots: solo i puntini agli incroci; staff: righe a gruppi di cinque, carta da musica)
 }
 export const THEME: { paperHex: string; inkHex: string; night: boolean; grid: Theme['grid'] | null } = {
   paperHex: PAPER_HEX,
@@ -39,6 +39,9 @@ export const RIGHE: Theme = { paper: '#fbf8ef', ink: '#23222b', grid: { size: 0.
 
 // Capitolo 8, la sagra: carta a puntini (quella dei diari), coi puntini color confetto
 export const PUNTINI: Theme = { paper: '#fbf7ee', ink: '#25222c', grid: { size: 0.7, color: '#c58fae', dots: true } };
+
+// Capitolo 9, il pub di Dario la sera: carta pentagrammata (da musica), color panna sotto le lampade
+export const PENTAGRAMMA: Theme = { paper: '#f1e6cf', ink: '#2a2119', grid: { size: 0.18, color: '#b99b76', rows: true, staff: true } };
 
 // Mercato Nero: carta da pacchi. Tutto quello che si vende qui sotto è incartato.
 export const PACCHI: Theme = { paper: '#d8c29d', ink: '#2a2119' };
