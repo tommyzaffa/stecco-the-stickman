@@ -163,7 +163,9 @@ export function createCharacters(g: Game) {
           say: [
             'Il cassone del furgone è un incastro: tutto quello di Nonna Pina ci entra preciso. Non avanza una casella.',
             'Se non ci sta, giralo. Se ancora non ci sta, giralo di più. Novanta gradi alla volta.',
-            'E se proprio non va, premi AIUTO: ti faccio vedere io dove va. Con l\'angolo giusto.',
+            '> E se non va? Ci aiuta lei?',
+            'Io misuro, non suggerisco. È una questione di etica professionale.',
+            'Un consiglio gratis però: i pezzi grossi verso la cabina, quelli piccoli verso le porte. Il consiglio non è gratis. Scherzo. Sì.',
           ],
         },
       },

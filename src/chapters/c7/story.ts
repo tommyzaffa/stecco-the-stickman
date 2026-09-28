@@ -21,7 +21,7 @@ export function setupStory(g: Game) {
   g.audio.birds = true;
   g.setCheckpoint(A.spawn, A.spawnLook, 'Ti rialzi sul marciapiede');
   setupFurniture(g, REFS7.lm!, REFS7.fill!);
-  if (import.meta.env.DEV) Object.assign(window, { __c7: { CARRY, PACK, Q7, lift, floorAt } });
+  if (import.meta.env.DEV) Object.assign(window, { __c7: { CARRY, PACK, Q7, lift, floorAt, addPiece, addJunk, openPack, BOXES } });
 
   g.addCoin(-6.5, 9.5, 'Una moneta sulla rampa delle scale. Qualcuno l\'ha persa traslocando. Nel millenovecento. Scherzo.', floorAt(-6.5, 9.5) + 0.9);
   g.addCoin(27, -4, 'Una moneta davanti alla ferramenta. Quadrata? No, rotonda.');

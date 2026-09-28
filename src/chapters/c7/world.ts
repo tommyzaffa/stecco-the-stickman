@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Sketch, makeHatchMaterial } from '../../render/sketch';
 import { HAND_FONT, MARKER_FONT } from '../../render/textures';
+import { THEME } from '../../render/palette';
 import { WorldBuilder, type World } from '../../world/builder';
 import type { Rect } from '../../world/collision';
 
@@ -52,6 +53,9 @@ export const REFS7 = {
   tacchettoDoor: null as Rect | null,
   lm: null as import('three/examples/jsm/lines/LineMaterial.js').LineMaterial | null,
   fill: null as THREE.Material | null,
+  // il divano in piedi ti sta davanti agli occhi: si disegna "in trasparenza" (solo il contorno, leggero)
+  ghostLm: null as import('three/examples/jsm/lines/LineMaterial.js').LineMaterial | null,
+  ghostFill: null as THREE.Material | null,
 };
 
 export function buildTrasloco(): World {
@@ -63,6 +67,11 @@ export function buildTrasloco(): World {
   REFS7.vanDoors = [];
   REFS7.lm = b.lineMat(2.2);
   REFS7.fill = b.fill;
+  REFS7.ghostLm = b.lineMat(1.6);
+  REFS7.ghostLm.transparent = true;
+  REFS7.ghostLm.opacity = 0.6;
+  REFS7.ghostLm.depthWrite = false;
+  REFS7.ghostFill = new THREE.MeshBasicMaterial({ color: THEME.paperHex, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide });
 
   // muro da y0 a y1 (i muri del primo piano partono da 3 m), con collisione
   const wall = (x0: number, z0: number, x1: number, z1: number, y0 = 0, y1 = CEIL + 0.4, t = 0.25) => {

@@ -12,6 +12,9 @@ import { keyName } from '../../settings';
 // (il divano si piega solo a destra).
 // Comandi: computer = puntatore col mouse, click prendi/metti, R o tasto destro ruota, E chiude.
 // Telefono = trascina i pezzi col dito, pulsante RUOTA, pulsante FATTO.
+// Niente aiuti: l'incastro si risolve da soli. (Una soluzione, per chi ci lavora: armadio 0,0;
+// divano 0,1; scala 4,0; poltrona 0,3; CENTRINI 2,2; lampada 4,4; PENTOLE 0,5; LIBRI 2,5;
+// attaccapanni 0,7 girato; cuccia 3,7; BOTTONI 0,8; FOTO 2,8.)
 // ---------------------------------------------------------------------------
 
 export const COLS = 5, ROWS = 9;
@@ -46,22 +49,6 @@ const SHAPES: Record<string, { name: string; cells: Cell[]; kind: PPiece['kind']
 export const BOXES = ['pentole', 'libri', 'lampada', 'attaccapanni', 'centrini', 'cuccia', 'bottoni', 'foto'];
 export const JUNK = ['cassetta', 'gatto', 'stop'];
 
-// una soluzione (per i suggerimenti): x, y, rotazione
-const SOLUTION: Record<string, [number, number, number]> = {
-  armadio: [0, 0, 0],
-  divano: [0, 1, 0],
-  scala: [4, 0, 0],
-  poltrona: [0, 3, 0],
-  centrini: [2, 2, 0],
-  lampada: [4, 4, 0],
-  pentole: [0, 5, 0],
-  libri: [2, 5, 0],
-  attaccapanni: [0, 7, 1],
-  cuccia: [3, 7, 0],
-  bottoni: [0, 8, 0],
-  foto: [2, 8, 0],
-};
-
 export const PACK = {
   pieces: [] as PPiece[],
   open: false,
@@ -72,7 +59,6 @@ export const PACK = {
   cursor: { x: 0, y: 0 },
   msg: '',
   msgT: 0,
-  hint: null as { p: PPiece; t: number } | null,
   doneT: -1,
   onDone: null as (() => void) | null,
   canvas: null as HTMLCanvasElement | null,
@@ -146,7 +132,6 @@ export function openPack(g: Game, mode: 'one' | 'all' | 'view', hold: PPiece | n
   PACK.mode = mode;
   PACK.onDone = onDone;
   PACK.doneT = -1;
-  PACK.hint = null;
   PACK.msg = '';
   PACK.cursor = { x: VIEW.w * 0.3, y: VIEW.h * 0.45 };
   PACK.held = null;
@@ -206,27 +191,37 @@ function layout() {
   return { w, h, cs, gx, gy, tx, ty, ts: cs * 0.62 };
 }
 
-// posizioni dei pezzi nel vassoio
+// posizioni dei pezzi nel vassoio (se sono tanti si rimpiccioliscono: non devono arrivare ai testi sopra i pulsanti)
 function trayRects() {
   const L = layout();
-  const out: { p: PPiece; x: number; y: number; w: number; h: number }[] = [];
-  let x = L.tx, y = L.ty, rowH = 0;
-  const maxW = L.w * 0.38;
-  for (const p of PACK.pieces) {
-    if (!p.inTray || p === PACK.held) continue;
-    const cells = rotCells(p.cells, 0);
-    const pw = (Math.max(...cells.map((c) => c[0])) + 1) * L.ts, ph = (Math.max(...cells.map((c) => c[1])) + 1) * L.ts;
-    if (x + pw > L.tx + maxW) {
-      x = L.tx;
-      y += rowH + L.ts * 0.6;
-      rowH = 0;
+  const bottom = buttons().ruota.y - textSpace(L);
+  let out: { p: PPiece; x: number; y: number; w: number; h: number; s: number }[] = [];
+  for (let s = L.ts, k = 0; k < 6; k++, s *= 0.85) {
+    out = [];
+    let x = L.tx, y = L.ty, rowH = 0;
+    const maxW = L.w * 0.38;
+    for (const p of PACK.pieces) {
+      if (!p.inTray || p === PACK.held) continue;
+      const cells = rotCells(p.cells, 0);
+      const pw = (Math.max(...cells.map((c) => c[0])) + 1) * s, ph = (Math.max(...cells.map((c) => c[1])) + 1) * s;
+      if (x + pw > L.tx + maxW) {
+        x = L.tx;
+        y += rowH + s * 0.6;
+        rowH = 0;
+      }
+      out.push({ p, x, y, w: pw, h: ph, s });
+      x += pw + s * 0.6;
+      rowH = Math.max(rowH, ph);
     }
-    out.push({ p, x, y, w: pw, h: ph });
-    x += pw + L.ts * 0.6;
-    rowH = Math.max(rowH, ph);
+    if (y + rowH <= bottom) break;
   }
   return out;
 }
+
+// testi sopra i pulsanti: istruzioni (fino a 2 righe) e messaggio rosso (sempre posto per 2 righe)
+const helpFs = (L: { cs: number }) => Math.max(13, Math.round(L.cs * 0.38));
+const msgFs = (L: { cs: number }) => Math.max(14, Math.round(L.cs * 0.46));
+const textSpace = (L: { cs: number }) => 2 * 1.2 * helpFs(L) + 2 * 1.15 * msgFs(L) + L.cs * 0.9;
 
 function buttons() {
   const L = layout();
@@ -234,8 +229,7 @@ function buttons() {
   const y = L.gy + ROWS * L.cs - bh;
   return {
     ruota: { x: L.tx, y, w: bw, h: bh, label: TOUCH ? 'RUOTA' : `RUOTA (${keyName('reload')})` },
-    aiuto: { x: L.tx + bw + 14, y, w: bw, h: bh, label: 'AIUTO' },
-    fatto: { x: L.tx + 2 * (bw + 14), y, w: bw, h: bh, label: TOUCH ? 'FATTO' : `FATTO (${keyName('interact')})` },
+    fatto: { x: L.tx + bw + 14, y, w: bw, h: bh, label: TOUCH ? 'FATTO' : `FATTO (${keyName('interact')})` },
   };
 }
 
@@ -259,7 +253,6 @@ function press(g: Game, px: number, py: number) {
   const L = layout();
   const B = buttons();
   if (inRect(px, py, B.ruota)) return rotate(g);
-  if (inRect(px, py, B.aiuto)) return help();
   if (inRect(px, py, B.fatto)) return finishTry(g);
   if (PACK.held) return place(g, px, py);
   // prendere un pezzo: dal vassoio o dal cassone
@@ -305,7 +298,7 @@ function place(g: Game, px: number, py: number) {
     }
     p.inTray = true;
     PACK.held = null;
-    if (PACK.mode === 'one') say(`${cap(p.name)}: lo lasciamo qui accanto, lo sistemiamo alla fine. (${keyName('interact')} per chiudere)`, 3.5);
+    if (PACK.mode === 'one') say(`${cap(p.name)}: lo lasciamo qui accanto, lo sistemiamo alla fine. (${TOUCH ? 'FATTO' : keyName('interact')} per chiudere)`, 3.5);
     return;
   }
   say('Lì non ci sta. Prova a girarlo.', 1.6);
@@ -319,27 +312,6 @@ function rotate(g: Game) {
   }
   PACK.heldRot = (PACK.heldRot + 1) % 4;
   g.audio.tick();
-}
-
-function help() {
-  // il primo pezzo che non è dove dovrebbe: te lo fa vedere
-  const intr = junkInVan()[0];
-  if (intr) {
-    say(`Prima togli ${intr.name}: trascinalo fuori dal cassone.`, 3);
-    PACK.hint = { p: intr, t: 3 };
-    return;
-  }
-  const wrong = PACK.pieces.find((p) => {
-    const s = SOLUTION[p.id];
-    if (!s) return false;
-    return !p.at || p.at.x !== s[0] || p.at.y !== s[1] || rotCells(p.cells, p.at.rot).join() !== rotCells(p.cells, s[2]).join();
-  });
-  if (!wrong) {
-    say('È già tutto giusto. Il geometra sarebbe fiero.');
-    return;
-  }
-  PACK.hint = { p: wrong, t: 3.5 };
-  say(`Il signor Goniometro indica dove va ${wrong.name}.`, 3);
 }
 
 function finishTry(g: Game) {
@@ -375,10 +347,6 @@ function update(g: Game, dt: number) {
   if (inp.wasPressed('reload')) rotate(g);
   if (inp.wasPressed('interact')) finishTry(g);
   PACK.msgT = Math.max(0, PACK.msgT - dt);
-  if (PACK.hint) {
-    PACK.hint.t -= dt;
-    if (PACK.hint.t <= 0) PACK.hint = null;
-  }
   // "tutto a posto" (fine partita: si chiude da solo quando è pieno e pulito)
   if (PACK.mode === 'all' && !PACK.held && allPacked() && PACK.doneT < 0) {
     PACK.doneT = 1.4;
@@ -398,7 +366,6 @@ function update(g: Game, dt: number) {
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 const INK = '#23222b';
 const RED = '#d6333a';
-const BLUE = '#2f5bd3';
 
 function draw() {
   const c = PACK.canvas;
@@ -441,22 +408,13 @@ function draw() {
   // pezzi nel cassone (prima tutti i corpi, poi tutti i nomi: così nessun nome finisce sotto un altro pezzo)
   for (const p of PACK.pieces) if (p.at) drawPiece(ctx, p, L.gx + p.at.x * L.cs, L.gy + p.at.y * L.cs, L.cs, p.at.rot, 1, INK, 'body');
   for (const p of PACK.pieces) if (p.at) drawPiece(ctx, p, L.gx + p.at.x * L.cs, L.gy + p.at.y * L.cs, L.cs, p.at.rot, 1, INK, 'label');
-  // suggerimento
-  if (PACK.hint) {
-    const s = SOLUTION[PACK.hint.p.id];
-    ctx.save();
-    ctx.globalAlpha = 0.45 + Math.sin(performance.now() / 150) * 0.2;
-    if (s && PACK.hint.p.kind !== 'intruso') drawPiece(ctx, PACK.hint.p, L.gx + s[0] * L.cs, L.gy + s[1] * L.cs, L.cs, s[2], 1, BLUE);
-    else if (PACK.hint.p.at) drawPiece(ctx, PACK.hint.p, L.gx + PACK.hint.p.at.x * L.cs, L.gy + PACK.hint.p.at.y * L.cs, L.cs, PACK.hint.p.at.rot, 1, RED);
-    ctx.restore();
-  }
   // vassoio
   ctx.fillStyle = INK;
   ctx.textAlign = 'left';
   ctx.font = `${Math.round(L.cs * 0.42)}px 'Patrick Hand', cursive`;
   const tray = trayRects();
   ctx.fillText(tray.length ? 'Da caricare:' : PACK.mode === 'all' ? 'Niente da caricare. Controlla il cassone.' : '', L.tx, L.ty - L.ts * 0.5);
-  for (const r of tray) drawPiece(ctx, r.p, r.x, r.y, L.ts, 0, 0.8);
+  for (const r of tray) drawPiece(ctx, r.p, r.x, r.y, r.s, 0, 0.8);
   // pulsanti
   const B = buttons();
   for (const b of Object.values(B)) {
@@ -469,17 +427,22 @@ function draw() {
     ctx.font = `${Math.round(Math.min(b.h * 0.42, 18))}px 'Permanent Marker', cursive`;
     ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h * 0.64);
   }
-  // istruzioni e messaggi
+  // istruzioni e messaggi: impilati dal basso, sopra i pulsanti. Il messaggio ha sempre posto per due
+  // righe (se ne ha di più spinge su le istruzioni): così non si sovrappongono mai.
+  const maxW = L.w * 0.38;
   ctx.textAlign = 'left';
+  const mfs = msgFs(L), mlh = mfs * 1.15;
+  ctx.font = `${mfs}px 'Patrick Hand', cursive`;
+  const msg = PACK.msgT > 0 ? wrapLines(ctx, PACK.msg, maxW) : [];
+  let yb = B.ruota.y - L.cs * 0.3; // riga di base dell'ultima riga del messaggio
+  ctx.fillStyle = RED;
+  msg.forEach((t, i) => ctx.fillText(t, L.tx, yb - (msg.length - 1 - i) * mlh));
+  yb -= Math.max(2, msg.length) * mlh + L.cs * 0.2;
+  const hfs = helpFs(L), hlh = hfs * 1.2;
+  ctx.font = `${hfs}px 'Patrick Hand', cursive`;
   ctx.fillStyle = INK;
-  ctx.font = `${Math.round(L.cs * 0.38)}px 'Patrick Hand', cursive`;
-  const help = TOUCH ? 'Trascina i pezzi nel cassone · RUOTA gira quello che hai preso' : `Click: prendi e metti · ${keyName('reload')} o tasto destro: ruota · fuori dal cassone: lo togli`;
-  wrap(ctx, help, L.tx, B.ruota.y - L.cs * 1.3, L.w * 0.38, L.cs * 0.45);
-  if (PACK.msgT > 0) {
-    ctx.fillStyle = RED;
-    ctx.font = `${Math.round(L.cs * 0.46)}px 'Patrick Hand', cursive`;
-    wrap(ctx, PACK.msg, L.tx, B.ruota.y - L.cs * 0.55, L.w * 0.38, L.cs * 0.5);
-  }
+  const help = wrapLines(ctx, TOUCH ? 'Trascina i pezzi nel cassone · RUOTA gira quello che hai preso' : `Click: prendi e metti · ${keyName('reload')} o tasto destro: ruota · fuori dal cassone: lo togli`, maxW);
+  help.forEach((t, i) => ctx.fillText(t, L.tx, yb - (help.length - 1 - i) * hlh));
   // il pezzo in mano
   if (PACK.held) {
     const cur = PACK.cursor;
@@ -543,22 +506,59 @@ function drawBody(ctx: CanvasRenderingContext2D, p: PPiece, cells: Cell[], set: 
   }
 }
 
+// il nome del pezzo: sul tratto dritto più lungo (in orizzontale o, se è più lungo, in verticale),
+// rimpicciolito finché non entra (sulle caselle singole anche su due righe)
 function drawLabel(ctx: CanvasRenderingContext2D, p: PPiece, cells: Cell[], set: Set<string>, x: number, y: number, cs: number, stroke: string) {
   const mx = Math.max(...cells.map((c) => c[0])) + 1, my = Math.max(...cells.map((c) => c[1])) + 1;
+  // tratto più lungo per righe e per colonne: [inizio x, inizio y, lunghezza]
+  const run = (vertical: boolean) => {
+    let best = { x: 0, y: 0, n: 0, d: Infinity };
+    for (const [cx, cy] of cells) {
+      const [px, py] = vertical ? [cx, cy - 1] : [cx - 1, cy];
+      if (set.has([px, py].join())) continue; // non è l'inizio di un tratto
+      let n = 1;
+      while (set.has((vertical ? [cx, cy + n] : [cx + n, cy]).join())) n++;
+      // a parità di lunghezza, quello più vicino al centro
+      const d = vertical ? Math.abs(cx + 0.5 - mx / 2) : Math.abs(cy + 0.5 - my / 2);
+      if (n > best.n || (n === best.n && d < best.d)) best = { x: cx, y: cy, n, d };
+    }
+    return best;
+  };
+  const h = run(false), v = run(true);
+  const full = cells.length === mx * my && mx >= 2 && my >= 2; // rettangolo pieno: al centro
+  const vertical = !full && v.n > h.n;
+  const len = (full ? mx : vertical ? v.n : h.n) * cs - 6;
+  const fs0 = Math.max(9, Math.round(cs * 0.3));
   ctx.fillStyle = stroke;
   ctx.textAlign = 'center';
-  const fs = Math.max(9, Math.round(cs * 0.3));
+  let fs = fs0;
+  let lines = [p.name];
   ctx.font = `${fs}px 'Patrick Hand', cursive`;
-  const [cx0, cy0] = cells.reduce((a, c) => (set.has([c[0] + 1, c[1]].join()) || cells.length === 1 ? c : a), cells[0]);
-  const lx = mx >= 2 && my >= 2 ? x + (mx * cs) / 2 : x + (cx0 + 0.5) * cs;
-  const ly = mx >= 2 && my >= 2 ? y + (my * cs) / 2 : y + (cy0 + 0.5) * cs;
-  if (my > mx && mx === 1) {
+  const w = ctx.measureText(p.name).width;
+  if (w > len) {
+    const words = p.name.split(' ');
+    if (!vertical && words.length > 1 && cs > 30) {
+      // due righe, spezzate dove vengono più pari
+      let bi = 1, bw = Infinity;
+      for (let i = 1; i < words.length; i++) {
+        const ww = Math.max(ctx.measureText(words.slice(0, i).join(' ')).width, ctx.measureText(words.slice(i).join(' ')).width);
+        if (ww < bw) (bw = ww), (bi = i);
+      }
+      lines = [words.slice(0, bi).join(' '), words.slice(bi).join(' ')];
+      fs = Math.max(7, Math.min(fs0, Math.floor((fs0 * len) / bw)));
+    } else fs = Math.max(7, Math.floor((fs0 * len) / w));
+    ctx.font = `${fs}px 'Patrick Hand', cursive`;
+  }
+  const lh = fs * 1.05;
+  const drawLines = (cx: number, cy: number) => lines.forEach((t, i) => ctx.fillText(t, cx, cy + fs * 0.35 + (i - (lines.length - 1) / 2) * lh));
+  if (vertical) {
     ctx.save();
-    ctx.translate(x + cs / 2, y + (my * cs) / 2);
+    ctx.translate(x + (v.x + 0.5) * cs, y + (v.y + v.n / 2) * cs);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText(p.name, 0, fs * 0.35);
+    drawLines(0, 0);
     ctx.restore();
-  } else ctx.fillText(p.name, lx, ly + fs * 0.35);
+  } else if (full) drawLines(x + (mx * cs) / 2, y + (my * cs) / 2);
+  else drawLines(x + (h.x + h.n / 2) * cs, y + (h.y + 0.5) * cs);
 }
 
 // linea "a mano": leggermente storta
@@ -585,19 +585,19 @@ function rrect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
   ctx.stroke();
 }
 
-function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, lh: number) {
-  const words = text.split(' ');
-  let lineTxt = '';
-  let yy = y;
-  for (const w of words) {
-    const t = lineTxt ? `${lineTxt} ${w}` : w;
-    if (ctx.measureText(t).width > maxW && lineTxt) {
-      ctx.fillText(lineTxt, x, yy);
-      lineTxt = w;
-      yy += lh;
-    } else lineTxt = t;
+// testo a capo: le righe che entrano in maxW
+function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxW: number) {
+  const out: string[] = [];
+  let cur = '';
+  for (const w of text.split(' ')) {
+    const t = cur ? `${cur} ${w}` : w;
+    if (ctx.measureText(t).width > maxW && cur) {
+      out.push(cur);
+      cur = w;
+    } else cur = t;
   }
-  if (lineTxt) ctx.fillText(lineTxt, x, yy);
+  if (cur) out.push(cur);
+  return out;
 }
 
 // --- telefono: si trascina col dito ---

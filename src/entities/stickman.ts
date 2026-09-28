@@ -9,7 +9,7 @@ import { headTexture, shadowTexture } from '../render/textures';
 
 export type Hat = 'none' | 'cap' | 'top' | 'beanie' | 'bun' | 'police' | 'party' | 'beret' | 'hair' | 'crayon' | 'pencil';
 export type Action =
-  | 'none' | 'wave' | 'talk' | 'push' | 'phone' | 'paint' | 'speech' | 'cane' | 'crossed' | 'think'
+  | 'none' | 'wave' | 'talk' | 'push' | 'carry' | 'phone' | 'paint' | 'speech' | 'cane' | 'crossed' | 'think'
   | 'dance' | 'drink' | 'guard' | 'windup' | 'strike' | 'dj' | 'dizzy'
   | 'aim' | 'cover' | 'gavel' | 'sharpen' | 'violin' | 'read';
 
@@ -72,6 +72,8 @@ export class Stickman {
   prop = new THREE.Group(); // oggetto in mano destra
 
   action: Action = 'none';
+  // 'carry': dove stanno le mani (coordinate del corpo: x di lato, y in su dai piedi, z davanti), es. il capo di un mobile
+  grip = { x: 0.25, y: 0.8, z: 0.35 };
   seated = false;
   ko = false;
   private koT = 0;
@@ -377,6 +379,38 @@ export class Stickman {
           tg.kneeLX = 0.3;
         }
         tg.hipsY = HIP_Y - 0.06;
+        break;
+      }
+      case 'carry': {
+        // tiene il capo di un mobile: le mani vanno su "grip" (una per lato), non dentro al mobile
+        // ginocchia un po' piegate (pesa!)
+        if (moving) tg.hipsY -= 0.04;
+        else {
+          tg.hipsY = HIP_Y - 0.055;
+          tg.legLX = tg.legRX = -0.35;
+          tg.kneeLX = tg.kneeRX = 0.7;
+        }
+        // bersaglio visto dalla spalla, nel riferimento del busto; se non ci arriva si piega un po' di più in avanti
+        const sh = TORSO - 0.07;
+        let tx = 0, ty = 0, tz = 0;
+        for (tx = moving ? 0.1 : 0.16; tx < 0.5; tx += 0.06) {
+          const by = this.grip.y - (tg.hipsY + sh * Math.cos(tx)), bz = this.grip.z - sh * Math.sin(tx);
+          ty = by * Math.cos(tx) + bz * Math.sin(tx);
+          tz = -by * Math.sin(tx) + bz * Math.cos(tx);
+          if (Math.hypot(this.grip.x, ty, tz) < UPPER + FORE - 0.01) break;
+        }
+        tg.torsoX = tx;
+        const d = Math.min(UPPER + FORE - 0.002, Math.max(0.15, Math.hypot(this.grip.x, ty, tz)));
+        // gomito: piegato in avanti quanto basta per arrivare a distanza d
+        const el = -Math.acos(Math.max(-1, Math.min(1, (d * d - UPPER * UPPER - FORE * FORE) / (2 * UPPER * FORE))));
+        const u = UPPER + FORE * Math.cos(el), w = -FORE * Math.sin(el); // mano: u giù, w avanti (braccio dritto giù)
+        const side = Math.asin(Math.max(-1, Math.min(1, this.grip.x / u))); // allargare le braccia
+        const pitch = Math.atan2(tz, ty) - Math.atan2(w, -u * Math.cos(side)); // e alzarle verso il mobile
+        tg.armLX = tg.armRX = pitch;
+        tg.armLZ = side;
+        tg.armRZ = -side;
+        tg.elbowLX = tg.elbowRX = el;
+        tg.elbowLZ = tg.elbowRZ = 0;
         break;
       }
       case 'phone':

@@ -99,8 +99,9 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   la visuale; se una mossa lo farebbe entrare in un muro si prova a scivolare, se no resta com'era.
   Gli ostacoli `low` (ringhiere, tavoli) non contano. USA = cambia capo con Marco, SALTA = divano
   in piedi, GIÙ = rimettilo a posto. **Puzzle del cassone** (`c7/pack.ts`): incastro 5×9 su un canvas
-  (minigioco: puntatore finto mosso dal mouse; sul telefono si trascina), soluzione esatta nota
-  (pulsante AIUTO).
+  (minigioco: puntatore finto mosso dal mouse; sul telefono si trascina), niente aiuti (una
+  soluzione è scritta in cima a `pack.ts`). Il divano in piedi si disegna in trasparenza (copriva tutto);
+  Marco tiene l'altro capo con l'azione `carry` di `Stickman` (mani su `grip`, non dentro il mobile).
 - **Opzioni del capitolo sul Game** (tornano normali allo scarico): `g.touchMode` = pulsanti a
   schermo speciali (`{fire, use, jump, crouch}`: testo o `null` per nasconderlo), `g.hideNameTags`,
   `g.interactOff` (niente "parla con"/"usa"). Gli elementi HTML con classe `chapter-ui` spariscono

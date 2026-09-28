@@ -5,7 +5,8 @@ import { Stickman } from '../../entities/stickman';
 import { Sketch } from '../../render/sketch';
 import type { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { keyName } from '../../settings';
-import { floorAt, FURNITURE_AT, VAN } from './world';
+import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
+import { floorAt, FURNITURE_AT, REFS7, VAN } from './world';
 
 // ---------------------------------------------------------------------------
 // PORTARE I MOBILI (capitolo 7). Tu tieni un capo, Marco l'altro.
@@ -25,6 +26,7 @@ export interface Furniture {
   rects: R4[];
   upRects?: R4[]; // in piedi (solo il divano)
   speed: number;
+  grip: number; // Marco lo tiene con le mani a ± grip dal centro
   group: THREE.Group; // perno (dove sei tu) con imbardata e inclinazione
   flipG: THREE.Group; // girato dall'altro capo ("cambia capo")
   upG: THREE.Group; // in piedi (solo il divano)
@@ -33,19 +35,22 @@ export interface Furniture {
   colliders: import('../../world/collision').Rect[];
   state: 'home' | 'carried' | 'van';
   up: boolean;
+  ghost: boolean; // disegnato in trasparenza (il divano in piedi)
 }
 
 const NEAR = 0.3; // il mobile comincia a 30 cm da te
-export const FURN: Record<FurnId, Omit<Furniture, 'group' | 'flipG' | 'upG' | 'model' | 'colliders' | 'state' | 'up' | 'flipped'>> = {
-  poltrona: { id: 'poltrona', name: 'la poltrona', rects: [[-0.45, NEAR, 0.45, NEAR + 0.9]], speed: 0.8 },
-  scala: { id: 'scala', name: 'la scala', rects: [[-0.21, NEAR, 0.21, NEAR + 2.6]], speed: 0.75 },
-  armadio: { id: 'armadio', name: "l'armadio a L", rects: [[-0.32, NEAR, 0.32, NEAR + 1.8], [0.32, NEAR + 1.2, 0.9, NEAR + 1.8]], speed: 0.62 },
+const GAP = 0.35; // Marco sta a 35 cm dall'altro capo (e ci arriva con le mani)
+export const FURN: Record<FurnId, Omit<Furniture, 'group' | 'flipG' | 'upG' | 'model' | 'colliders' | 'state' | 'up' | 'flipped' | 'ghost'>> = {
+  poltrona: { id: 'poltrona', name: 'la poltrona', rects: [[-0.45, NEAR, 0.45, NEAR + 0.9]], speed: 0.8, grip: 0.28 },
+  scala: { id: 'scala', name: 'la scala', rects: [[-0.21, NEAR, 0.21, NEAR + 2.6]], speed: 0.75, grip: 0.17 },
+  armadio: { id: 'armadio', name: "l'armadio a L", rects: [[-0.32, NEAR, 0.32, NEAR + 1.8], [0.32, NEAR + 1.2, 0.9, NEAR + 1.8]], speed: 0.62, grip: 0.25 },
   divano: {
     id: 'divano',
     name: 'il divano',
     rects: [[-0.45, NEAR, 0.45, NEAR + 2.2], [0.45, NEAR + 1.55, 1.05, NEAR + 2.2]],
     upRects: [[-0.45, NEAR, 0.45, NEAR + 0.9]],
     speed: 0.62,
+    grip: 0.28,
   },
 };
 
@@ -108,7 +113,7 @@ export function setupFurniture(g: Game, lm: LineMaterial, fill: THREE.Material) 
     flipG.add(upG);
     upG.add(model);
     g.world.group.add(group);
-    const f: Furniture = { ...def, rects: def.rects, group, flipG, upG, model, colliders: [], state: 'home', up: false, flipped: false };
+    const f: Furniture = { ...def, rects: def.rects, group, flipG, upG, model, colliders: [], state: 'home', up: false, flipped: false, ghost: false };
     CARRY.items[id] = f;
     placeHome(g, f);
   }
@@ -129,6 +134,7 @@ function placeHome(g: Game, f: Furniture) {
   f.flipG.position.set(0, 0, 0);
   f.upG.rotation.set(0, 0, 0);
   f.upG.position.set(0, 0, 0);
+  setGhost(f, false);
   for (const r of worldRects(f.rects, px, pz, yaw)) {
     const rect = g.world.colliders.rect(r.x0, r.z0, r.x1, r.z1);
     f.colliders.push(rect);
@@ -354,21 +360,37 @@ function place(g: Game, f: Furniture) {
   // in piedi: il divano si alza sulla sua testata (appoggiato per terra, davanti a te)
   f.upG.rotation.set(f.up ? -Math.PI / 2 : 0, 0, 0);
   f.upG.position.set(0, f.up ? -0.8 - NEAR : 0, f.up ? NEAR + 0.5 : 0);
+  setGhost(f, f.up);
   // girato: specchio rispetto al centro (è lo stesso mobile, visto dall'altro capo)
   const zs = NEAR + len;
   f.flipG.rotation.set(0, f.flipped ? Math.PI : 0, 0);
   f.flipG.position.set(0, 0, f.flipped ? zs : 0);
   // Marco all'altro capo, che ti guarda (e cammina all'indietro)
   const m = g.npc('marco');
-  const mp = toWorld(0, len + 0.35, p.pos.x, p.pos.z, p.yaw);
+  const mp = toWorld(0, len + GAP, p.pos.x, p.pos.z, p.yaw);
   m.controlled = true;
   m.pos.set(mp.x, floorAt(mp.x, mp.y), mp.y);
   m.body.root.rotation.y = p.yaw;
   m.ctrlSpeed = p.speed > 0.1 ? p.speed : 0;
   if (m.body instanceof Stickman) {
-    m.body.action = 'push';
+    // le mani sul capo del mobile (alla sua altezza, anche sulle scale), non dentro
+    m.body.action = 'carry';
+    m.body.grip.x = f.grip;
+    m.body.grip.y = yFar - m.pos.y;
+    m.body.grip.z = GAP - 0.03;
     m.body.seated = false;
   }
+}
+
+// In piedi il divano è alto più di te e ti sta a un passo dagli occhi: coprirebbe tutto.
+// Finché è su si disegna in trasparenza: si vede il contorno, e attraverso si vede dove vai.
+function setGhost(f: Furniture, on: boolean) {
+  if (f.ghost === on || !REFS7.ghostLm || !REFS7.ghostFill) return;
+  f.ghost = on;
+  f.model.traverse((o) => {
+    if (o instanceof LineSegments2) o.material = on ? REFS7.ghostLm! : REFS7.lm!;
+    else if (o instanceof THREE.Mesh) o.material = on ? REFS7.ghostFill! : REFS7.fill!;
+  });
 }
 
 // "Cambia capo": tu vai dove sta Marco e lui dove stavi tu. Il mobile resta dov'è.
