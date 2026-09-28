@@ -185,6 +185,29 @@ export class Music {
     o.stop(t + dur + 0.06);
   }
 
+  // fisarmonica: due ance un po' stonate tra loro, il mantice che attacca morbido
+  accordion(notes: number[], t: number, dur: number, vol = 0.02) {
+    for (const n of notes) {
+      for (const det of [-8, 8]) {
+        const o = this.ctx.createOscillator();
+        o.type = 'sawtooth';
+        o.frequency.value = mtof(n);
+        o.detune.value = det;
+        const lp = this.ctx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = 1800;
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(vol, t + 0.025);
+        g.gain.setValueAtTime(vol, t + Math.max(0.03, dur - 0.05));
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(lp).connect(g).connect(this.out);
+        o.start(t);
+        o.stop(t + dur + 0.05);
+      }
+    }
+  }
+
   lead(f: number, t: number, dur: number, vol = 0.035) {
     const o = this.ctx.createOscillator();
     o.type = 'triangle';
@@ -583,6 +606,113 @@ export const TRASLOCO: Track = {
   },
 };
 
+// "Sagra": liscio della banda di paese (mazurka in fa, 3/4): tuba, fisarmonica in levare, clarinetto
+const SAGRA_PROG = [
+  { root: 41, fifth: 48, chord: [65, 69, 72] }, // F
+  { root: 41, fifth: 48, chord: [65, 69, 72] }, // F
+  { root: 36, fifth: 43, chord: [64, 67, 70] }, // C7
+  { root: 36, fifth: 43, chord: [64, 67, 70] }, // C7
+  { root: 36, fifth: 43, chord: [64, 67, 70] }, // C7
+  { root: 36, fifth: 43, chord: [64, 67, 70] }, // C7
+  { root: 41, fifth: 48, chord: [65, 69, 72] }, // F
+  { root: 41, fifth: 48, chord: [65, 69, 72] }, // F
+  { root: 41, fifth: 48, chord: [63, 69, 72] }, // F7
+  { root: 34, fifth: 41, chord: [65, 70, 74] }, // Bb
+  { root: 34, fifth: 41, chord: [65, 70, 74] }, // Bb
+  { root: 41, fifth: 48, chord: [65, 69, 72] }, // F
+  { root: 41, fifth: 48, chord: [65, 69, 72] }, // F
+  { root: 36, fifth: 43, chord: [64, 67, 70] }, // C7
+  { root: 36, fifth: 43, chord: [64, 67, 70] }, // C7
+  { root: 41, fifth: 48, chord: [65, 69, 72] }, // F
+];
+const SAGRA_TEMA: number[][] = [
+  [72, _, 77, 76, 77, 79],
+  [81, _, _, _, 77, _],
+  [79, _, 76, 74, 76, 77],
+  [79, _, _, _, 72, _],
+  [76, _, 79, 77, 76, 74],
+  [72, _, 70, _, 67, _],
+  [69, _, 72, _, 77, _],
+  [77, _, _, _, 0, 0],
+  [75, _, 77, 75, 74, 72],
+  [74, _, 77, _, 82, _],
+  [81, _, 79, 77, 74, _],
+  [72, _, 77, _, 81, _],
+  [84, _, 81, _, 77, _],
+  [79, _, 76, _, 72, _],
+  [70, _, 74, 72, 70, 67],
+  [65, _, _, _, 0, 0],
+];
+export const SAGRA: Track = {
+  bpm: 168,
+  stepsPerBeat: 2,
+  play(m, step, t) {
+    const bar = Math.floor(step / 6) % 16;
+    const slot = step % 6; // tre battiti, due passi per battito
+    const section = Math.floor(step / 96) % 3; // 0: solo "um-pa-pa", 1: clarinetto, 2: fisarmonica che canta
+    const c = SAGRA_PROG[bar];
+    // um-pa-pa: tuba sull'uno, fisarmonica sul due e sul tre
+    if (slot === 0) m.bass(mtof(bar % 2 ? c.fifth : c.root), t, 0.3, 0.15);
+    if (slot === 2 || slot === 4) m.accordion(c.chord, t, 0.16, 0.012);
+    if (slot === 0) m.kick(t, 0.08, 90, 45, 0.1);
+    if (slot === 2 || slot === 4) m.hit(t, 0.025, 2600, 'bandpass', 0.05, 1);
+    if (slot === 5 && bar % 4 === 3) m.hit(t, 0.03, 5000, 'highpass', 0.08, 0.7);
+    if (section > 0) {
+      const row = SAGRA_TEMA[bar];
+      const n = row[slot];
+      if (n > 0) {
+        let len = 1;
+        while (slot + len < 6 && row[slot + len] === _) len++;
+        const dur = len * (60 / 168 / 2) * 0.92;
+        if (section === 1) m.lead(mtof(n - 12), t, dur, 0.03);
+        else m.accordion([n], t, dur, 0.016);
+      }
+    }
+  },
+};
+
+// "Giostra": organetto da ruota panoramica (valzerino in do, campanelli e fischio)
+const GIOSTRA_PROG = [
+  { root: 48, chord: [64, 67, 72] }, // C
+  { root: 48, chord: [64, 67, 72] }, // C
+  { root: 43, chord: [65, 67, 71] }, // G7
+  { root: 43, chord: [65, 67, 71] }, // G7
+  { root: 43, chord: [65, 67, 71] }, // G7
+  { root: 43, chord: [65, 67, 71] }, // G7
+  { root: 48, chord: [64, 67, 72] }, // C
+  { root: 48, chord: [64, 67, 72] }, // C
+];
+const GIOSTRA_TEMA: number[][] = [
+  [76, _, 79, _, 84, _],
+  [83, _, 81, _, 79, _],
+  [77, _, 79, _, 81, _],
+  [79, _, _, _, 74, _],
+  [77, _, 76, _, 74, _],
+  [72, _, 74, _, 76, _],
+  [79, _, 77, _, 76, _],
+  [72, _, _, _, 0, 0],
+];
+export const GIOSTRA: Track = {
+  bpm: 150,
+  stepsPerBeat: 2,
+  play(m, step, t) {
+    const bar = Math.floor(step / 6) % 8;
+    const slot = step % 6;
+    const c = GIOSTRA_PROG[bar];
+    if (slot === 0) m.bass(mtof(c.root - 12), t, 0.35, 0.12);
+    if (slot === 2 || slot === 4) for (const n of c.chord) m.pluck(mtof(n), t, 0.018, 0.2);
+    // campanelli: un'ottava sopra la melodia, ogni tanto
+    const row = GIOSTRA_TEMA[bar];
+    const n = row[slot];
+    if (n > 0) {
+      let len = 1;
+      while (slot + len < 6 && row[slot + len] === _) len++;
+      m.whistle(mtof(n), t, len * (60 / 150 / 2) * 0.9, 0.04);
+      if (slot === 0) m.pluck(mtof(n + 12), t, 0.03, 0.5);
+    }
+  },
+};
+
 export const TRACKS = {
   paese: PAESE,
   club: disco(false),
@@ -594,5 +724,7 @@ export const TRACKS = {
   violino: valzer(true),
   consegna: CONSEGNA,
   trasloco: TRASLOCO,
+  sagra: SAGRA,
+  giostra: GIOSTRA,
 };
 export type TrackName = keyof typeof TRACKS;

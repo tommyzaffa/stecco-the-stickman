@@ -15,7 +15,7 @@ export const HIGHLIGHT_YELLOW_HEX = '#e8f53a';
 export interface Theme {
   paper: string;
   ink: string;
-  grid?: { size: number; color: string; major?: number; rows?: boolean }; // carta a quadretti (major: una riga più marcata ogni N; rows: solo righe orizzontali, quaderno a righe)
+  grid?: { size: number; color: string; major?: number; rows?: boolean; dots?: boolean }; // carta a quadretti (major: una riga più marcata ogni N; rows: solo righe orizzontali, quaderno a righe; dots: solo i puntini agli incroci)
 }
 export const THEME: { paperHex: string; inkHex: string; night: boolean; grid: Theme['grid'] | null } = {
   paperHex: PAPER_HEX,
@@ -36,6 +36,9 @@ export const MILLIMETRATA: Theme = { paper: '#f7f2e4', ink: '#2a2530', grid: { s
 
 // Capitolo 7, il trasloco: quaderno a righe (righe orizzontali anche sui muri, come un foglio di bella)
 export const RIGHE: Theme = { paper: '#fbf8ef', ink: '#23222b', grid: { size: 0.8, color: '#9dbbe0', rows: true } };
+
+// Capitolo 8, la sagra: carta a puntini (quella dei diari), coi puntini color confetto
+export const PUNTINI: Theme = { paper: '#fbf7ee', ink: '#25222c', grid: { size: 0.7, color: '#c58fae', dots: true } };
 
 // Mercato Nero: carta da pacchi. Tutto quello che si vende qui sotto è incartato.
 export const PACCHI: Theme = { paper: '#d8c29d', ink: '#2a2119' };

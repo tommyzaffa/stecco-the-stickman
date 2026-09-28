@@ -29,6 +29,7 @@ export class Player {
   stillT = 0; // da quanti secondi sei fermo (chi spara ti inquadra meglio)
   floor = 0; // altezza del pavimento sotto i piedi (capitolo 6: in macchina si scende sotto lo zero)
   carrying = false; // sta portando un mobile (capitolo 7): piano, niente salti né pugni
+  rooted = false; // fermo a una bancarella (capitolo 8): ci si guarda intorno, ma niente passi, salti né pugni
   speedMul = 1;
   private eyeH = EYE;
   private armMat: THREE.MeshBasicMaterial;
@@ -211,7 +212,7 @@ export class Player {
 
     let mx = 0, mz = 0;
     let analog = 0;
-    if (canMove && !this.seated) {
+    if (canMove && !this.seated && !this.rooted) {
       if (input.isDown('forward') || input.down.has('ArrowUp')) mz -= 1;
       if (input.isDown('back') || input.down.has('ArrowDown')) mz += 1;
       if (input.isDown('left') || input.down.has('ArrowLeft')) mx -= 1;
@@ -224,7 +225,7 @@ export class Player {
       }
     }
     let len = Math.hypot(mx, mz);
-    this.blocking = canMove && !this.seated && !this.carrying && input.rightDown;
+    this.blocking = canMove && !this.seated && !this.carrying && !this.rooted && input.rightDown;
     const running = (input.isDown('run') || analog > 0.92) && !this.crouching && !this.blocking && !this.carrying;
     const sp = (running ? RUN : WALK) * (this.crouching ? 0.5 : 1) * (this.blocking ? 0.55 : 1) * this.speedMul;
     let vx = 0, vz = 0;
@@ -242,7 +243,7 @@ export class Player {
     this.pos.z += (vz + this.knock.z) * dt;
     this.knock.multiplyScalar(Math.max(0, 1 - dt * 6));
 
-    if (canMove && !this.seated && !this.carrying && input.wasPressed('jump') && this.pos.y <= this.floor + 0.001 && !this.crouching) {
+    if (canMove && !this.seated && !this.carrying && !this.rooted && input.wasPressed('jump') && this.pos.y <= this.floor + 0.001 && !this.crouching) {
       this.vy = JUMP;
       jumped = true;
     }
@@ -327,7 +328,7 @@ export class Player {
       if (this.attackT >= 1) this.attackT = -1;
     }
     // durante dialoghi e scene il braccio (e l'arma) si abbassa: non copre la scena
-    this.lower += ((canMove && !this.seated && !this.carrying ? 0 : 1) - this.lower) * Math.min(1, dt * 6);
+    this.lower += ((canMove && !this.seated && !this.carrying && !this.rooted ? 0 : 1) - this.lower) * Math.min(1, dt * 6);
     ay -= this.lower * 0.65;
     this.arm.position.set(ax, ay, az);
     this.arm.rotation.set(rx, 0, rz);

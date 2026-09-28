@@ -693,6 +693,55 @@ export class Sound {
     for (let i = 0; i < 6; i++) this.noise(0.14, 0.05 * vol, { type: 'bandpass', freq: 1400 + (i % 2) * 500, q: 1.2 }, { delay: i * 0.16, attack: 0.04 });
   }
 
+  // --- la sagra (capitolo 8) ------------------------------------------------------------
+  // barattolo colpito: latta che suona (k = forza del colpo)
+  clang(k = 1) {
+    const f = 780 + Math.random() * 260;
+    this.tone(f, 0.18, { type: 'square', vol: 0.05 * k, filter: { type: 'bandpass', freq: f * 1.5, q: 6 } });
+    this.tone(f * 2.76, 0.12, { type: 'triangle', vol: 0.03 * k });
+    this.noise(0.05, 0.08 * k, { type: 'highpass', freq: 3000 });
+  }
+
+  // barattolo che cade per terra: tlan-tlan
+  canDrop() {
+    for (let i = 0; i < 3; i++) this.tone(600 + Math.random() * 300, 0.07, { type: 'square', vol: 0.03 / (i + 1), delay: i * 0.13, filter: { type: 'bandpass', freq: 1400, q: 4 } });
+  }
+
+  // barattolo incollato: TONK (non si muove)
+  tonk() {
+    this.tone(180, 0.14, { type: 'triangle', to: 120, vol: 0.12 });
+    this.noise(0.06, 0.08, { type: 'lowpass', freq: 600 });
+  }
+
+  // amo nell'acqua
+  splash() {
+    this.noise(0.22, 0.09, { type: 'bandpass', freq: 1800, to: 500, q: 1.4 });
+    this.tone(500, 0.08, { to: 260, vol: 0.04 });
+  }
+
+  // un piano di torta appoggiato: plof
+  plop(k = 1) {
+    this.tone(160 + k * 40, 0.12, { to: 90, vol: 0.1, type: 'sine' });
+    this.noise(0.08, 0.05, { type: 'lowpass', freq: 900 });
+  }
+
+  // campanello della bancarella (giusto! / perfetto!)
+  ding(high = false) {
+    const f = high ? 1568 : 1319;
+    this.tone(f, 0.5, { type: 'sine', vol: 0.07 });
+    this.tone(f * 2.01, 0.3, { type: 'sine', vol: 0.025 });
+  }
+
+  // gettoni vinti: tintinnio
+  tokens(n: number) {
+    for (let i = 0; i < Math.min(6, n + 1); i++) this.tone(1500 + i * 180 + Math.random() * 60, 0.09, { type: 'square', vol: 0.035, delay: i * 0.09, filter: { type: 'lowpass', freq: 5000 } });
+  }
+
+  // la ruota che riparte (o si inceppa): cigolio
+  creak() {
+    this.tone(230, 0.7, { type: 'sawtooth', to: 170, vol: 0.035, vibrato: [13, 18], filter: { type: 'bandpass', freq: 900, q: 3 } });
+  }
+
   // --- ambiente ----------------------------------------------------------------------
   private loopNoise() {
     const s = this.ctx!.createBufferSource();

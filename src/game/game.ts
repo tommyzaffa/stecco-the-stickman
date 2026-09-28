@@ -320,9 +320,11 @@ export class Game {
     this.player.floor = 0;
     this.player.pos.y = 0;
     this.player.carrying = false;
+    this.player.rooted = false;
     this.player.speedMul = 1;
     // interfacce dei capitoli (ballo, cruscotto...): spariscono con il capitolo
     document.querySelectorAll('.dance, .chapter-ui').forEach((e) => e.remove());
+    this.hud.root.classList.remove('packing', 'in-booth');
   }
 
   // Salvataggio all'inizio di ogni capitolo: dove finisce lo decide il flusso (account o niente,
@@ -769,7 +771,7 @@ export class Game {
       } else {
         if (inp.wasPressed('interact') && this.focus) this.focus.use(this);
         if (inp.wasPressed('journal') || inp.pressed.has('Tab')) this.hud.showDiario(this.diarioHtml());
-        const hands = !this.player.seated && !this.player.carrying;
+        const hands = !this.player.seated && !this.player.carrying && !this.player.rooted;
         if (inp.clicked && !this.player.blocking && hands) {
           if (this.player.weapon === 'pistol') this.fire();
           else if (this.player.attack()) this.audio.swing(this.player.weapon);

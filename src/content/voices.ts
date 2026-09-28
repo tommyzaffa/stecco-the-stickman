@@ -115,3 +115,17 @@ Object.assign(VOICES, {
   tacchetto: { base: 140, type: 'sawtooth', spread: 5, every: 2, vol: 0.06 },
   stipite: { base: 185, type: 'sine', spread: 4, every: 2, vol: 0.07, vibrato: 8 },
 });
+
+// Capitolo 8
+Object.assign(VOICES, {
+  perno: { base: 150, type: 'square', spread: 3, every: 3 },
+  crostata: { base: 350, type: 'triangle', spread: 5, every: 2 },
+  pastello: { base: 280, type: 'sawtooth', spread: 9, every: 1, vol: 0.05 },
+  banda0: { base: 110, type: 'sawtooth', spread: 3, every: 3, vol: 0.06 },
+  banda1: { base: 240, type: 'square', spread: 6, every: 2 },
+  banda2: { base: 300, type: 'triangle', spread: 6, every: 2 },
+  paesano0: { base: 190, type: 'triangle', spread: 5, every: 2 },
+  paesano1: { base: 320, type: 'triangle', spread: 6, every: 2 },
+  paesano2: { base: 160, type: 'square', spread: 4, every: 2 },
+  paesano3: { base: 270, type: 'square', spread: 7, every: 2 },
+});

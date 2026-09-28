@@ -532,3 +532,22 @@ html.compact .drive-sub { font-size: 16px; }
 .pack { position: absolute; left: 0; top: 0; width: var(--gw, 100vw); height: var(--gh, 100vh); pointer-events: none; }
 body.touch .pack { pointer-events: auto; touch-action: none; }
 #hud.packing .stats, #hud.packing .objectives, #hud.packing .markers, #hud.packing .prompt { display: none; }
+
+/* capitolo 8: le bancarelle della sagra (riquadro in alto: titolo, stato o risultato, comandi, gettoni) */
+.booth {
+  position: absolute; left: 50%; top: 12px; transform: translateX(-50%);
+  min-width: min(420px, calc(var(--gw, 100vw) * 0.5)); max-width: min(660px, calc(var(--gw, 100vw) * 0.72));
+  padding: 6px 18px 8px; text-align: center; pointer-events: none;
+}
+.booth .t { font-family: var(--marker); font-size: 22px; letter-spacing: .5px; }
+.booth .s { font-size: 20px; margin-top: 2px; line-height: 1.2; }
+.booth .s small { font-size: 16px; opacity: .8; }
+.booth .s i { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--ink); border-radius: 50%; margin: 0 2px; vertical-align: -1px; }
+.booth .s i.on { background: var(--ink); }
+.booth .s .win { font-family: var(--marker); font-size: 24px; color: var(--red); margin-top: 4px; }
+.booth .h { font-size: 15px; opacity: .75; margin-top: 4px; }
+.booth .g { font-size: 15px; margin-top: 2px; }
+#hud.in-booth .objectives, #hud.in-booth .marker, #hud.in-booth .edge-arrow, #hud.in-booth .npc-icon, #hud.in-booth .prompt { display: none !important; }
+body.touch .booth { top: 62px; }
+html.compact .booth { zoom: .72; }
+html.compact body.touch .booth { top: 74px; }

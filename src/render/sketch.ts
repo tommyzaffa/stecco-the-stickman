@@ -51,6 +51,7 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
         uGridColor: { value: new THREE.Color(THEME.grid?.color ?? '#000000') },
         uGridMajor: { value: THEME.grid?.major ?? 0 },
         uGridRows: { value: THEME.grid?.rows ? 1 : 0 },
+        uGridDots: { value: THEME.grid?.dots ? 1 : 0 },
       },
     ]),
     vertexShader: /* glsl */ `
@@ -76,6 +77,7 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
       uniform vec3 uGridColor;
       uniform float uGridMajor;
       uniform float uGridRows;
+      uniform float uGridDots;
       varying vec3 vN;
       varying vec3 vW;
       #include <fog_pars_fragment>
@@ -109,6 +111,12 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
           float line = 1.0 - clamp(min(d.x, d.y) - 0.3, 0.0, 1.0);
           float fade = 1.0 - clamp(max(w.x, w.y) * 3.0, 0.0, 1.0);
           float a = line * fade * (uGridMajor > 0.0 ? 0.4 : 0.8);
+          if (uGridDots > 0.5) {
+            // carta a puntini: un puntino a ogni incrocio (largo un nono della maglia), niente righe
+            float px = max(w.x, w.y);
+            float dd = length(fract(g + 0.5) - 0.5);
+            a = (1.0 - smoothstep(0.055 - px, 0.055 + px, dd)) * (1.0 - clamp(px * 6.0, 0.0, 1.0)) * 0.8;
+          }
           if (uGridMajor > 0.0) {
             // carta millimetrata: ogni N righe una più marcata, che si vede anche da lontano
             vec2 G = p / (uGrid * uGridMajor);

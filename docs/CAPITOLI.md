@@ -84,7 +84,7 @@ alla sagra. Nel parco, la panchina di Arturo non c'è più: solo briciole di gom
 | # | Titolo | Pagina | Novità |
 |---|---|---|---|
 | 7 ✅ | Il trasloco | Casa di Nonna Pina (quaderno a righe) | **Incastri**: portare i mobili giù per le scale con Marco e incastrarli nel furgone |
-| 8 | La sagra | La piazza di San Scarabocchio in festa | **Bancarelle**: tanti minigiochi, gettoni e premi |
+| 8 ✅ | La sagra | La piazza di San Scarabocchio in festa (carta a puntini) | **Bancarelle**: tanti minigiochi, gettoni e premi |
 | 9 | Da Dario | Il pub, di sera | **Capogiro da bollicine**: visuale e comandi che ondeggiano, freccette con Barnie |
 | 10 | Il condominio | Una palazzina, di notte | **Furtività col rumore**: pavimenti che scricchiolano, vicini che dormono |
 | 11 | Modulo 27-B | L'Ufficio Protocollo di Quadropoli | **Burocrazia a tempo**: code, sportelli che chiudono, timbri |
@@ -98,9 +98,15 @@ girarli nelle porte, cambiare capo, mettere il divano in piedi. Poi l'incastro n
 Fratelli Squadra, dove Marco "aiuta" caricando una cassetta della posta, il gatto del vicino e un
 cartello STOP. Il superstite del vicolo ricorda un profumo: fragola (la Gomma è una gomma per
 bambini). Missioni: il Vicolo Storto (con Arturo), l'album di Nonna Pina, il gatto di Tacchetto.
-**8. La sagra.** La festa del paese: tiro ai barattoli, pesca dei tappi, gara di torte, la ruota.
-Si vincono gettoni e premi (alcuni tornano utili più avanti). Durante la sagra, per un attimo,
-sparisce un pezzo di piazza. Nessuno ci fa caso, tranne il Filosofo.
+**8. La sagra.** La festa del paese, su carta a puntini. Martina vuole il tappo restituito in cima
+alla ruota panoramica, e la ruota costa sei gettoni: si vincono alle bancarelle, ognuna un minigioco
+diverso. Tiro ai barattoli dei Pastelli a Cera (palline di carta a parabola, uno è incollato: verbale
+dell'Ispettore Penna), pesca dei tappi (quello con la stella, per Martina), la torta a piani per Nonna
+Pina (dieci piani battono la maestra Crostata), il banco dei premi di Don Fluo (pesce grigio per Marco,
+fischietto, palloncino, orsacchiotto gigante). In cima alla ruota, il tappo; poi, sotto gli occhi di
+Stecco, la fontana sparisce e torna ridisegnata con tre zampilli invece di quattro. Tutti dicono che
+sono sempre stati tre, tranne Arturo: chi cancella è la gomma alla fragola, ma chi ridisegna "ha la mano
+che trema". Dario invita tutti al pub.
 **9. Da Dario.** Serata al pub con Marco e Martina: quiz e freccette. La squadra esagera con la
 Gazzosa Gigante ("tre litri, una cannuccia") e a tutti gira la testa: la visuale ondeggia e i
 comandi scivolano. Bisogna vincere la finale di freccette contro Barnie e riportare tutti a casa.

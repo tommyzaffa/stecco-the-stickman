@@ -3,7 +3,8 @@ export type ItemId =
   | 'gomma' | 'guanti' | 'fiore' | 'poesia' | 'sospiri'
   | 'pistola' | 'profumo' | 'ombra' | 'scusa' | 'tappoVero'
   | 'lettere' | 'torta' | 'freccetta'
-  | 'album' | 'briciola';
+  | 'album' | 'briciola'
+  | 'tappoStella' | 'pesce' | 'fischietto' | 'palloncino' | 'orsetto';
 
 export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolean }> = {
   pacco: {
@@ -95,5 +96,26 @@ export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolea
   freccetta: {
     name: 'Una freccetta di Barnie',
     desc: 'Disegnata benissimo: la punta è davvero appuntita. Da Dario si gioca a freccette.',
+  },
+  // capitolo 8: la sagra (pescati e vinti al banco dei premi)
+  tappoStella: {
+    name: 'Il tappo con la stella',
+    desc: 'Il più raro della pesca dei tappi: sotto c\'è una stella rossa. Martina lo cerca da tre sagre.',
+  },
+  pesce: {
+    name: 'Pesce rosso (grigio)',
+    desc: 'In un sacchetto d\'acqua disegnata. È rosso, giura il banco dei premi. Tu lo vedi grigio: come tutto.',
+  },
+  fischietto: {
+    name: 'Fischietto di latta',
+    desc: 'Fa un fischio che sentono solo i cani e i vicini di casa. Potrebbe tornare utile.',
+  },
+  palloncino: {
+    name: 'Palloncino a forma di niente',
+    desc: 'Il venditore dice che è a forma di cane. È tondo. Tira verso l\'alto, ma non abbastanza.',
+  },
+  orsetto: {
+    name: 'Orsacchiotto gigante',
+    desc: 'Il premio più grande della sagra. Senza tasche, lo porti sotto il braccio. Cioè, sotto la linea.',
   },
 };
