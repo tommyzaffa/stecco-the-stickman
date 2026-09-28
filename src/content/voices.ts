@@ -107,3 +107,11 @@ Object.assign(VOICES, {
   nonnaMercato: { base: 400, type: 'triangle', spread: 7, every: 2, vibrato: 20 },
 });
 for (const id of ['px0', 'px1', 'px2', 'px3', 'px4', 'px5']) VOICES[id] = { base: 230 + Math.random() * 80, type: 'sawtooth', spread: 9, every: 1, vol: 0.045 };
+
+// Capitolo 7
+Object.assign(VOICES, {
+  squadra: { base: 160, type: 'square', spread: 2, every: 3 },
+  goniometro: { base: 210, type: 'triangle', spread: 9, every: 2 },
+  tacchetto: { base: 140, type: 'sawtooth', spread: 5, every: 2, vol: 0.06 },
+  stipite: { base: 185, type: 'sine', spread: 4, every: 2, vol: 0.07, vibrato: 8 },
+});

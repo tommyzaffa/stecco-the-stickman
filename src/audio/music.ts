@@ -533,6 +533,56 @@ export const CONSEGNA: Track = {
   },
 };
 
+// "Trasloco": marcetta da lavoro, un po' zoppa (sol maggiore, 108 bpm): tuba, battimani e fischio
+const TRASLOCO_PROG = [
+  { root: 43, chord: [67, 71, 74] }, // G
+  { root: 43, chord: [67, 71, 74] }, // G
+  { root: 48, chord: [67, 72, 76] }, // C
+  { root: 50, chord: [66, 69, 74] }, // D
+  { root: 43, chord: [67, 71, 74] }, // G
+  { root: 40, chord: [67, 71, 76] }, // Em
+  { root: 45, chord: [69, 72, 76] }, // Am
+  { root: 50, chord: [66, 69, 74] }, // D
+];
+const TRASLOCO_TEMA: number[][] = [
+  [79, _, 78, 79, 81, _, 79, _],
+  [74, _, _, 71, 74, _, _, 0],
+  [76, _, 79, _, 84, 83, 81, _],
+  [78, _, 76, _, 74, _, _, 0],
+  [79, _, 81, 83, 84, _, 83, _],
+  [79, _, 76, _, 71, _, _, 0],
+  [72, _, 76, _, 81, 79, 76, _],
+  [74, _, _, 78, 79, _, _, 0],
+];
+export const TRASLOCO: Track = {
+  bpm: 108,
+  stepsPerBeat: 2,
+  swing: 0.05,
+  play(m, step, t) {
+    const bar = Math.floor(step / 8) % 8;
+    const slot = step % 8;
+    const section = Math.floor(step / 64) % 2;
+    const c = TRASLOCO_PROG[bar];
+    // tuba: fondamentale e quinta, con un passo "pesante" in mezzo
+    if (slot === 0) m.bass(mtof(c.root - 12), t, 0.35, 0.16);
+    if (slot === 4) m.bass(mtof(c.root - 5), t, 0.3, 0.13);
+    if (slot === 6 && bar % 2) m.bass(mtof(c.root - 10), t, 0.15, 0.1);
+    if (slot === 2 || slot === 6) m.pluck(mtof(c.chord[slot === 2 ? 0 : 1]), t, 0.04, 0.2);
+    // battimani sul 2 e sul 4
+    if (slot === 2 || slot === 6) m.hit(t, 0.05, 1500, 'bandpass', 0.05, 0.8);
+    if (slot % 2 === 1) m.hit(t, 0.012, 7000, 'highpass');
+    if (section === 1) {
+      const row = TRASLOCO_TEMA[bar];
+      const n = row[slot];
+      if (n > 0) {
+        let len = 1;
+        while (slot + len < 8 && row[slot + len] === _) len++;
+        m.whistle(mtof(n), t, len * (60 / 108 / 2) * 0.95, 0.045);
+      }
+    }
+  },
+};
+
 export const TRACKS = {
   paese: PAESE,
   club: disco(false),
@@ -543,5 +593,6 @@ export const TRACKS = {
   cena: valzer(false),
   violino: valzer(true),
   consegna: CONSEGNA,
+  trasloco: TRASLOCO,
 };
 export type TrackName = keyof typeof TRACKS;

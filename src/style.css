@@ -527,3 +527,8 @@ body.touch .drive-hud .speed b { font-size: 21px; }
 body.touch .drive-sub { bottom: 34%; font-size: 18px; }
 html.compact body.touch .drive-hud { top: 72px; zoom: .85; }
 html.compact .drive-sub { font-size: 16px; }
+
+/* capitolo 7: il cassone del furgone (incastro disegnato su un canvas) */
+.pack { position: absolute; left: 0; top: 0; width: var(--gw, 100vw); height: var(--gh, 100vh); pointer-events: none; }
+body.touch .pack { pointer-events: auto; touch-action: none; }
+#hud.packing .stats, #hud.packing .objectives, #hud.packing .markers, #hud.packing .prompt { display: none; }

@@ -2,7 +2,8 @@ export type ItemId =
   | 'pacco' | 'righello' | 'libro' | 'tappo' | 'sottobicchiere' | 'calzino' | 'chiave'
   | 'gomma' | 'guanti' | 'fiore' | 'poesia' | 'sospiri'
   | 'pistola' | 'profumo' | 'ombra' | 'scusa' | 'tappoVero'
-  | 'lettere' | 'torta' | 'freccetta';
+  | 'lettere' | 'torta' | 'freccetta'
+  | 'album' | 'briciola';
 
 export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolean }> = {
   pacco: {
@@ -82,6 +83,14 @@ export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolea
   torta: {
     name: 'Torta quadrata (tre piani)',
     desc: 'Della Pasticceria Squadrata, per Nonna Pina. Ogni botta forte, un piano in meno.',
+  },
+  album: {
+    name: "L'album di Nonna Pina",
+    desc: "Caduto dall'armadio. Foto di Nonna Pina da giovane: disegnata con la matita appena temperata.",
+  },
+  briciola: {
+    name: 'Una briciola di gomma',
+    desc: 'Dal Vicolo Storto. Rosa. Profuma di fragola. Chi cancella lascia sempre qualcosa.',
   },
   freccetta: {
     name: 'Una freccetta di Barnie',

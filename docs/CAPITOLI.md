@@ -83,7 +83,7 @@ alla sagra. Nel parco, la panchina di Arturo non c'è più: solo briciole di gom
 
 | # | Titolo | Pagina | Novità |
 |---|---|---|---|
-| 7 | Il trasloco | Casa di Nonna Pina | **Incastri**: caricare il furgone (pezzi da girare e incastrare) e portare i mobili |
+| 7 ✅ | Il trasloco | Casa di Nonna Pina (quaderno a righe) | **Incastri**: portare i mobili giù per le scale con Marco e incastrarli nel furgone |
 | 8 | La sagra | La piazza di San Scarabocchio in festa | **Bancarelle**: tanti minigiochi, gettoni e premi |
 | 9 | Da Dario | Il pub, di sera | **Capogiro da bollicine**: visuale e comandi che ondeggiano, freccette con Barnie |
 | 10 | Il condominio | Una palazzina, di notte | **Furtività col rumore**: pavimenti che scricchiolano, vicini che dormono |
@@ -91,9 +91,13 @@ alla sagra. Nel parco, la panchina di Arturo non c'è più: solo briciole di gom
 | 12 | Il pranzo della domenica | A casa della famiglia di Martina | **Fare tutto insieme**: piatti, parenti e domande, niente disastri |
 | 13 | Il campeggio | Al bordo del foglio | **Scappare da un posto che si cancella**: il terreno sparisce sotto i piedi |
 
-**7. Il trasloco.** Nonna Pina deve traslocare: la via accanto alla sua è stata cancellata di notte
-e lei non si fida. Si carica il furgone incastrando mobili di forme assurde (un armadio a L, un
-divano che si piega solo a destra) e si portano giù per le scale. Marco "aiuta".
+**7. Il trasloco.** Nonna Pina trasloca: stanotte il Vicolo Storto, accanto a casa sua, è stato
+cancellato. Va in Via della Penna ("là è tutto a penna: la gomma non ci fa niente"). Poltrona,
+scala, armadio a L e divano vanno portati giù per una scala a U tenendo un capo (Marco l'altro):
+girarli nelle porte, cambiare capo, mettere il divano in piedi. Poi l'incastro nel cassone dei
+Fratelli Squadra, dove Marco "aiuta" caricando una cassetta della posta, il gatto del vicino e un
+cartello STOP. Il superstite del vicolo ricorda un profumo: fragola (la Gomma è una gomma per
+bambini). Missioni: il Vicolo Storto (con Arturo), l'album di Nonna Pina, il gatto di Tacchetto.
 **8. La sagra.** La festa del paese: tiro ai barattoli, pesca dei tappi, gara di torte, la ruota.
 Si vincono gettoni e premi (alcuni tornano utili più avanti). Durante la sagra, per un attimo,
 sparisce un pezzo di piazza. Nessuno ci fa caso, tranne il Filosofo.

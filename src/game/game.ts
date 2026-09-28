@@ -180,7 +180,7 @@ export class Game {
   touch: TouchUI | null = null;
   // comandi a schermo speciali di un capitolo (capitolo 6: in macchina). null = quelli normali.
   // Per ogni pulsante: il testo da mostrare, oppure null per nasconderlo.
-  touchMode: { fire?: string | null; use?: string | null; jump?: string | null } | null = null;
+  touchMode: { fire?: string | null; use?: string | null; jump?: string | null; crouch?: string | null } | null = null;
   hideNameTags = false; // niente nomi sopra le teste (es. in macchina, con Marco seduto accanto)
   interactOff = false; // niente "parla con..." / "usa" (es. in macchina: il tasto serve ad altro)
 

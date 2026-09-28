@@ -27,7 +27,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   - `palette.ts`: colori e **tema** (`DAY` inchiostro su carta, `NIGHT` gesso su carta nera,
     `QUADRETTI` carta a quadretti: la griglia la disegna lo shader del tratteggio,
     `PACCHI` carta da pacchi, `CARTONCINO` cartoncino prugna a lume di candela, `MILLIMETRATA`
-    carta millimetrata: `grid.major` = una riga più marcata ogni N). `CERA` = colori dei Pastelli a Cera.
+    carta millimetrata: `grid.major` = una riga più marcata ogni N, `RIGHE` quaderno a righe:
+    `grid.rows` = solo righe orizzontali, anche sui muri). `CERA` = colori dei Pastelli a Cera.
     Il tema va impostato prima di costruire un capitolo (lo fa `Game.loadChapter`).
 - `src/world/` — `builder.ts` (`WorldBuilder`: muri, porte, edifici, cartelli, neon, alberi,
   `ceiling` per gli interni, `wallText` per le scritte sui muri...; `finish()` restituisce un
@@ -48,7 +49,7 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 - `src/audio/` — audio tutto sintetizzato con Web Audio (nessun file): `audio.ts` effetti, voci a
   bip, sorgenti nel mondo (`addEmitter`), filtro "musica ovattata" (`setMusicMuffle`);
   `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`, `indagine`, `mercato`, `sparatoria`,
-  `cena`, `violino`, `consegna`). Suoni della macchina (capitolo 6): `car(v, freno, sbandata)`
+  `cena`, `violino`, `consegna`, `trasloco`). Suoni della macchina (capitolo 6): `car(v, freno, sbandata)`
   continuo, `crash`, `bump`, `scrape`, `horn`, `wiper`, `bleat`, `glow`, `erase`.
   L'AudioContext si sblocca solo con un click (schermata del titolo).
 
@@ -90,9 +91,18 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   in piano/salita ti prendono), cera sul parabrezza e tergicristallo, posta da lanciare nelle
   cassette (mira aiutata), tappi, pecore e nonna da scansare col clacson ("bip"), tappe con Riprova.
   Il mondo è a pezzi da 100 m (`REFS.chunks`) e ciò che è lontano non si disegna.
-- **Pavimento a quota variabile**: `player.floor` (default 0). Il capitolo 6 scende sotto lo zero.
+- **Pavimento a quota variabile**: `player.floor` (default 0), da aggiornare a ogni frame dal
+  capitolo (capitolo 6 sotto lo zero, capitolo 7 scale e primo piano con `floorAt()`). Le collisioni
+  restano 2D: i due piani non devono avere zone calpestabili sovrapposte.
+- **Portare i mobili** (capitolo 7, `c7/carry.ts`): `player.carrying` (piano, niente salti, pugni,
+  parate e armi; `player.speedMul`). Il mobile è una sagoma di rettangoli davanti a te che gira con
+  la visuale; se una mossa lo farebbe entrare in un muro si prova a scivolare, se no resta com'era.
+  Gli ostacoli `low` (ringhiere, tavoli) non contano. USA = cambia capo con Marco, SALTA = divano
+  in piedi, GIÙ = rimettilo a posto. **Puzzle del cassone** (`c7/pack.ts`): incastro 5×9 su un canvas
+  (minigioco: puntatore finto mosso dal mouse; sul telefono si trascina), soluzione esatta nota
+  (pulsante AIUTO).
 - **Opzioni del capitolo sul Game** (tornano normali allo scarico): `g.touchMode` = pulsanti a
-  schermo speciali (`{fire, use, jump}`: testo o `null` per nasconderlo), `g.hideNameTags`,
+  schermo speciali (`{fire, use, jump, crouch}`: testo o `null` per nasconderlo), `g.hideNameTags`,
   `g.interactOff` (niente "parla con"/"usa"). Gli elementi HTML con classe `chapter-ui` spariscono
   da soli con il capitolo.
 
@@ -171,7 +181,8 @@ dialoghi, guida, furtività su più piani...): mai due capitoli che si giocano u
 Completati: capitolo 1 (San Scarabocchio), 2 (Il Parallelepipedo), 3 (Il Banco dei Pegni, Quadropoli),
 4 (Il Mercato Nero: poligono, asta, sparatoria a ondate con il Pastellone),
 5 (L'appuntamento: cena a portate con Martina, interesse, risposte a tempo, Marco da scacciare),
-6 (Consegna a domicilio: la macchina senza motore di Luca giù per 1300 metri, i Pastelli dietro).
+6 (Consegna a domicilio: la macchina senza motore di Luca giù per 1300 metri, i Pastelli dietro),
+7 (Il trasloco: mobili giù per la scala a U con Marco, incastro nel cassone del furgone).
 Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 
 ## Convenzioni per i contenuti

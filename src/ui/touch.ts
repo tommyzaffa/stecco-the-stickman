@@ -242,8 +242,10 @@ export class TouchUI {
     if (VIEW.needLock && inp.locked) inp.unlock();
     const playing = g.mode === 'play' && inp.locked && !g.hud.screenVisible;
     const talk = playing && g.dialogue.isOpen;
-    const dance = playing && !!g.minigame && !talk;
-    const free = playing && !talk && !dance && !g.hud.diarioOpen;
+    // le frecce servono solo nella sfida di ballo (altri minigiochi hanno i loro comandi)
+    const dance = playing && !!g.minigame && !talk && !!document.querySelector('.dance');
+    const busy = playing && !!g.minigame && !talk;
+    const free = playing && !talk && !busy && !g.hud.diarioOpen;
     const r = this.root.classList;
     r.toggle('on', playing);
     r.toggle('free', free);
@@ -270,7 +272,7 @@ export class TouchUI {
     const tm = g.touchMode;
     if (tm) {
       for (const id of ['crouch', 'parry', 'weapon', 'reload']) this.btn[id].classList.add('hide');
-      for (const id of ['fire', 'use', 'jump'] as const) {
+      for (const id of ['fire', 'use', 'jump', 'crouch'] as const) {
         const label = tm[id];
         if (label === undefined) continue;
         this.btn[id].classList.toggle('hide', label === null);
@@ -281,6 +283,7 @@ export class TouchUI {
     } else {
       if (this.btn.jump.textContent !== 'SALTA') this.btn.jump.textContent = 'SALTA';
       if (this.btn.use.textContent !== 'USA') this.btn.use.textContent = 'USA';
+      if (this.btn.crouch.textContent !== 'GIÙ') this.btn.crouch.textContent = 'GIÙ';
       this.btn.fire.classList.remove('hide');
     }
     if (this.btn.fire.textContent !== fireLabel) this.btn.fire.textContent = fireLabel;
