@@ -1,5 +1,6 @@
 import { Game, deserializeState, serializeState, type RawState } from './game';
 import { CHAPTERS } from '../chapters';
+import { DEMO } from '../chapters/demo';
 import { ACTIONS, QUALITY_LABEL, SETTINGS, bindKey, codeLabel, keyName, resetKeys, saveSettings, type Quality } from '../settings';
 import { TOUCH } from '../touch';
 import { ACCOUNT, authError, type Progress } from '../account';
@@ -13,7 +14,8 @@ import { ACCOUNT, authError, type Progress } from '../account';
 //    "Nuova partita" azzera tutto.
 //  - capitoli: si sblocca finendo la storia. Capitolo a scelta, con lo stretto necessario; finito
 //    il capitolo si torna alla lista, e la storia non cambia.
-//  - demo: senza account si gioca solo il capitolo 1 (senza salvare).
+//  - demo: "la pagina di prova", un percorso che insegna tutti i comandi (anche senza account).
+//    Non salva niente; alla fine si torna al menu.
 //  - test: ?cap=N, solo in sviluppo.
 // ---------------------------------------------------------------------------
 
@@ -59,7 +61,6 @@ export function setupFlow(g: Game) {
   const screen = g.hud.screen;
   let mode: Mode = 'story';
   let progress: Progress = { story: null, finished: false };
-  let pendingDemo: RawState | null = null; // la demo appena finita: diventa l'inizio della storia
   const show = (html: string, onClick: ((e: MouseEvent) => void) | null, kind: 'menu' | 'overlay' = 'overlay') => {
     screen.innerHTML = html;
     screen.className = `screen ${kind}`;
@@ -148,8 +149,17 @@ export function setupFlow(g: Game) {
     begin();
   };
 
+  // la demo: la pagina di prova (non è un capitolo della storia, non salva)
+  const playDemo = () => {
+    mode = 'demo';
+    g.resetState();
+    g.saveHook = null;
+    g.loadChapter(DEMO);
+    begin();
+  };
+
   // =========================================================================
-  // ACCESSO (con Firebase): email e password, Google, oppure la demo del capitolo 1
+  // ACCESSO (con Firebase): email e password, Google, oppure la demo
   // =========================================================================
   const loginScreen = (msg = '') => {
     g.mode = 'title';
@@ -177,7 +187,7 @@ export function setupFlow(g: Game) {
           <button class="link" data-a="forgot">Password dimenticata?</button>
           <div class="msg">${msg}</div>
           <div class="buttons menu-buttons demo">
-            <button data-a="demo">Prova il capitolo 1<small>senza account, senza salvare</small></button>
+            <button data-a="demo">Prova la demo<small>tutti i comandi in 3 minuti, senza account</small></button>
             ${DEV ? '<button data-a="local">Entra in locale<small>solo in sviluppo: salvataggi nel browser</small></button>' : ''}
           </div>
           <button class="link" data-a="privacy">Privacy</button>
@@ -217,7 +227,7 @@ export function setupFlow(g: Game) {
         } catch (err) {
           return loginScreen(authError(err));
         }
-        if (a === 'demo') return play('demo', 1, 'fresh');
+        if (a === 'demo') return playDemo();
         if (a === 'local') {
           ACCOUNT.useLocal();
           return afterLogin();
@@ -234,21 +244,13 @@ export function setupFlow(g: Game) {
     );
   };
 
-  // Appena dentro: se c'era una demo appena giocata e non hai ancora una storia, la storia parte da lì
+  // Appena dentro: si legge la storia salvata, poi il menu
   const afterLogin = async () => {
     try {
       progress = await ACCOUNT.load();
     } catch {
       progress = { story: null, finished: false };
       return loginScreen('Non riesco a leggere il salvataggio: controlla la connessione e riprova.');
-    }
-    if (pendingDemo) {
-      if (!progress.story) {
-        progress.story = { chapter: 2, state: pendingDemo };
-        ACCOUNT.save(progress).catch(() => {});
-        g.toast('Il capitolo 1 che hai giocato è salvato nella tua storia.', 'reward', 5000);
-      } else g.toast('Hai già una storia: la demo non la sostituisce.', 'info', 5000);
-      pendingDemo = null;
     }
     mainMenu();
   };
@@ -306,6 +308,7 @@ export function setupFlow(g: Game) {
             }
             <button class="${storyCh || capParam ? '' : 'primary'}" data-a="new">${story ? 'Nuova partita' : progress.finished ? 'Nuova storia' : 'Inizia la storia'}</button>
             ${chaptersOpen ? '<button data-a="chapters">Capitoli<small>gioca un capitolo a scelta</small></button>' : ''}
+            <button data-a="demo">Demo<small>tutti i comandi in 3 minuti</small></button>
             <button data-a="settings">Impostazioni</button>
           </div>
           <div class="menu-foot">Capitoli disegnati: ${CHAPTERS.length} su ${TOTAL_CHAPTERS}${
@@ -332,6 +335,7 @@ export function setupFlow(g: Game) {
           });
         }
         if (a === 'chapters') return chaptersMenu();
+        if (a === 'demo') return playDemo();
         if (a === 'settings') return settingsMenu(mainMenu);
       },
       'menu',
@@ -520,7 +524,7 @@ export function setupFlow(g: Game) {
                   : 'Il capitolo ricomincerà da capo.',
             yes: 'Sì, torna al menu',
             no: 'No, resto qui',
-            onYes: () => (mode === 'demo' ? loginScreen() : mode === 'chapters' ? chaptersMenu() : mainMenu()),
+            onYes: () => (mode === 'chapters' ? chaptersMenu() : mainMenu()),
             onNo: pauseMenu,
           });
         }
@@ -575,17 +579,13 @@ export function setupFlow(g: Game) {
         ACCOUNT.save(progress).catch(() => {});
       } else saveStory(next, serializeState(g.state));
     }
-    if (mode === 'demo') pendingDemo = serializeState(g.state);
     const stats = `<div class="stats-end">
           <div>Tempo: <b>${mins}m ${secs}s</b></div>
           <div>Livello: <b>${g.state.level}</b> · Monete: <b>${g.state.coins}</b></div>
           <div>Missioni secondarie: <b>${side}/${c.sideQuests.length}</b></div>
         </div>`;
     const buttons =
-      mode === 'demo'
-        ? `<div class="sub">Fine della demo. Per continuare la storia (e non perdere quello che hai fatto) serve un account.</div>
-          <button class="primary" data-a="account">Crea un account e continua</button>`
-        : mode === 'story'
+      mode === 'story'
           ? next > TOTAL_CHAPTERS
             ? `<div class="sub">Hai finito la storia! Adesso puoi rigiocare i capitoli che vuoi, o iniziarne una nuova.</div>
               <button class="primary" data-a="menu">Menu principale</button>`
@@ -596,6 +596,20 @@ export function setupFlow(g: Game) {
               }
               <button ${nextCh ? '' : 'class="primary" '}data-a="menu">Menu principale</button>`
           : `<button class="primary" data-a="list">Torna ai capitoli</button><button data-a="menu">Menu principale</button>`;
+    if (mode === 'demo') {
+      show(
+        `<div class="card paper">
+          <div class="title small">Demo finita</div>
+          <div class="sub">Adesso sai tutti i comandi. La storia ti aspetta.</div>
+          <div class="stats-end"><div>Tempo: <b>${mins}m ${secs}s</b></div></div>
+          <div class="buttons"><button class="primary" data-a="menu">Menu principale</button></div>
+        </div>`,
+        (e) => {
+          if (action(e)?.dataset.a === 'menu') mainMenu();
+        },
+      );
+      return;
+    }
     show(
       `<div class="card paper">
         <div class="title small">Capitolo ${c.num} completato</div>
@@ -608,7 +622,6 @@ export function setupFlow(g: Game) {
         const a = action(e)?.dataset.a;
         if (!a) return;
         if (a === 'next' && nextCh) return play('story', next, serializeState(g.state));
-        if (a === 'account') return loginScreen('Crea un account (o accedi): il capitolo 1 che hai appena giocato finisce nella tua storia.');
         if (a === 'list') return mode === 'test' ? mainMenu() : chaptersMenu();
         if (a === 'menu') return mainMenu();
       },

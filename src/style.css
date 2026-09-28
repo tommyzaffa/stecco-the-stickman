@@ -405,8 +405,9 @@ body.touch #hud .ammo, body.touch #hud .prompt { display: none !important; }
 .touch-ui .b-journal { left: calc(50% - 76px); width: 74px; font-size: 12px; }
 /* frecce del minigioco di ballo */
 .touch-ui .dpad { position: absolute; right: 28px; bottom: 24px; width: 210px; height: 150px; display: none; }
-.touch-ui.dance .dpad { display: block; }
-.touch-ui.dance .dpad .tb { display: flex; width: 64px; height: 64px; font-size: 26px; font-family: var(--hand); }
+.touch-ui.dancing .dpad { display: block; }
+.touch-ui.dancing .dpad .tb { display: flex; width: 64px; height: 64px; font-size: 26px; font-family: var(--hand); }
+.dance .key .arrow { width: 72px; height: 72px; }
 .touch-ui .d-forward { left: 73px; top: 0; }
 .touch-ui .d-left { left: 0; top: 43px; }
 .touch-ui .d-right { left: 146px; top: 43px; }

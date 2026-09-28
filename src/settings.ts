@@ -142,10 +142,10 @@ export function codeLabel(code: string) {
 
 // Etichette dei pulsanti a schermo (telefono)
 const TOUCH_LABELS: Record<Action, string> = {
-  forward: '▲',
-  back: '▼',
-  left: '◀',
-  right: '▶',
+  forward: '▲\uFE0E',
+  back: '▼\uFE0E',
+  left: '◀\uFE0E',
+  right: '▶\uFE0E',
   run: 'joystick in fondo',
   jump: 'SALTA',
   crouch: 'GIÙ',

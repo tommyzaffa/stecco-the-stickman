@@ -20,6 +20,12 @@ const FIRE_TAP_MS = 450; // sul pulsante si può tenere il dito un attimo di pi�
 const TAP_MOVE = 12;
 const STICK_R = 56;
 
+// Freccia disegnata a mano (per il ballo): niente caratteri tipo ▶, che sul telefono diventano emoji
+export function arrowSvg(dir: Action | string, size = 34) {
+  const rot = dir === 'left' ? -90 : dir === 'right' ? 90 : dir === 'back' ? 180 : 0;
+  return `<svg class="arrow" width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true"><g transform="rotate(${rot} 20 20)" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 34 C19.6 26 20.4 16 19.8 8"/><path d="M9 18.5 L19.8 7 L31 17.5"/></g></svg>`;
+}
+
 const el = (tag: string, cls: string, parent: HTMLElement, html = '') => {
   const e = document.createElement(tag);
   e.className = cls;
@@ -114,10 +120,10 @@ export class TouchUI {
     this.tap(this.button('weapon', 'ARMA', 'b-weapon'), () => (inp.cycleWeapon = true));
     this.tap(this.button('journal', 'DIARIO', 'b-journal'), () => inp.press('journal'));
     this.tap(this.button('pause', '❚❚', 'b-pause'), () => inp.unlock());
-    // frecce per il minigioco di ballo
+    // frecce per il minigioco di ballo (disegnate: mai emoji)
     const pad = el('div', 'dpad', this.root);
-    for (const [a, label] of [['forward', '▲'], ['left', '◀'], ['right', '▶'], ['back', '▼']] as [Action, string][]) {
-      this.tap(el('div', `tb d-${a}`, pad, label), () => inp.press(a));
+    for (const a of ['forward', 'left', 'right', 'back'] as Action[]) {
+      this.tap(el('div', `tb d-${a}`, pad, arrowSvg(a)), () => inp.press(a));
     }
     this.btn.dpad = pad;
 
@@ -242,7 +248,7 @@ export class TouchUI {
     r.toggle('on', playing);
     r.toggle('free', free);
     r.toggle('talk', talk);
-    r.toggle('dance', dance);
+    r.toggle('dancing', dance);
     const p = g.player;
     // sul telefono le munizioni stanno dentro il pulsante RICARICA (niente riquadro a parte)
     this.btn.reload.classList.toggle('hide', p.weapon !== 'pistol');

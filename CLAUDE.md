@@ -118,6 +118,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   (blocco rotazione spento) il gioco va in pausa con l'avviso "Attiva il blocco rotazione"
   (`VIEW.needLock`; `?iphone=1` lo simula). Android, iPad e schermata Home: nessun blocco.
 
+- **Mai emoji** (sul telefono ▶ ◀ e simili diventano emoji colorate): frecce e simboli vanno
+  disegnati (SVG, es. `arrowSvg()` in `ui/touch.ts`); nei testi, se proprio serve, con `\uFE0E`.
 - **Mai `confirm()`/`alert()` del browser**: per le conferme c'è `ask()` in `flow.ts` (foglietto
   con Sì/No). Sul telefono i clic simulati dopo un tocco vanno ignorati (`Input` li scarta):
   un tocco = un'azione.
@@ -134,8 +136,12 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   la **modalità Capitoli**: un capitolo a scelta con il suo `startState` (**solo lo stretto
   necessario**); finito, si torna alla lista e la storia non cambia. **Per ora (gioco in
   lavorazione) `OPEN_CHAPTERS = true` in `flow.ts` la apre a tutti: all'uscita va rimesso a false.**
-- **Demo**: senza account si gioca solo il capitolo 1, senza salvare; accedendo dopo la demo,
-  quel capitolo diventa l'inizio della storia.
+- **Demo** (`src/chapters/demo/`, `DEMO`, non sta in `CHAPTERS`): "la pagina di prova", un percorso
+  di circa 3 minuti che insegna un comando alla volta con il Tutorial (guarda, cammina, corri a
+  tempo, salta la pozzanghera, accovacciati sotto la sbarra, parla e scegli, monete, diario,
+  colpisci, para, righello, pistola e sagome, ricarica). Si apre dal menu, anche senza account,
+  non salva niente e alla fine torna al menu. Se si aggiunge un comando nuovo al gioco, va
+  aggiunta una tappa.
 - All'avvio: schermata di accesso (o menu principale, se sei già dentro). Nessun capitolo è
   caricato finché non si inizia (`Game.closeChapter`). Mai `confirm()` del browser: `ask()`.
 - **Impostazioni** (`src/settings.ts`): tasti riassegnabili, sensibilità del mouse, volumi.

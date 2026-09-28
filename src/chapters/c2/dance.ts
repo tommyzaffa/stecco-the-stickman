@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import type { Game } from '../../game/game';
 import type { NPC } from '../../entities/npc';
 import { SETTINGS, keyName } from '../../settings';
+import { TOUCH } from '../../touch';
+import { arrowSvg } from '../../ui/touch';
 
 // ---------------------------------------------------------------------------
 // Sfida di ballo: compare un tasto (W A S D), un cerchio rosso si stringe e va
@@ -9,8 +11,9 @@ import { SETTINGS, keyName } from '../../settings';
 // ---------------------------------------------------------------------------
 
 // i quattro tasti di movimento (quelli scelti nelle impostazioni)
-const keys = (): [string, string][] =>
-  (['forward', 'left', 'back', 'right'] as const).map((a) => [SETTINGS.keys[a], keyName(a)]);
+// sul telefono al posto del nome del tasto c'è la freccia disegnata (terzo elemento: la direzione)
+const keys = (): [string, string, string][] =>
+  (['forward', 'left', 'back', 'right'] as const).map((a) => [SETTINGS.keys[a], keyName(a), a]);
 const STEPS = 10;
 const NEED = 7;
 const WINDOW = 0.2; // secondi di tolleranza
@@ -77,12 +80,18 @@ export function startDanceOff(g: Game, rival: NPC, onEnd: (won: boolean) => void
     if (i === 0 && before > 2 * beat) {
       const n = Math.ceil((before - 2 * beat) / beat);
       kEl.textContent = n > 0 ? String(n) : 'VIA!';
+      kEl.dataset.dir = '';
       ring.style.setProperty('--s', '1');
       ring.style.setProperty('--o', '0');
-      info.textContent = 'Rey ti sfida! Premi il tasto quando il cerchio si chiude.';
+      info.textContent = TOUCH ? 'Rey ti sfida! Tocca la freccia giusta quando il cerchio si chiude.' : 'Rey ti sfida! Premi il tasto quando il cerchio si chiude.';
       return;
     }
-    kEl.textContent = seq[i][1];
+    if (TOUCH) {
+      if (kEl.dataset.dir !== seq[i][2]) {
+        kEl.innerHTML = arrowSvg(seq[i][2], 72);
+        kEl.dataset.dir = seq[i][2];
+      }
+    } else kEl.textContent = seq[i][1];
     const k = Math.max(0, before) / (2 * beat);
     ring.style.setProperty('--s', String(1 + k * 1.6));
     ring.style.setProperty('--o', String(0.9 - k * 0.6));

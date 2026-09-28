@@ -146,7 +146,13 @@ function startDrive(g: Game) {
   const verde = g.npc('pVerdeGiornale');
   g.after(1.4, () => {
     verde.setBehavior({ type: 'stand' });
-    if (verde.body instanceof Stickman) verde.body.action = 'wave';
+    if (verde.body instanceof Stickman) {
+      verde.body.action = 'wave';
+      verde.baseAction = 'wave';
+      // il giornale vola via
+      const paper = verde.body.torso.getObjectByName('giornale');
+      if (paper) paper.visible = false;
+    }
     verde.say('SONO QUI! SONO IN MACCHINA!!', 3);
     g.audio.alert();
     startChase(g);

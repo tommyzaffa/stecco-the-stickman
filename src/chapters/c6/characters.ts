@@ -1,6 +1,9 @@
+import * as THREE from 'three';
 import type { Game } from '../../game/game';
+import { Stickman } from '../../entities/stickman';
 import type { Dialogue } from '../../game/dialogue';
-import { CERA } from '../../render/palette';
+import { CERA, THEME } from '../../render/palette';
+import { HAND_FONT, MARKER_FONT } from '../../render/textures';
 import { TOUCH } from '../../touch';
 import { ROAD, S } from './road';
 import { DRIVE } from './drive';
@@ -273,6 +276,18 @@ export function createCharacters(g: Game) {
     },
   });
   g.npc('pVerdeGiornale').homeRot = Math.PI / 2;
+  // il giornale: al contrario, con due buchi per gli occhi
+  const verde = g.npc('pVerdeGiornale').body;
+  if (verde instanceof Stickman) {
+    const paper = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.72, 0.52),
+      new THREE.MeshBasicMaterial({ map: newspaperTexture(), transparent: true, alphaTest: 0.5, side: THREE.DoubleSide }),
+    );
+    paper.name = 'giornale';
+    paper.position.set(0, 0.8, 0.3);
+    paper.rotation.x = -0.12;
+    verde.torso.add(paper);
+  }
 
   g.addNpc({
     id: 'bimbo',
@@ -452,4 +467,52 @@ function pinaDialogue(): Dialogue {
       },
     },
   };
+}
+
+// Il giornale del Pastello: "La Gazzetta Quadrata", tenuto al contrario, coi buchi per gli occhi
+function newspaperTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 184;
+  const ctx = c.getContext('2d')!;
+  ctx.translate(128, 92);
+  ctx.rotate(Math.PI); // al contrario
+  ctx.translate(-128, -92);
+  ctx.fillStyle = '#f4f0e2';
+  ctx.fillRect(0, 0, 256, 184);
+  ctx.strokeStyle = THEME.inkHex;
+  ctx.lineWidth = 5;
+  ctx.strokeRect(3, 3, 250, 178);
+  ctx.fillStyle = THEME.inkHex;
+  ctx.font = `30px ${MARKER_FONT}`;
+  ctx.textAlign = 'center';
+  ctx.fillText('LA GAZZETTA', 128, 38);
+  ctx.font = `20px ${HAND_FONT}`;
+  ctx.fillText('QUADRATA', 128, 60);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(14, 70);
+  ctx.lineTo(242, 70);
+  ctx.stroke();
+  // colonne di righe scarabocchiate
+  for (let col = 0; col < 3; col++) {
+    for (let r = 0; r < 8; r++) {
+      const x = 16 + col * 80, y = 84 + r * 11;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 62 - ((r * 7 + col * 3) % 18), y);
+      ctx.stroke();
+    }
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  // i buchi (dove ci sono gli occhi del lettore)
+  ctx.globalCompositeOperation = 'destination-out';
+  for (const x of [108, 148]) {
+    ctx.beginPath();
+    ctx.arc(x, 80, 9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }
