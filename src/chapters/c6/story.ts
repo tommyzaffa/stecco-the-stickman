@@ -49,7 +49,7 @@ export function setupStory(g: Game) {
     use: (g) => g.talk(narr(['Un righello alto sette metri. "AL RIGHELLO, CHE CI HA RESI DRITTI".', 'Qualcuno ci ha segnato sopra la propria altezza. Tutti uguali. Tutti un metro e novantatré.'])),
   });
   g.addInteractable({
-    pos: new THREE.Vector3(0, 1, -30),
+    pos: new THREE.Vector3(0, 1, -29),
     radius: 2.6,
     label: () => (DRIVE.active ? null : 'Via della Cera'),
     use: (g) => g.talk(narr(['Una transenna. Dall\'altra parte, il quartiere dei Pastelli a Cera.', 'Dopo ieri sera, meglio non passarci. Nemmeno in punta di piedi. Soprattutto non in punta.'])),

@@ -38,6 +38,8 @@ export const REFS = {
   crumbs: null as THREE.Group | null,
   car: null as CarModel | null,
   scatola: null as THREE.Group | null,
+  transenna: null as THREE.Object3D | null,
+  transennaCol: null as import('../../world/collision').Rect | null,
   lmD: null as import('three/examples/jsm/lines/LineMaterial.js').LineMaterial | null,
 };
 
@@ -741,13 +743,27 @@ function buildPiazza(b: WorldBuilder, fill: THREE.Material) {
   // nord: due blocchi e in mezzo la Via della Cera (da lì arrivano i Pastelli)
   block(-23, -40, -5, -30, 10, 'n', { door: -14, sign: 'Pasticceria Squadrata' });
   block(5, -40, 23, -30, 12, 'n', { door: 12 });
-  // la via dei Pastelli (chiusa con una transenna, per chi va a piedi)
+  // la via dei Pastelli (chiusa con una transenna, per chi va a piedi): ha il suo pavimento e un fondo
   block(-12, -80, -5, -40, 9, 'e');
   block(5, -80, 12, -40, 11, 'w');
-  for (let x = -4.6; x <= 4.6; x += 0.9) Sk.seg(x, 0, -31, x, 1.0, -31, { over: 0.02 });
-  Sk.seg(-5, 1.0, -31, 5, 1.0, -31).seg(-5, 0.55, -31, 5, 0.55, -31);
-  col.rect(-5, -31.3, 5, -30.7);
-  sign('Via della Cera\nquartiere dei Pastelli', -3.4, 2.4, -30.9, 2.6, 0.9, '+z', { font: HAND_FONT });
+  block(-6, -88, 6, -80, 10, 's');
+  const street = new THREE.PlaneGeometry(10.4, 52);
+  street.rotateX(-Math.PI / 2);
+  const sm = new THREE.Mesh(street, fill);
+  sm.position.set(0, 0, -56);
+  b.group.add(sm);
+  // la transenna sta dentro la piazza (i Pastelli la spostano quando parte l'inseguimento)
+  const tz = -29.4;
+  const tr = new Sketch();
+  tr.style = { jitter: 0.02, over: 0.03 };
+  for (let x = -4.6; x <= 4.6; x += 0.9) tr.seg(x, 0, tz, x, 1.0, tz, { over: 0.02 });
+  tr.seg(-5, 1.0, tz, 5, 1.0, tz).seg(-5, 0.55, tz, 5, 0.55, tz);
+  const trGroup = tr.build(b.lineMat(2.2), fill);
+  b.group.add(trGroup);
+  REFS.transenna = trGroup;
+  REFS.transennaCol = col.rect(-5, tz - 0.3, 5, tz + 0.3);
+  Sk.seg(-5.6, 0, tz + 0.2, -5.6, 2.9, tz + 0.2, { over: 0.03 });
+  sign('Via della Cera\nquartiere dei Pastelli', -4.1, 2.45, tz + 0.25, 2.6, 0.9, '+z', { font: HAND_FONT });
   // ovest e est
   block(-33, -30, -23, -8, 9, 'w');
   block(-33, -8, -23, 20, 11, 'w', { door: 6 });

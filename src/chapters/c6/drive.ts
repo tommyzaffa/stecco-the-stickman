@@ -547,6 +547,9 @@ export function startChase(g: Game) {
     n.controlled = true;
   }
   REFS.scatola!.visible = true;
+  // la transenna della Via della Cera: i Pastelli la tolgono di mezzo
+  if (REFS.transenna) REFS.transenna.visible = false;
+  if (REFS.transennaCol) g.world.colliders.remove(REFS.transennaCol);
 }
 
 function chasePoint(s: number, d: number) {

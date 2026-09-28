@@ -132,7 +132,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 - **Storia** (una per account): si salva all'inizio di ogni capitolo (`Game.saveHook`, stato +
   capitolo). "Continua" riparte da lì, "Nuova partita" azzera. Finiti i 20 capitoli si sblocca
   la **modalità Capitoli**: un capitolo a scelta con il suo `startState` (**solo lo stretto
-  necessario**); finito, si torna alla lista e la storia non cambia.
+  necessario**); finito, si torna alla lista e la storia non cambia. **Per ora (gioco in
+  lavorazione) `OPEN_CHAPTERS = true` in `flow.ts` la apre a tutti: all'uscita va rimesso a false.**
 - **Demo**: senza account si gioca solo il capitolo 1, senza salvare; accedendo dopo la demo,
   quel capitolo diventa l'inizio della storia.
 - All'avvio: schermata di accesso (o menu principale, se sei già dentro). Nessun capitolo è

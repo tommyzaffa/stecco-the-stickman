@@ -19,6 +19,9 @@ import { ACCOUNT, authError, type Progress } from '../account';
 
 const TOTAL_CHAPTERS = 20;
 const DEV = import.meta.env.DEV;
+// TEMPORANEO: finché il gioco è in lavorazione i capitoli si possono scegliere anche senza aver
+// finito la storia (per provarli). All'uscita va rimesso a false.
+const OPEN_CHAPTERS = true;
 type Mode = 'story' | 'chapters' | 'demo' | 'test';
 
 // Riepilogo dei comandi con i tasti scelti nelle impostazioni (o i pulsanti a schermo sul telefono)
@@ -284,7 +287,7 @@ export function setupFlow(g: Game) {
     if (!ACCOUNT.loggedIn) return loginScreen();
     const story = progress.story;
     const storyCh = story ? CHAPTERS[story.chapter - 1] : null;
-    const chaptersOpen = progress.finished || DEV;
+    const chaptersOpen = progress.finished || DEV || OPEN_CHAPTERS;
     show(
       `<div class="menu-page">
         ${WAVING_STICKMAN}
