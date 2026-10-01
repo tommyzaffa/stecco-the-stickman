@@ -177,6 +177,9 @@ export class Game {
   onChapterComplete: ((g: Game, next: number) => void) | null = null;
   onGameOver: ((title: string, text: string, retry: () => void) => void) | null = null;
   onLine: ((l: ParsedLine) => void) | null = null; // ogni nuova riga di dialogo (per effetti sonori a tempo)
+  // ogni passo del giocatore (capitolo 10: il rumore); restituisce il volume del passo (1 = normale)
+  onStep: ((running: boolean, crouching: boolean) => number) | null = null;
+  onLand: (() => void) | null = null; // atterrato da un salto
 
   touch: TouchUI | null = null;
   // comandi a schermo speciali di un capitolo (capitolo 6: in macchina). null = quelli normali.
@@ -303,6 +306,8 @@ export class Game {
     this.onKo = () => {};
     this.onFaint = null;
     this.onLine = null;
+    this.onStep = null;
+    this.onLand = null;
     this.clues = {};
     this.combat.restricted = () => false;
     this.combat.nav = [];
@@ -801,9 +806,12 @@ export class Game {
     const ev = this.player.update(dt, inp, this.world.colliders, canMove);
     if (ev.hit) this.resolveHit();
     const indoor = this.world.isIndoor(this.player.pos);
-    if (ev.stepped) this.audio.footstep(ev.running, indoor, this.player.crouching);
+    if (ev.stepped) this.audio.footstep(ev.running, indoor, this.player.crouching, this.onStep?.(ev.running, this.player.crouching) ?? 1);
     if (ev.jumped) this.audio.jump();
-    if (ev.landed) this.audio.land();
+    if (ev.landed) {
+      this.audio.land();
+      this.onLand?.();
+    }
     this.audio.update(dt, { pos: this.player.pos, yaw: this.player.yaw, indoor });
 
     // PNG
@@ -842,7 +850,8 @@ export class Game {
       p.sprite.position.y += Math.sin(this.time * 3 + p.sprite.position.x) * 0.002;
       if (p.kind === 'coin') p.sprite.scale.x = 0.5 * Math.max(0.12, Math.abs(Math.cos(this.time * 2.5 + p.sprite.position.z)));
       const d = Math.hypot(pp.x - p.sprite.position.x, pp.z - p.sprite.position.z);
-      if (d < 1.1 && playing) {
+      // (solo al tuo piano: nei palazzi a più piani le monete di sopra non si prendono da sotto)
+      if (d < 1.1 && playing && Math.abs(p.sprite.position.y - pp.y - 0.9) < 1.7) {
         // la salute piena non si spreca
         if (p.kind === 'heal' && this.state.hp >= this.state.maxHp) continue;
         p.taken = true;

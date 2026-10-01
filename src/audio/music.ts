@@ -786,6 +786,25 @@ export const NOTTE: Track = {
   },
 };
 
+// "Notturno": in punta di piedi (pizzicato in la minore, contrabbasso che cammina piano, celesta)
+const NOTT_BASS = [45, 52, 48, 52, 50, 57, 53, 57, 44, 52, 47, 52, 45, 52, 40, 44];
+const NOTT_MEL = [76, _, 72, _, 74, _, 71, _, 72, _, 69, _, 0, 0, 0, 0, 77, _, 74, _, 76, _, 72, _, 71, _, 68, _, 0, 0, 0, 0];
+export const NOTTURNO: Track = {
+  bpm: 96,
+  stepsPerBeat: 2,
+  swing: 0.04,
+  play(m, step, t) {
+    // un passo sì e uno no, come chi cammina in punta di piedi
+    if (step % 2 === 0) m.pluck(mtof(NOTT_BASS[(step / 2) % 16] - 12), t, 0.06, 0.25);
+    if (step % 4 === 2) m.hit(t, 0.012, 5200, 'highpass', 0.04, 0.6);
+    // la celesta, ogni tanto (dalla seconda volta)
+    if (Math.floor(step / 64) % 2 === 1) {
+      const n = NOTT_MEL[step % 32];
+      if (n > 0) m.pluck(mtof(n), t, 0.022, 0.5);
+    }
+  },
+};
+
 export const TRACKS = {
   paese: PAESE,
   club: disco(false),
@@ -802,5 +821,6 @@ export const TRACKS = {
   pub: pub(false),
   pubRotto: pub(true),
   notte: NOTTE,
+  notturno: NOTTURNO,
 };
 export type TrackName = keyof typeof TRACKS;

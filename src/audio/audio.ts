@@ -247,8 +247,8 @@ export class Sound {
   }
 
   // --- giocatore --------------------------------------------------------------------
-  footstep(run: boolean, indoor: boolean, crouch = false) {
-    const v = (run ? 1.3 : 1) * (crouch ? 0.4 : 1);
+  footstep(run: boolean, indoor: boolean, crouch = false, vol = 1) {
+    const v = (run ? 1.3 : 1) * (crouch ? 0.4 : 1) * vol;
     if (indoor) {
       this.tone(95 + Math.random() * 20, 0.06, { to: 60, vol: 0.12 * v });
       this.noise(0.05, 0.05 * v, { type: 'bandpass', freq: 900, q: 1.5 });
@@ -781,6 +781,43 @@ export class Sound {
   scratch() {
     this.noise(0.25, 0.08, { type: 'bandpass', freq: 900, to: 2600, q: 2 });
     this.tone(180, 0.25, { type: 'sawtooth', to: 420, vol: 0.03 });
+  }
+
+  // --- il condominio (capitolo 10) ------------------------------------------------------
+  // asse del pavimento che scricchiola (k = quanto forte)
+  floorCreak(k = 1) {
+    const f = 380 + Math.random() * 160;
+    this.tone(f, 0.22 + 0.1 * k, { type: 'sawtooth', to: f * 0.62, vol: 0.03 * k, vibrato: [24, 30], filter: { type: 'bandpass', freq: 1100, q: 2.5 } });
+    this.noise(0.06, 0.02 * k, { type: 'bandpass', freq: 2400, q: 3 });
+  }
+
+  // paperella di gomma pestata
+  squeak() {
+    this.tone(1300, 0.16, { type: 'square', to: 1900, vol: 0.05, filter: { type: 'lowpass', freq: 3500 } });
+    this.tone(1900, 0.12, { type: 'square', to: 1200, vol: 0.04, delay: 0.15, filter: { type: 'lowpass', freq: 3500 } });
+  }
+
+  // la goccia del rubinetto: plic (vol per la distanza)
+  drip(vol = 1) {
+    this.tone(1400 + Math.random() * 300, 0.07, { to: 700, vol: 0.05 * vol });
+  }
+
+  // il neonato: uèèè
+  cry() {
+    for (let i = 0; i < 3; i++) this.tone(520, 0.55, { type: 'sawtooth', to: 430, vol: 0.05, delay: i * 0.65, vibrato: [7, 25], filter: { type: 'bandpass', freq: 1400, q: 1.5 } });
+  }
+
+  // il signor Chiodo batte sul muro (col martello): TUM TUM TUM
+  thumps(n = 3) {
+    for (let i = 0; i < n; i++) {
+      this.tone(70, 0.16, { to: 45, vol: 0.2, delay: i * 0.32 });
+      this.noise(0.05, 0.08, { type: 'lowpass', freq: 400 }, { delay: i * 0.32 });
+    }
+  }
+
+  // ringhio sommesso (il cane si sta svegliando)
+  growl() {
+    this.tone(95, 0.6, { type: 'sawtooth', to: 80, vol: 0.05, vibrato: [18, 12], filter: { type: 'lowpass', freq: 500 } });
   }
 
   // --- ambiente ----------------------------------------------------------------------

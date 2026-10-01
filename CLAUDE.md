@@ -30,7 +30,7 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
     carta millimetrata: `grid.major` = una riga più marcata ogni N, `RIGHE` quaderno a righe:
     `grid.rows` = solo righe orizzontali, anche sui muri, `PUNTINI` carta a puntini: `grid.dots` =
     solo un puntino a ogni incrocio, `PENTAGRAMMA` carta da musica: `grid.staff` = righe a gruppi di
-    cinque). `CERA` = colori dei Pastelli a Cera.
+    cinque, `CARBONE` carta carbone blu notte con l'inchiostro azzurro). `CERA` = colori dei Pastelli a Cera.
     Il tema va impostato prima di costruire un capitolo (lo fa `Game.loadChapter`).
 - `src/world/` — `builder.ts` (`WorldBuilder`: muri, porte, edifici, cartelli, neon, alberi,
   `ceiling` per gli interni, `wallText` per le scritte sui muri...; `finish()` restituisce un
@@ -52,11 +52,12 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   bip, sorgenti nel mondo (`addEmitter`), filtro "musica ovattata" (`setMusicMuffle`);
   `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`, `indagine`, `mercato`, `sparatoria`,
   `cena`, `violino`, `consegna`, `trasloco`, `sagra`, `giostra`, `pub`, `pubRotto` (disco rigato che
-  salta), `notte`; strumento `accordion` = fisarmonica).
+  salta), `notte`, `notturno` (in punta di piedi); strumento `accordion` = fisarmonica).
   Suoni della macchina (capitolo 6): `car(v, freno, sbandata)` continuo, `crash`, `bump`, `scrape`,
   `horn`, `wiper`, `bleat`, `glow`, `erase`. Sagra (capitolo 8): `clang`, `canDrop`, `tonk`, `splash`,
   `plop`, `ding`, `tokens`, `creak`. Pub (capitolo 9): `dart(nelSughero)`, `fizz`, `glug`, `hic`,
-  `clink`, `scratch`.
+  `clink`, `scratch`. Condominio (capitolo 10): `floorCreak`, `squeak`, `drip`, `cry`, `thumps`, `growl`;
+  `footstep(..., volume)`.
   L'AudioContext si sblocca solo con un click (schermata del titolo).
 
 ## Sistemi riusabili
@@ -106,7 +107,16 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   Il mondo è a pezzi da 100 m (`REFS.chunks`) e ciò che è lontano non si disegna.
 - **Pavimento a quota variabile**: `player.floor` (default 0), da aggiornare a ogni frame dal
   capitolo (capitolo 6 sotto lo zero, capitolo 7 scale e primo piano con `floorAt()`). Le collisioni
-  restano 2D: i due piani non devono avere zone calpestabili sovrapposte.
+  sono 2D: o i piani non hanno zone calpestabili sovrapposte (capitolo 7), oppure **piani sovrapposti**
+  (capitolo 10): `col.tag = k` mentre si costruisce il piano k (i suoi ostacoli valgono solo lì) e il
+  capitolo mette `colliders.level` = il piano su cui sei; sulle scale a U impilate `floorAt(x, z, y)`
+  sceglie la rampa più vicina all'altezza a cui sei. Le monete si prendono solo al proprio piano.
+- **Rumore e vicini che dormono** (capitolo 10, `c10/noise.ts`): `g.onStep(corsa, accovacciato)` a ogni
+  passo (restituisce il volume del passo) e `g.onLand`; il rumore dipende da pavimento (`PATCHES`: assi
+  che scricchiolano segnate in giallo, tappeti e cartone muti; gradini al centro o vicino al muro) e
+  andatura; arriva ai vicini attenuato da distanza, porte e piani; ognuno ha una sveglia 0..1 che scende
+  da sola (fumetti sopra le porte con `g.worldBubble`, barra in alto); a 1 game over e si riprova
+  dall'ultimo pianerottolo. Oggetti per terra (secchio, paperelle) fanno rumore una volta se urtati.
 - **Portare i mobili** (capitolo 7, `c7/carry.ts`): `player.carrying` (piano, niente salti, pugni,
   parate e armi; `player.speedMul`). Il mobile è una sagoma di rettangoli davanti a te che gira con
   la visuale; se una mossa lo farebbe entrare in un muro si prova a scivolare, se no resta com'era.
@@ -220,7 +230,8 @@ Completati: capitolo 1 (San Scarabocchio), 2 (Il Parallelepipedo), 3 (Il Banco d
 6 (Consegna a domicilio: la macchina senza motore di Luca giù per 1300 metri, i Pastelli dietro),
 7 (Il trasloco: mobili giù per la scala a U con Marco, incastro nel cassone del furgone),
 8 (La sagra: bancarelle a minigiochi e gettoni, la ruota panoramica con Martina, la fontana ridisegnata),
-9 (Da Dario: quiz a squadre, Gazzosa Gigante e capogiro, freccette contro Barnie, il vassoio, a casa a piedi).
+9 (Da Dario: quiz a squadre, Gazzosa Gigante e capogiro, freccette contro Barnie, il vassoio, a casa a piedi),
+10 (Il condominio: di notte, quattro piani sovrapposti, il pacco al 3° senza svegliare nessuno).
 Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 
 ## Convenzioni per i contenuti

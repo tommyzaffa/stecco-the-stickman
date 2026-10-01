@@ -1,17 +1,22 @@
 import type * as THREE from 'three';
 
 // Collisioni 2D sul piano XZ: il mondo è piatto, basta e avanza.
-export interface Rect { x0: number; z0: number; x1: number; z1: number; noSight?: boolean; low?: boolean; h?: number }
-export interface Circle { x: number; z: number; r: number }
+// lv: il piano a cui appartiene l'ostacolo (palazzi a più piani sovrapposti, capitolo 10): conta
+// solo quando `Colliders.level` è quel piano. Senza lv vale per tutti i piani.
+export interface Rect { x0: number; z0: number; x1: number; z1: number; noSight?: boolean; low?: boolean; h?: number; lv?: number }
+export interface Circle { x: number; z: number; r: number; lv?: number }
 
 export class Colliders {
   rects: Rect[] = [];
   circles: Circle[] = [];
+  tag: number | undefined = undefined; // se impostato, i nuovi ostacoli appartengono a quel piano
+  level = 0; // il piano su cui si sta (lo aggiorna il capitolo)
 
   // noSight: blocca il passaggio ma non la vista (es. banconi bassi, cordoni)
   rect(x0: number, z0: number, x1: number, z1: number, noSight = false) {
     const r: Rect = { x0: Math.min(x0, x1), z0: Math.min(z0, z1), x1: Math.max(x0, x1), z1: Math.max(z0, z1) };
     if (noSight) r.noSight = true;
+    if (this.tag !== undefined) r.lv = this.tag;
     this.rects.push(r);
     return r;
   }
@@ -27,7 +32,8 @@ export class Colliders {
   }
 
   circle(x: number, z: number, r: number) {
-    const c = { x, z, r };
+    const c: Circle = { x, z, r };
+    if (this.tag !== undefined) c.lv = this.tag;
     this.circles.push(c);
     return c;
   }
@@ -42,6 +48,7 @@ export class Colliders {
   blocked(ax: number, az: number, bx: number, bz: number, crouching = false, minSize = 0.2) {
     const dx = bx - ax, dz = bz - az;
     for (const r of this.rects) {
+      if (r.lv !== undefined && r.lv !== this.level) continue;
       // ostacoli bassi o minuscoli (es. gambe dei tavoli) non contano
       if (r.x1 - r.x0 < minSize && r.z1 - r.z0 < minSize) continue;
       if (r.noSight || (r.low && !crouching)) continue;
@@ -70,6 +77,7 @@ export class Colliders {
   resolve(p: THREE.Vector3, radius: number) {
     for (let iter = 0; iter < 2; iter++) {
       for (const r of this.rects) {
+        if (r.lv !== undefined && r.lv !== this.level) continue;
         if (p.x < r.x0 - radius || p.x > r.x1 + radius || p.z < r.z0 - radius || p.z > r.z1 + radius) continue;
         const cx = Math.max(r.x0, Math.min(p.x, r.x1));
         const cz = Math.max(r.z0, Math.min(p.z, r.z1));
@@ -93,6 +101,7 @@ export class Colliders {
         }
       }
       for (const c of this.circles) {
+        if (c.lv !== undefined && c.lv !== this.level) continue;
         const dx = p.x - c.x, dz = p.z - c.z;
         const min = radius + c.r;
         const d2 = dx * dx + dz * dz;

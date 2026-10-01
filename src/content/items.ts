@@ -5,7 +5,8 @@ export type ItemId =
   | 'lettere' | 'torta' | 'freccetta'
   | 'album' | 'briciola'
   | 'tappoStella' | 'pesce' | 'fischietto' | 'palloncino' | 'orsetto'
-  | 'sottobicchiereOro' | 'mezzoSottobicchiere';
+  | 'sottobicchiereOro' | 'mezzoSottobicchiere'
+  | 'pantofole' | 'letteraRighello' | 'paccoStecco';
 
 export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolean }> = {
   pacco: {
@@ -127,5 +128,18 @@ export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolea
   mezzoSottobicchiere: {
     name: 'Mezzo sottobicchiere',
     desc: 'Dal tavolo in fondo del pub. L\'altra metà non è rotta: non c\'è. Profuma di fragola.',
+  },
+  // capitolo 10: il condominio
+  pantofole: {
+    name: 'Pantofole di feltro',
+    desc: 'Regalo di Nonna Pina, la vicina. Senza piedi non si indossano: si calpestano. Ma i passi fanno meno rumore.',
+  },
+  letteraRighello: {
+    name: 'Lettera per i Righello',
+    desc: 'Finita nella tua cassetta. Interno 8, 2° piano. Sulla busta: "URGENTE (ma non di notte)".',
+  },
+  paccoStecco: {
+    name: 'Il pacco del trasloco',
+    desc: 'La tua roba. Dentro c\'è il cuscino: senza, non si dorme. Il corriere l\'ha lasciato all\'interno 12.',
   },
 };

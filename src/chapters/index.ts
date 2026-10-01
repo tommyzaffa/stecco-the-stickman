@@ -8,6 +8,7 @@ import { chapter6 } from './c6';
 import { chapter7 } from './c7';
 import { chapter8 } from './c8';
 import { chapter9 } from './c9';
+import { chapter10 } from './c10';
 
 // Tutti i capitoli, in ordine.
-export const CHAPTERS: Chapter[] = [chapter1, chapter2, chapter3, chapter4, chapter5, chapter6, chapter7, chapter8, chapter9];
+export const CHAPTERS: Chapter[] = [chapter1, chapter2, chapter3, chapter4, chapter5, chapter6, chapter7, chapter8, chapter9, chapter10];

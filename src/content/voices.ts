@@ -137,3 +137,10 @@ Object.assign(VOICES, {
   righetti: { base: 160, type: 'square', spread: 4, every: 2 },
   mamma: { base: 330, type: 'triangle', spread: 5, every: 2, vibrato: 6 },
 });
+
+// Capitolo 10
+Object.assign(VOICES, {
+  gufo: { base: 150, type: 'sine', spread: 3, every: 3, vol: 0.05 },
+  portinaia: { base: 300, type: 'square', spread: 6, every: 2, vol: 0.045 },
+  biscotto: { base: 300, type: 'square', spread: 4, every: 2 },
+});

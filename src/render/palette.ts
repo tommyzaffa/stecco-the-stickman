@@ -43,6 +43,9 @@ export const PUNTINI: Theme = { paper: '#fbf7ee', ink: '#25222c', grid: { size: 
 // Capitolo 9, il pub di Dario la sera: carta pentagrammata (da musica), color panna sotto le lampade
 export const PENTAGRAMMA: Theme = { paper: '#f1e6cf', ink: '#2a2119', grid: { size: 0.18, color: '#b99b76', rows: true, staff: true } };
 
+// Capitolo 10, il condominio di notte: carta carbone (blu notte), inchiostro azzurro chiaro
+export const CARBONE: Theme = { paper: '#1c2232', ink: '#d3dbf2' };
+
 // Mercato Nero: carta da pacchi. Tutto quello che si vende qui sotto è incartato.
 export const PACCHI: Theme = { paper: '#d8c29d', ink: '#2a2119' };
 

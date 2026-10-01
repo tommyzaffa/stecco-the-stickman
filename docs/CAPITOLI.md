@@ -86,7 +86,7 @@ alla sagra. Nel parco, la panchina di Arturo non c'è più: solo briciole di gom
 | 7 ✅ | Il trasloco | Casa di Nonna Pina (quaderno a righe) | **Incastri**: portare i mobili giù per le scale con Marco e incastrarli nel furgone |
 | 8 ✅ | La sagra | La piazza di San Scarabocchio in festa (carta a puntini) | **Bancarelle**: tanti minigiochi, gettoni e premi |
 | 9 ✅ | Da Dario | Il pub, di sera (carta pentagrammata) | **Capogiro da bollicine**: visuale e comandi che ondeggiano, freccette con Barnie |
-| 10 | Il condominio | Una palazzina, di notte | **Furtività col rumore**: pavimenti che scricchiolano, vicini che dormono |
+| 10 ✅ | Il condominio | Via della Penna 3, di notte (carta carbone) | **Furtività col rumore**: pavimenti che scricchiolano, vicini che dormono |
 | 11 | Modulo 27-B | L'Ufficio Protocollo di Quadropoli | **Burocrazia a tempo**: code, sportelli che chiudono, timbri |
 | 12 | Il pranzo della domenica | A casa della famiglia di Martina | **Fare tutto insieme**: piatti, parenti e domande, niente disastri |
 | 13 | Il campeggio | Al bordo del foglio | **Scappare da un posto che si cancella**: il terreno sparisce sotto i piedi |
@@ -118,9 +118,18 @@ fondo con le briciole rosa (una cliente alla fragola ha chiesto di Via dei Tempe
 racconta: le case ai numeri 4, 6 e 8 di Via dei Temperini sono sparite, e nessuno se lo ricorda. A
 piedi per Via del Pentagramma: Martina a casa, i tre lotti bianchi (Marco ricorda un compagno di banco,
 o forse no), Marco consegnato a sua mamma.
-**10. Il condominio.** Stecco si trasferisce in una palazzina. Un pacco è finito al piano sbagliato,
-di notte: bisogna recuperarlo senza svegliare nessuno (il neonato del terzo piano, il signore
-col martello, il cane). Ogni passo fa rumore; i pavimenti di carta scricchiolano.
+**10. Il condominio.** Stecco si trasferisce in Via della Penna 3 ("qui la gomma non passa"), di
+fronte a Nonna Pina. La prima notte manca il cuscino: il corriere ha lasciato il pacco all'interno 12,
+al terzo piano. Quattro piani uno sopra l'altro, e le scale costringono ad attraversare tutti i
+corridoi: il 1° (Biscotto il cane, che sente anche col naso), il 2° (i lavori del signor Chiodo: secchio,
+barattoli, parquet nuovo che canta, un percorso di cartone), il 3° (il neonato, le paperelle di gomma).
+Ogni passo fa rumore secondo il pavimento (assi segnate, tappeti, cartone, gradini al centro o vicino al
+muro) e l'andatura (di corsa, normale, accovacciato; con le pantofole meno, col pacco di più); sopra le
+porte si vede come dormono i vicini; se uno si sveglia si riprova dall'ultimo pianerottolo. Al ritorno,
+col pacco in braccio, telefona Marco (urla). Il signor Gufo, che non dorme mai, dà i consigli sulle
+scale. Missioni: le pantofole di Nonna Pina, il rubinetto che gocciola (il neonato lo sente nei tubi),
+la lettera per i Righello da infilare sotto la porta. Nel pacco: il cuscino e la lettera dell'Ufficio
+Protocollo (Modulo 27-B).
 **11. Modulo 27-B.** Per registrare il nuovo indirizzo serve un modulo che richiede un altro modulo.
 Code che si spostano, sportelli che chiudono per pausa, timbri nell'ordine giusto. Tra i moduli,
 Stecco trova una pratica: "Richiesta di cancellazione totale. Firmato: G."
