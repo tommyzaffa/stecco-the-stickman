@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 import type { Game } from '../../game/game';
 import type { Dialogue, DNode } from '../../game/dialogue';
-import { Stickman } from '../../entities/stickman';
 import { TOUCH } from '../../touch';
 import { parryName } from '../../settings';
 import { BOOTH, updateBooth } from '../../game/booth';
 import { dartsLosses, playDarts, setupDarts } from './darts';
 import { Q9 } from './quests';
-import { GOOD, TRAY, dropTray, goodGlasses, pickTray, resetTray, setupTray, updateTray } from './tray';
-import { BOARD, HOMES, LOTS, OCHE, REFS9, inPub } from './world';
+import { GOOD, TRAY, dropTray, goodGlasses, pickTray, placeTray, resetTray, setupTray, updateTray } from './tray';
+import { BOARD, GAZ, HOMES, LOTS, OCHE, REFS9, STAGE, inPub } from './world';
+import { seatedLook } from './characters';
 
 // Capitolo 9: da Dario. Il pub → il quiz a squadre (Dario al microfono) → la Gazzosa Gigante (capogiro)
 // → la finale di freccette contro Barnie → Dario chiude e racconta dei Temperini → a casa Martina,
@@ -19,7 +19,7 @@ const concentrati = () => `tieni premuto <b>${TOUCH ? 'PARA' : parryName()}</b>`
 
 export function setupStory(g: Game) {
   const A = g.world.anchors;
-  Object.assign(Q9, { fizz: 0, team: 'Gli Stecchini', score: 0, hicT: 9, inside: 0 });
+  Object.assign(Q9, { fizz: 0, target: 0, team: 'Gli Stecchini', score: 0, hicT: 9, inside: 0, carry: false, leaving: [], martinaIn: false, marcoIn: false });
   BOOTH.cur = null;
   BOOTH.el = null;
   setupDarts(g);
@@ -121,8 +121,11 @@ function update(g: Game, dt: number) {
   updateBooth(g, dt);
   updateTray(g, dt);
 
-  // il capogiro: le bollicine scendono piano (mai del tutto, stasera)
-  if (Q9.fizz > 0) Q9.fizz = Math.max(g.quest('c9') >= 3 ? 0.3 : 0.35, Q9.fizz - dt / 600);
+  // il capogiro: dopo aver bevuto le bollicine salgono piano (ci vuole quasi un minuto), poi
+  // scendono pianissimo (stasera non del tutto); l'acqua le fa scendere prima
+  if (Q9.target > 0.25) Q9.target = Math.max(0.25, Q9.target - dt / 600);
+  const dF = Q9.target - Q9.fizz;
+  Q9.fizz += Math.sign(dF) * Math.min(Math.abs(dF), dt / (dF > 0 ? 70 : 30));
   p.dizzy = Q9.fizz;
   // concentrarsi (PARA tenuto): la visuale sta ferma e si va dritti (le freccette lo gestiscono da sé)
   if (!BOOTH.cur) {
@@ -144,13 +147,13 @@ function update(g: Game, dt: number) {
     const n = goodGlasses();
     g.hud.meter({ label: `VASSOIO: ${n} ${n === 1 ? 'bicchiere pieno' : 'bicchieri pieni'} su 3`, value: TRAY.levels.reduce((s, l) => s + l, 0) / 3, color: '#4f86b8' });
   } else {
-    const show = Q9.fizz > 0 && !BOOTH.cur && !g.is('c9Fine');
+    const show = Q9.target > 0 && !BOOTH.cur && !g.is('c9Fine');
     g.hud.meter(show ? { label: 'BOLLICINE (capogiro)', value: Q9.fizz, color: '#b8942a' } : null);
   }
   // vassoio vuoto: si torna al bancone
   if (TRAY.held && goodGlasses() === 0) {
     dropTray(g);
-    resetTray();
+    resetTray(new THREE.Vector3(A.tray.x, A.tray.y, A.tray.z));
     g.audio.bad();
     g.toast('Il vassoio è arrivato. L\'acqua no. Dario ha già riempito altri tre bicchieri: sono sul bancone.', 'bad', 5000);
   }
@@ -178,6 +181,35 @@ function update(g: Game, dt: number) {
     g.startQuest('fragola');
   }
 
+  // Dario porta la Gazzosa Gigante (la spinge accanto a sé); arrivato, la posa
+  if (Q9.carry) {
+    const d = g.npc('dario');
+    REFS9.gazzosa!.position.set(d.pos.x + GAZ.x - A.darioGaz.x, 0, d.pos.z + GAZ.z - A.darioGaz.z);
+    if (Math.hypot(d.pos.x - A.darioGaz.x, d.pos.z - A.darioGaz.z) < 0.15) placeBottle(g);
+  }
+  // i clienti escono dalla porta, e fuori spariscono (vanno a casa)
+  for (const id of Q9.leaving) {
+    const n = g.npc(id);
+    if (!n.hidden && n.pos.z > 11.5) g.setHidden(n, true);
+  }
+  // Martina entra in casa: arrivata alla porta sparisce dentro; poi si accende la sua finestra
+  if (Q9.martinaIn) {
+    const m = g.npc('martina');
+    if (!m.hidden && m.pos.z > HOMES.martina.z - 0.3) martinaInside(g);
+  }
+  if (REFS9.tappo!.visible) REFS9.tappo!.position.x = 51.8 + Math.sin(g.time * 3.2) * 0.28;
+  // Marco e la mamma entrano: la porta si chiude dietro di loro
+  if (Q9.marcoIn) {
+    for (const id of ['marco', 'mamma']) {
+      const n = g.npc(id);
+      if (!n.hidden && n.pos.z < HOMES.marco.z + 0.25) g.setHidden(n, true);
+    }
+    if (g.npc('marco').hidden && g.npc('mamma').hidden) {
+      Q9.marcoIn = false;
+      g.audio.door();
+    }
+  }
+
   // i due della squadra, a piedi: ondeggiano (e vanno un po' a zig-zag)
   for (const id of ['marco', 'martina']) {
     const n = g.npc(id);
@@ -201,36 +233,29 @@ function update(g: Game, dt: number) {
     const n = g.npc(id);
     return !n.hidden && Math.hypot(n.pos.x - p.pos.x, n.pos.z - p.pos.z) < 7;
   };
-  // a casa di Martina
+  // a casa di Martina: lei va al portone (il dialogo non la ferma: cammina mentre parla)
   if (g.quest('c9') === 3 && !g.is('c9MartinaCasa') && near(HOMES.martina, 5.5) && withMe('martina')) {
     g.flag('c9MartinaCasa');
-    g.talk(martinaHome(), g.npc('martina'), () => {
-      const m = g.npc('martina');
-      m.setBehavior({ type: 'patrol', path: [[HOMES.martina.x, HOMES.martina.z - 0.6]], speed: 1.2, once: true });
-      g.after(2.2, () => g.setHidden(m, true));
-    });
+    const m = g.npc('martina');
+    m.setBehavior({ type: 'patrol', path: [[A.martinaDoor.x, A.martinaDoor.z]], speed: 1.3, once: true });
+    g.talk(martinaHome(), null);
   }
   // i Temperini (solo con Marco)
   if (g.quest('c9') === 4 && !g.is('c9Temperini') && p.pos.x > LOTS.x0 + 3 && withMe('marco')) {
     g.flag('c9Temperini');
     g.talk(temperini(), g.npc('marco'));
   }
-  // a casa di Marco
+  // a casa di Marco: la mamma apre la porta (era sveglia: la luce è accesa), Marco le va incontro
   if (g.quest('c9') === 4 && !g.is('c9MarcoCasa') && near(HOMES.marco, 5.8) && withMe('marco')) {
     g.flag('c9MarcoCasa');
     const mm = g.npc('mamma');
     g.setHidden(mm, false);
-    mm.pos.set(A.mamma.x, 0, A.mamma.z);
+    mm.pos.set(A.mamma.x - 0.3, 0, HOMES.marco.z + 0.35);
+    mm.setBehavior({ type: 'patrol', path: [[A.mamma.x - 0.3, A.mamma.z]], speed: 1, once: true });
+    g.audio.door();
     const marco = g.npc('marco');
-    marco.setBehavior({ type: 'stand' });
-    g.talk(marcoHome(), mm, () => {
-      marco.setBehavior({ type: 'patrol', path: [[HOMES.marco.x + 0.4, HOMES.marco.z + 0.3]], speed: 1.2, once: true });
-      g.after(2, () => {
-        g.setHidden(marco, true);
-        g.setHidden(mm, true);
-        g.audio.door();
-      });
-    });
+    marco.setBehavior({ type: 'patrol', path: [[A.mamma.x + 0.7, A.mamma.z + 0.5]], speed: 1.3, once: true });
+    g.talk(marcoHome(), null);
   }
   // fine
   if (g.is('c9Fine') && !g.is('c9Via')) {
@@ -272,13 +297,16 @@ export function startWater(g: Game) {
 
 function deliverTray(g: Game) {
   const n = goodGlasses();
+  const levels = TRAY.levels.slice();
   dropTray(g);
-  resetTray();
-  if (n === 0) return;
-  Q9.fizz = Math.max(0.35, Q9.fizz - 0.12 * n);
-  g.hud.meterPop(`-${n * 12}% bollicine`, true);
-  g.audio.glug(n);
-  const perfect = TRAY.levels.every((l) => l >= GOOD);
+  const A = g.world.anchors;
+  if (n === 0) {
+    resetTray(new THREE.Vector3(A.tray.x, A.tray.y, A.tray.z));
+    return;
+  }
+  // il vassoio resta sul tavolo, coi bicchieri com'erano arrivati
+  placeTray(new THREE.Vector3(A.teamTable.x + 0.1, 0.795, A.teamTable.z - 0.15), levels);
+  const perfect = levels.every((l) => l >= GOOD);
   g.talk(
     {
       name: 'Martina',
@@ -286,12 +314,30 @@ function deliverTray(g: Game) {
       nodes: {
         a: {
           say: [
-            n === 3 ? '* Posi il vassoio. Tre bicchieri, tre pieni. Nemmeno una goccia sul pavimento a righe.' : `* Posi il vassoio. ${n === 1 ? 'Un bicchiere pieno' : 'Due bicchieri pieni'}, il resto è sul pavimento. Il pavimento ringrazia.`,
+            n === 3 ? '* Posi il vassoio sul tavolo. Tre bicchieri, tre pieni. Nemmeno una goccia sul pavimento a righe.' : `* Posi il vassoio sul tavolo. ${n === 1 ? 'Un bicchiere pieno' : 'Due bicchieri pieni'}, il resto è sul pavimento. Il pavimento ringrazia.`,
             'Acqua! Stecco, sei un cameriere nato. Senza mani, poi.',
             '@Marco| Acqua? Io volevo la gazzosa. ...No, hai ragione. Acqua.',
-            '* Bevete. Le bollicine scendono un po\'. Il pub gira meno. Gira ancora, ma più educato.',
           ],
+          next: 'bevete',
+        },
+        bevete: {
           do: (g) => {
+            // si beve: i bicchieri si svuotano, le bollicine scendono (piano)
+            placeTray(new THREE.Vector3(A.teamTable.x + 0.1, 0.795, A.teamTable.z - 0.15), [0, 0, 0]);
+            Q9.target = Math.max(0.2, Q9.target - 0.1 * n);
+            g.audio.glug(n);
+            for (const id of ['marco', 'martina']) g.npc(id).baseAction = 'drink';
+            g.after(2.5, () => {
+              for (const id of ['marco', 'martina']) g.npc(id).baseAction = g.is('c9Gazzosa') ? 'tipsy' : 'none';
+            });
+          },
+          say: ['* Bevete. Le bollicine scendono un po\'. Il pub gira meno. Gira ancora, ma più educato.'],
+          next: 'fine',
+        },
+        fine: {
+          say: [],
+          do: (g) => {
+            g.hud.meterPop(`-${n * 10}% bollicine`, true);
             g.addXp(20 + n * 10);
             g.addCoins(n * 3);
             g.completeQuest('acqua');
@@ -317,10 +363,14 @@ export function sitDown(g: Game) {
     p.seated = true;
     p.setCrouch(false);
     p.setWeapon('fist');
+    // Dario sale sul palco, dietro l'asta del microfono; tutti si girano verso di lui
     const d = g.npc('dario');
-    d.pos.set(A.darioMic.x, 0, A.darioMic.z);
-    d.homeRot = 0;
-    d.body.root.rotation.y = 0;
+    d.pos.set(A.darioMic.x, A.darioMic.y, A.darioMic.z);
+    d.setBehavior({ type: 'stand' });
+    d.homeRot = Math.atan2(A.teamTable.x - d.pos.x, A.teamTable.z - d.pos.z) * 0.4;
+    d.body.root.rotation.y = d.homeRot;
+    d.faceWhenNear = false;
+    seatedLook(g, 'stage');
     p.setLook(new THREE.Vector3(A.mic.x, A.mic.y, A.mic.z));
     g.setCheckpoint(A.seat, A.mic, 'Ti rialzi vicino al tavolo');
     g.fade(false);
@@ -333,12 +383,16 @@ function standUp(g: Game) {
   p.seated = false;
   p.floor = 0;
   g.setStep('c9', 2);
-  // Dario torna dietro il bancone (girando attorno al fondo)
+  seatedLook(g, 'table');
+  // Dario torna dietro il bancone (dal fondo, passando accanto al palco)
   const d = g.npc('dario');
   const A = g.world.anchors;
-  d.setBehavior({ type: 'patrol', path: [[2.6, -4.3], [2.6, -6.8], [A.dario.x, A.dario.z]], speed: 2.4, once: true });
-  g.after(6, () => {
+  d.pos.y = 0;
+  d.setBehavior({ type: 'patrol', path: [[2.5, -6.9], [A.dario.x, A.dario.z]], speed: 2.4, once: true });
+  g.after(9, () => {
+    d.pos.set(A.dario.x, 0, A.dario.z);
     d.homeRot = 0;
+    d.faceWhenNear = true;
     d.setBehavior({ type: 'stand' });
   });
   g.after(1.5, () => g.npc('barnie').say('Freccette! Stecco, vieni. Il bersaglio ti aspetta. Anch\'io, ma meno.', 4));
@@ -395,7 +449,7 @@ function quiz(): Dialogue {
           '@Ispettore Penna| "Verbale Unico". Presenti. Verbalizzato.',
           'Seconda squadra: i Pastelli a Cera.',
           '@Pastello Rosso| "I TEMPERATI"! APPUNTITI!',
-          'E la terza squadra: il tavolo in mezzo. Come vi chiamate?',
+          'E la terza squadra: il tavolo sotto il palco. Come vi chiamate?',
           '@Marco| Un attimo! Abbiamo tre nomi. Decide Stecco.',
         ],
         choices: [
@@ -538,9 +592,13 @@ function quiz(): Dialogue {
 // LA GAZZOSA GIGANTE (tre litri, una cannuccia)
 // =========================================================================
 function gazzosa(): Dialogue {
-  const sip = (v: number) => (g: Game) => {
-    Q9.fizz = v;
-    g.audio.glug(v > 0.9 ? 6 : v > 0.7 ? 4 : 2);
+  // quanta gazzosa resta nella bottiglia (0..1)
+  const level = (k: number) => (REFS9.gazLiquid!.scale.y = Math.max(0.02, 1.38 * k));
+  const drinker = (id: string, on: boolean) => (g: Game) => (g.npc(id).baseAction = on ? 'drink' : 'none');
+  const sip = (v: number, left: number) => (g: Game) => {
+    Q9.target = v;
+    level(left);
+    g.audio.glug(v > 0.8 ? 6 : v > 0.5 ? 4 : 2);
   };
   return {
     name: 'Dario',
@@ -548,37 +606,80 @@ function gazzosa(): Dialogue {
     nodes: {
       a: {
         do: (g) => {
+          // Dario scende dal palco e va a prendere la bottiglia: la porta accanto a sé fino al tavolo
           const d = g.npc('dario');
-          d.setBehavior({ type: 'patrol', path: [[2.6, -6.6], [2.6, -4.3], [-2.5, 1.4]], speed: 3.2, once: true });
-          g.after(2.8, () => {
-            REFS9.gazzosa!.visible = true;
-            g.audio.fizz(1.4);
-          });
+          const A = g.world.anchors;
+          d.pos.y = 0;
+          d.setBehavior({ type: 'patrol', path: [[STAGE.x - 1.3, STAGE.z + 1.4], [A.darioGaz.x, A.darioGaz.z]], speed: 2.2, once: true });
+          REFS9.gazzosa!.visible = true;
+          level(1);
+          Q9.carry = true;
         },
-        look: (g) => g.world.anchors.teamTable.clone(),
         say: [
           'E adesso, la tradizione della casa.',
-          (g) => (g.is('c9QuizVinto') ? 'Il premio per i vincitori: la Gazzosa Gigante!' : 'Il premio di consolazione per il tavolo in mezzo: la Gazzosa Gigante! Da Dario non perde nessuno. Si perde e basta, ma con le bollicine.'),
-          '* Dario arriva al tavolo con una bottiglia alta come Pennino. Tre litri. Una cannuccia sola, lunga, a zig-zag.',
+          (g) => (g.is('c9QuizVinto') ? 'Il premio per i vincitori: la Gazzosa Gigante! Ve la porto io.' : 'Il premio di consolazione per il tavolo sotto il palco: la Gazzosa Gigante! Da Dario non perde nessuno. Si perde e basta, ma con le bollicine.'),
+          '@Marco| Arriva! Arriva!',
+        ],
+        next: 'arriva',
+      },
+      arriva: {
+        do: (g) => placeBottle(g),
+        look: () => new THREE.Vector3(GAZ.x, 1.4, GAZ.z),
+        say: [
+          '* Dario arriva spingendo una bottiglia più alta di Pennino. Sull\'etichetta c\'è scritto "3 litri". L\'etichetta mente.',
+          '* Una cannuccia sola, lunga, rossa, a zig-zag, arriva fino al centro del tavolo.',
+          'Tre litri, una cannuccia. Nessun rimpianto. Qualche singhiozzo.',
           '@Marco| Prima io! Sono il capitano!',
           '@Martina| Non abbiamo un capitano.',
           '@Marco| Adesso sì.',
-          '* Marco beve. Tanto. Poi Martina: un sorso educato. Poi due. Poi tre.',
-          '@Martina| È buonissima. È pericolosa. È buonissima.',
-          '* Tocca a te. La cannuccia ti guarda.',
         ],
+        next: 'marco',
+      },
+      marco: {
+        do: (g) => {
+          drinker('marco', true)(g);
+          level(0.8);
+          g.audio.glug(5);
+        },
+        look: () => new THREE.Vector3(GAZ.x, 1.4, GAZ.z),
+        say: ['* Marco beve. Tanto. La gazzosa nella bottiglia scende di un palmo.'],
+        next: 'martina',
+      },
+      martina: {
+        do: (g) => {
+          drinker('marco', false)(g);
+          drinker('martina', true)(g);
+          level(0.68);
+          g.audio.glug(3);
+        },
+        say: ['* Poi Martina: un sorso educato. Poi due. Poi tre.', '@Martina| È buonissima. È pericolosa. È buonissima.'],
+        next: 'tu',
+      },
+      tu: {
+        do: drinker('martina', false),
+        say: ['* Tocca a te. La cannuccia ti guarda.'],
         choices: [
-          { t: 'Un sorso. Educato.', do: sip(0.55), next: 'poco' },
-          { t: 'Mezzo litro. Sportivo.', do: sip(0.8), next: 'medio' },
-          { t: 'Tutto quello che resta.', do: sip(1), next: 'tanto' },
+          { t: 'Un sorso. Educato.', do: sip(0.35, 0.62), next: 'poco' },
+          { t: 'Mezzo litro. Sportivo.', do: sip(0.6, 0.45), next: 'medio' },
+          { t: 'Tutto quello che resta.', do: sip(0.85, 0.02), next: 'tanto' },
         ],
       },
       poco: {
-        say: ['* Un sorso. Le bollicine salgono lo stesso: sono disegnate, ma con entusiasmo.', '@Marco| Un sorso? UN SORSO? Allora finisco io.', '* Marco finisce. Tutto.'],
-        next: 'dopo',
+        say: ['* Un sorso. Frizzante, dolce, niente di che.', '@Marco| Un sorso? UN SORSO? Allora finisco io.'],
+        next: 'finisce',
       },
       medio: {
-        say: ['* Mezzo litro. Le bollicine salgono. Il pentagramma sul muro comincia a suonare da solo.', '@Marco| Sportivo! Il resto è mio.'],
+        say: ['* Mezzo litro. Frizzante, dolce. Per ora non succede niente.', '@Marco| Sportivo! Il resto è mio.'],
+        next: 'finisce',
+      },
+      finisce: {
+        do: (g) => {
+          drinker('marco', true)(g);
+          level(0.02);
+          g.audio.glug(6);
+        },
+        look: () => new THREE.Vector3(GAZ.x, 1.2, GAZ.z),
+        say: ['* Marco finisce la bottiglia. Tutta. La bottiglia fa un rumore di bottiglia vuota.'],
         next: 'dopo',
       },
       tanto: {
@@ -586,22 +687,40 @@ function gazzosa(): Dialogue {
         next: 'dopo',
       },
       dopo: {
-        say: [
-          '* Le righe della carta ondeggiano. Il pavimento pure. Il pub sembra una nave: una nave con le freccette.',
-          (_g) => `* Ti gira la testa: la visuale ondeggia e i piedi vanno un po' dove vogliono. Tenendo premuto ${TOUCH ? 'PARA' : parryName()} ti concentri: vai più piano, ma dritto.`,
-          '@Barnie| Finale di freccette. Io contro tutti. Adesso.',
-        ],
         do: (g) => {
+          drinker('marco', false)(g);
           g.flag('c9Gazzosa');
-          g.addXp(20);
-          for (const id of ['marco', 'martina']) {
-            const b = g.npc(id).body;
-            if (b instanceof Stickman) b.action = 'tipsy';
-          }
+          // le bollicine arrivano anche a loro, piano
+          g.after(25, () => {
+            for (const id of ['marco', 'martina']) if (g.npc(id).baseAction === 'none') g.npc(id).baseAction = 'tipsy';
+          });
         },
+        say: [
+          '* Per un attimo non succede niente.',
+          '* Poi le bollicine cominciano a salire. Piano. Tra un po\' le righe della carta si metteranno a ondeggiare. Prima un pochino, poi di più.',
+          (_g) => `* Quando ti girerà la testa: tieni premuto ${TOUCH ? 'PARA' : parryName()} per concentrarti. Vai più piano, ma dritto.`,
+          '@Barnie| Finale di freccette. Io contro tutti. Quando vuoi.',
+        ],
+        next: 'fine',
       },
+      fine: { say: [], do: (g) => g.addXp(20) },
     },
   };
+}
+
+// la bottiglia arriva accanto al tavolo (anche se chi legge è stato più veloce di Dario)
+function placeBottle(g: Game) {
+  const A = g.world.anchors;
+  const d = g.npc('dario');
+  if (Q9.carry) {
+    Q9.carry = false;
+    d.pos.set(A.darioGaz.x, 0, A.darioGaz.z);
+    d.setBehavior({ type: 'stand' });
+    d.homeRot = Math.atan2(A.teamTable.x - d.pos.x, A.teamTable.z - d.pos.z);
+    REFS9.gazzosa!.position.set(GAZ.x, 0, GAZ.z);
+    g.world.colliders.circle(GAZ.x, GAZ.z, GAZ.r + 0.05);
+    g.audio.fizz(1.4);
+  }
 }
 
 // =========================================================================
@@ -633,13 +752,26 @@ function barnieWin(): Dialogue {
     start: 'a',
     nodes: {
       a: {
+        do: (g) => {
+          // festa: Marco balla in piedi sullo sgabello, Martina sbraccia
+          const m = g.npc('marco');
+          m.setBehavior({ type: 'stand' });
+          m.pos.y = 0.28;
+          m.baseAction = 'dance';
+          g.npc('martina').baseAction = 'wave';
+          g.audio.tokens(6);
+        },
         say: [
           'Hai vinto.',
-          '* Il pub esplode. Marco cade dallo sgabello. Di gioia, dice. Martina lo tira su senza smettere di applaudire.',
+          '* Il pub esplode. Marco sale in piedi sullo sgabello e balla. Martina agita le braccia come se chiamasse un taxi.',
           'Undici serate. Poi tu. Col capogiro.',
           'Tieni: il Sottobicchiere d\'Oro. Tienilo lontano dall\'acqua: è di cartone.',
           (g) => (g.has('freccetta') ? 'E la freccetta tienila. Sa la strada. Adesso la sai anche tu.' : 'Domani mi alleno. Dopodomani lo rivinco. Oggi però è tuo.'),
         ],
+        next: 'premio',
+      },
+      premio: {
+        say: [],
         do: (g) => {
           g.give('sottobicchiereOro');
           g.flag('c9Barnie');
@@ -661,8 +793,15 @@ export function closing(g: Game) {
       nodes: {
         a: {
           say: [
-            '* Dario spegne metà delle lampade.',
+            '* Dario batte due volte sul bancone. TOC, TOC.',
             'Si chiude! Si chiude, gente. Le Biro Blu, fuori. I Temperati, fuori. Barnie... Barnie resta, Barnie è l\'arredamento.',
+          ],
+          next: 'b',
+        },
+        b: {
+          do: (g) => customersLeave(g),
+          say: [
+            '* Le Biro Blu si alzano ed escono in fila per due. I Pastelli escono in fila per colore. Il signor Righetti esce per ultimo, piano.',
             'Stecco. Aspetta. Te lo dico perché tu mi sembri uno che ascolta.',
             'Stamattina ho portato le casse di gazzosa in Via dei Temperini. Numero 4, 6 e 8. Come ogni martedì.',
             'Le case non c\'erano più. Né le case, né i giardini. Solo i pali coi numeri. E dietro, bianco.',
@@ -679,6 +818,10 @@ export function closing(g: Game) {
             'Passate di là, tornando. Guardate. E poi ditemi che sono io quello che ha bevuto troppa gazzosa.',
             'Adesso vai: riporta a casa quei due. Prima la signorina, poi Marco. Casa sua è di là dal canale.',
           ],
+          next: 'fine',
+        },
+        fine: {
+          say: [],
           do: (g) => {
             g.flag('c9Chiuso');
             g.addXp(30);
@@ -691,9 +834,31 @@ export function closing(g: Game) {
   );
 }
 
+// a fine serata i clienti si alzano ed escono dalla porta (fuori spariscono: vanno a casa)
+function customersLeave(g: Game) {
+  const out: [string, [number, number][]][] = [
+    ['penna', [[5.2, 7.1]]],
+    ['pennino', [[5.2, 7.1]]],
+    ['pBlu', [[-6.5, 7.3], [5.2, 7.3]]],
+    ['pGiallo', [[-5, 7.3], [5.2, 7.3]]],
+    ['pRosso', [[-7.5, 7.3], [5.2, 7.3]]],
+    ['righetti', [[-2, 0.2], [3.3, 3.9], [5.2, 7.1]]],
+  ];
+  out.forEach(([id, path], i) =>
+    g.after(0.2 + i * 0.7, () => {
+      const n = g.npc(id);
+      if (n.hidden) return;
+      n.pos.y = 0;
+      n.baseAction = 'none';
+      n.setBehavior({ type: 'patrol', path: [...path, [6, 8], [6 + (i % 3) * 0.4 - 0.4, 10], [4 + i * 1.5, 13]], speed: 1.7, once: true });
+      Q9.leaving.push(id);
+    }),
+  );
+}
+
 function leavePub(g: Game) {
-  // gli altri vanno a casa da soli (le Biro Blu in fila per due)
-  for (const id of ['penna', 'pennino', 'pRosso', 'pGiallo', 'pBlu', 'righetti']) g.setHidden(g.npc(id), true);
+  // chi non è ancora uscito (se hai letto più in fretta di loro) esce adesso
+  for (const id of ['penna', 'pennino', 'pRosso', 'pGiallo', 'pBlu', 'righetti']) if (!Q9.leaving.includes(id)) g.setHidden(g.npc(id), true);
   g.after(0.5, () => {
     g.setStep('c9', 3);
     const p = g.player;
@@ -701,10 +866,7 @@ function leavePub(g: Game) {
       const n = g.npc(id);
       n.pos.y = 0;
       n.setBehavior({ type: 'follow', target: () => p.pos, dist, speed });
-      if (n.body instanceof Stickman) {
-        n.body.seated = false;
-        n.body.action = 'tipsy';
-      }
+      n.baseAction = 'tipsy';
     };
     follow('martina', 1.8, 3.9);
     follow('marco', 2.8, 3.9);
@@ -725,30 +887,60 @@ function martinaHome(): Dialogue {
       a: {
         say: [
           'Eccola. Casa mia. Quella coi tappi in finestra.',
-          '* Martina si appoggia al portone. Il portone la tiene su, gentile.',
+          '* Martina arriva al portone e ci si appoggia. Il portone la tiene su, gentile.',
           'Stasera mi sono divertita. Il quiz, la gazzosa, tu contro Barnie.',
           (g) => (g.is('c9Barnie') ? 'Hai battuto un gigante. Col capogiro. Lo racconto alla mia collezione: i tappi adorano le storie.' : 'Anche Marco si è divertito. Lo si capisce da come cammina.'),
           'Stecco. Da camera mia si vedono i Temperini. Le finestre accese, la sera. Mi facevano compagnia.',
-          '* Guarda verso est, oltre le case. Laggiù, dove c\'erano le finestre, non c\'è buio. C\'è bianco.',
-          'Stasera non le vedo. Sarà la gazzosa.',
         ],
+        next: 'est',
+      },
+      est: {
+        // si gira verso est, dove c'erano le case (e ci guardi anche tu)
+        do: (g) => {
+          const m = g.npc('martina');
+          m.setBehavior({ type: 'stand' });
+          m.faceWhenNear = false;
+          m.homeRot = Math.PI / 2;
+        },
+        look: () => new THREE.Vector3(LOTS.x0 + 6, 3, 4),
+        say: ['* Martina guarda verso est, oltre i tetti. Laggiù, dove c\'erano le finestre, non c\'è buio. C\'è bianco.', 'Stasera non le vedo. Sarà la gazzosa.'],
         choices: [
           { t: 'Sarà la gazzosa.', next: 'gazzosa' },
           { t: 'Non è la gazzosa. Sono sparite.', next: 'sparite' },
         ],
       },
-      gazzosa: { say: ['Sì. Sarà la gazzosa. Buonanotte, Stecco.'], next: 'bye' },
-      sparite: {
-        say: ['Sparite. Come la panchina di Arturo. Come il vicolo di Nonna Pina.', 'Domani ne parliamo. Da sgasati.', 'Buonanotte, Stecco.'],
-        do: (g) => g.flag('martinaSa'),
-        next: 'bye',
+      gazzosa: {
+        do: (g) => (g.npc('martina').faceWhenNear = true),
+        say: ['Sì. Sarà la gazzosa. Buonanotte, Stecco.'],
+        next: 'entra',
       },
-      bye: {
-        say: [
-          '* Martina entra. Un attimo dopo, alla finestra, un tappo giallo ti saluta. È lei che lo muove.',
-          '@Marco| E io? Chi mi porta a casa, a me?',
-          '> Io. Andiamo.',
-        ],
+      sparite: {
+        do: (g) => {
+          g.npc('martina').faceWhenNear = true;
+          g.flag('martinaSa');
+        },
+        say: ['Sparite. Come la panchina di Arturo. Come il vicolo di Nonna Pina.', 'Domani ne parliamo. Da sgasati.', 'Buonanotte, Stecco.'],
+        next: 'entra',
+      },
+      entra: {
+        // apre il portone ed entra (sparisce quando ci arriva: vedi update)
+        do: (g) => {
+          const m = g.npc('martina');
+          m.faceWhenNear = false;
+          m.setBehavior({ type: 'patrol', path: [[HOMES.martina.x, HOMES.martina.z]], speed: 1, once: true });
+          Q9.martinaIn = true;
+        },
+        say: ['* Martina apre il portone ed entra. Il portone si richiude piano, dietro di lei.'],
+        next: 'finestra',
+      },
+      finestra: {
+        do: (g) => martinaInside(g, true),
+        look: () => new THREE.Vector3(51.8, 4.6, 18.2),
+        say: ['* Al primo piano si accende una finestra. Un tappo giallo ti saluta, di qua e di là: è lei che lo muove.', '@Marco| E io? Chi mi porta a casa, a me?', '> Io. Andiamo.'],
+        next: 'fine',
+      },
+      fine: {
+        say: [],
         do: (g) => {
           g.setStep('c9', 4);
           g.addXp(30);
@@ -756,6 +948,23 @@ function martinaHome(): Dialogue {
       },
     },
   };
+}
+
+// Martina è dentro: portone chiuso, e dopo un attimo la sua finestra si accende (col tappo che saluta)
+function martinaInside(g: Game, now = false) {
+  if (Q9.martinaIn) {
+    Q9.martinaIn = false;
+    const m = g.npc('martina');
+    m.faceWhenNear = true;
+    g.setHidden(m, true);
+    g.audio.door();
+  }
+  const light = () => {
+    REFS9.martinaWin!.visible = true;
+    REFS9.tappo!.visible = true;
+  };
+  if (now) light();
+  else g.after(1.6, light);
 }
 
 function temperini(): Dialogue {
@@ -795,6 +1004,7 @@ function marcoHome(): Dialogue {
     nodes: {
       a: {
         say: [
+          '* La porta si apre prima che tu bussi. La mamma di Marco era sveglia: la luce era accesa.',
           '@Marco| Mamma! Sono a casa! Sono... quasi a casa.',
           'MARCO. Sai che ore sono?',
           '@Marco| Tardi, mamma. Ma tardi disegnato. Non conta.',
@@ -803,8 +1013,39 @@ function marcoHome(): Dialogue {
           '@Marco| Stecco. Grazie. Hic. Per il quiz, e per Barnie, e per... non mi ricordo. Per tutto.',
           '@Marco| E Tito. Domani cerchiamo Tito. Se c\'era.',
           'A letto.',
-          '* La porta si chiude. Via del Pentagramma è silenziosa. Da qualche parte, lontano, qualcosa strofina.',
         ],
+        next: 'dentro',
+      },
+      dentro: {
+        // entrano: prima Marco (ondeggiando), poi la mamma, e la porta si chiude (vedi update)
+        do: (g) => {
+          const door = HOMES.marco;
+          const marco = g.npc('marco');
+          marco.faceWhenNear = false;
+          marco.setBehavior({ type: 'patrol', path: [[door.x + 0.1, door.z + 0.7], [door.x + 0.1, door.z]], speed: 1.1, once: true });
+          const mm = g.npc('mamma');
+          mm.faceWhenNear = false;
+          g.after(0.9, () => mm.setBehavior({ type: 'patrol', path: [[door.x - 0.2, door.z + 0.6], [door.x - 0.2, door.z]], speed: 1.1, once: true }));
+          Q9.marcoIn = true;
+        },
+        look: () => new THREE.Vector3(HOMES.marco.x, 1.4, HOMES.marco.z),
+        say: ['* Marco entra, ondeggiando. La mamma lo segue e chiude la porta.'],
+        next: 'notte',
+      },
+      notte: {
+        do: (g) => {
+          // se hai letto più in fretta di loro: sono dentro adesso
+          for (const id of ['marco', 'mamma']) if (!g.npc(id).hidden) g.setHidden(g.npc(id), true);
+          if (Q9.marcoIn) {
+            Q9.marcoIn = false;
+            g.audio.door();
+          }
+        },
+        say: ['* Via del Pentagramma è silenziosa. Da qualche parte, lontano, qualcosa strofina.'],
+        next: 'fine',
+      },
+      fine: {
+        say: [],
         do: (g) => {
           g.flag('c9Fine');
           g.addXp(60);

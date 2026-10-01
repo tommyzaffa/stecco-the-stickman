@@ -183,7 +183,7 @@ export class Player {
 
   // La visuale: dove guardi, più l'ondeggiare del capogiro (la concentrazione lo calma)
   applyView() {
-    const d = this.dizzy * (1 - 0.8 * this.steady), t = this.dzT;
+    const d = Math.pow(this.dizzy, 1.5) * (1 - 0.8 * this.steady), t = this.dzT;
     const sy = d * (0.06 * Math.sin(t * 0.9) + 0.03 * Math.sin(t * 2.3 + 1));
     const sp = d * (0.04 * Math.sin(t * 1.13 + 2) + 0.02 * Math.sin(t * 2.9));
     this.camera.rotation.set(this.pitch + sp, this.yaw + sy, d * 0.07 * Math.sin(t * 0.77));
@@ -259,11 +259,12 @@ export class Player {
     if (this.dizzy > 0.001) {
       // i comandi scivolano: la direzione gira da sola, e si parte e ci si ferma in ritardo
       // (concentrandosi si va più dritti)
+      // (poco capogiro = quasi niente: l'effetto cresce col quadrato)
       const dz = this.dizzy * (1 - 0.7 * this.steady);
-      const a = dz * (0.45 * Math.sin(this.dzT * 0.63) + 0.25 * Math.sin(this.dzT * 1.71 + 2));
+      const a = dz * dz * (0.3 * Math.sin(this.dzT * 0.63) + 0.15 * Math.sin(this.dzT * 1.71 + 2));
       const c = Math.cos(a), s = Math.sin(a);
       [vx, vz] = [vx * c - vz * s, vx * s + vz * c];
-      const k = Math.min(1, dt * (12 - 9.5 * dz));
+      const k = Math.min(1, dt * (12 - 7 * dz));
       this.vel.x += (vx - this.vel.x) * k;
       this.vel.y += (vz - this.vel.y) * k;
       vx = this.vel.x;
@@ -272,10 +273,10 @@ export class Player {
       this.lurchT -= dt;
       if (this.lurchT <= 0) {
         this.lurchT = 2.5 + Math.random() * 3.5;
-        if (dz > 0.35 && !this.seated && !this.rooted) {
+        if (dz > 0.6 && !this.seated && !this.rooted) {
           const side = Math.random() < 0.5 ? -1 : 1;
-          this.knock.x += Math.cos(this.yaw) * side * 1.6 * dz;
-          this.knock.z += -Math.sin(this.yaw) * side * 1.6 * dz;
+          this.knock.x += Math.cos(this.yaw) * side * 1.2 * dz;
+          this.knock.z += -Math.sin(this.yaw) * side * 1.2 * dz;
           this.lurched = true;
         }
       }

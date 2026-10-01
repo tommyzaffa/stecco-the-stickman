@@ -63,9 +63,17 @@ export function setupTray(g: Game, home: THREE.Vector3) {
 }
 
 // il vassoio torna sul bancone, coi bicchieri pieni
-export function resetTray() {
+export function resetTray(home?: THREE.Vector3) {
   TRAY.held = false;
   TRAY.levels = [1, 1, 1];
+  if (home) TRAY.home.copy(home);
+  place();
+}
+
+// il vassoio posato da qualche parte (sul tavolo della squadra), coi bicchieri com'erano
+export function placeTray(pos: THREE.Vector3, levels: number[]) {
+  TRAY.home.copy(pos);
+  TRAY.levels = levels.slice();
   place();
 }
 

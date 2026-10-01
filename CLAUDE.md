@@ -66,7 +66,14 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 - **Game over**: `g.gameOver(titolo, testo, riprova)` mostra la schermata con "Riprova";
   `riprova` rimette le cose a posto (es. capitolo 3: tre accuse sbagliate).
 - `NpcSpec.talkRadius` per chi si parla da lontano (es. il testimone sul balcone).
-- `WorldBuilder.daySky('mountains' | 'skyline')` per il cielo di giorno.
+- `WorldBuilder.daySky('mountains' | 'skyline')` per il cielo di giorno. Di sera: `building({ lit })`
+  accende alcune finestre della facciata (la luce sta dentro la cornice disegnata), `b.litPane()` per
+  una finestra accesa a mano.
+- **Azioni dei PNG**: l'azione del corpo la decide `npc.baseAction` (ogni frame il PNG la rimette sul
+  corpo): non scrivere `body.action` direttamente. Chi parla in un dialogo (`g.talk(d, npc)`) si
+  ferma e si gira verso di te: per una scena in cui deve camminare mentre parla (entrare in casa,
+  portare qualcosa) si passa `null` come PNG e si muove con `setBehavior` (la voce e lo sguardo lo
+  trovano dal nome). **Le didascalie del narratore devono corrispondere a quello che si vede.**
 - **Dialoghi e regia**: la testa si gira da sola verso chi parla (anche un `@Nome|` che non è il
   PNG con cui hai iniziato). `DNode.look` = cosa guardare durante le righe del narratore di quel
   nodo (un oggetto, un punto). `g.onLine` = callback a ogni riga (es. "TOC" → suono del martelletto).
@@ -122,8 +129,10 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
 - **Capogiro** (capitolo 9): `player.dizzy` (0..1) = la visuale ondeggia (`applyView()`, e il
   post-processing la fa ondulare con un'ombra doppia), i comandi scivolano (la direzione gira da sola,
   inerzia) e ogni tanto si barcolla (`player.lurched`); `player.steady` (0..1) = concentrazione (PARA
-  tenuto): visuale ferma e passi dritti. Il capitolo aggiorna entrambi a ogni frame (`Q9.fizz` =
-  bollicine, scendono piano; l'acqua le abbassa). Azione `tipsy` di `Stickman` per chi ondeggia.
+  tenuto): visuale ferma e passi dritti. Gli effetti crescono più del capogiro (al quadrato): un po' di
+  capogiro si sente appena. Il capitolo aggiorna entrambi a ogni frame (`Q9.target` = quanto hai bevuto,
+  `Q9.fizz` = bollicine che salgono piano verso il target, quasi un minuto, e scendono pianissimo;
+  l'acqua le abbassa). Azione `tipsy` di `Stickman` per chi ondeggia.
   Freccette (`c9/darts.ts`): bersaglio vero (settori, doppio, triplo, centro), tre turni contro
   Barnie, fiato limitato per stare fermi; ogni rivincita persa lo stanca. Vassoio (`c9/tray.ts`):
   `player.carrying` + tre bicchieri che si svuotano se il vassoio si inclina (accelerazioni, curve,

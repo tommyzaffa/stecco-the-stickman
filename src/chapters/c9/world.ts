@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { Sketch } from '../../render/sketch';
-import { HAND_FONT, MARKER_FONT, moonTexture } from '../../render/textures';
+import { HAND_FONT, MARKER_FONT, moonTexture, textTexture } from '../../render/textures';
 import { BLUE_HEX, RED_HEX, THEME } from '../../render/palette';
 import { WorldBuilder, type World } from '../../world/builder';
 
@@ -24,9 +24,15 @@ import { WorldBuilder, type World } from '../../world/builder';
 export const PUB = { x0: -10, x1: 10, z0: -8, z1: 8, h: 4, door: 6 };
 export const BOARD = { x: 9.86, y: 1.73, z: -1.5, r: 0.45 };
 export const OCHE = 7.55; // la linea di tiro
-export const TABLE = { x: -4, z: 2.5 }; // il tavolo della squadra
+export const TABLE = { x: 1.6, z: -1.2 }; // il tavolo della squadra (vicino al palco: Dario si vede bene)
+export const TABLES = { team: TABLE, pastelli: { x: -6.5, z: 5.6 }, biro: { x: 0.5, z: 5.6 } };
 export const HOMES = { martina: new THREE.Vector3(55, 0, 18.4), marco: new THREE.Vector3(123, 0, 7.6) };
 export const LOTS = { x0: 68, x1: 98 };
+// il palco del quiz (nell'angolo nord-est, a destra del bancone) e il microfono sull'asta
+export const STAGE = { x: 4.9, z: -6.95, w: 3.4, d: 1.9, h: 0.35 };
+export const MIC = { x: STAGE.x, y: STAGE.h + 1.6, z: STAGE.z };
+// la Gazzosa Gigante: per terra, accanto al tavolo della squadra (è più alta di Pennino)
+export const GAZ = { x: TABLE.x + 1.3, z: TABLE.z - 0.3, r: 0.42 };
 export const CANAL = { x0: 104, x1: 112 };
 
 export const REFS9 = {
@@ -35,6 +41,9 @@ export const REFS9 = {
   fill: null as THREE.Material | null,
   jukeboxGlow: null as THREE.Mesh | null,
   gazzosa: null as THREE.Group | null,
+  gazLiquid: null as THREE.Mesh | null, // quanta gazzosa resta (scala in altezza)
+  martinaWin: null as THREE.Mesh | null, // la finestra di Martina (si accende quando entra)
+  tappo: null as THREE.Mesh | null, // il tappo giallo che saluta dalla finestra
 };
 
 export const inPub = (p: THREE.Vector3) => p.x > PUB.x0 && p.x < PUB.x1 && p.z > PUB.z0 && p.z < PUB.z1;
@@ -174,10 +183,23 @@ export function buildPub(): World {
       D.circle(x, 2.82, z, 0.07, 'x', 8);
     }
   }
-  // --- il bancone (a nord) ---
-  b.solid(-3, -5.75, 10, 0.9, 1.1);
-  S.box(-3, 1.1, -5.75, 10.3, 0.08, 1.1);
-  for (let x = -7.4; x <= 1.8; x += 1.3) b.stool(x, -4.75);
+  // --- il bancone (a nord): piano di legno scuro, pannelli a doghe davanti, poggiapiedi ---
+  b.solid(-3, -5.75, 10, 0.9, 1.05);
+  {
+    const top = new THREE.Mesh(new THREE.BoxGeometry(10.4, 0.1, 1.2), new THREE.MeshBasicMaterial({ color: '#7a5436' }));
+    top.position.set(-3, 1.1, -5.75);
+    b.group.add(top);
+    D.poly([[-8.2, 1.155, -6.35], [2.2, 1.155, -6.35], [2.2, 1.155, -5.15], [-8.2, 1.155, -5.15]], true);
+    D.seg(-8.2, 1.045, -5.145, 2.2, 1.045, -5.145).seg(-8.2, 1.045, -5.145, -8.2, 1.155, -5.145).seg(2.2, 1.045, -5.145, 2.2, 1.155, -5.145);
+    const front = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.05), new THREE.MeshBasicMaterial({ color: '#d9c092' }));
+    front.position.set(-3, 0.525, -5.285);
+    b.group.add(front);
+    for (let x = -7.65; x < 2; x += 0.35) D.seg(x, 0.04, -5.27, x, 1.0, -5.27, { over: 0 });
+    // il poggiapiedi (una sbarra con i sostegni)
+    S.seg(-8, 0.24, -5.05, 2, 0.24, -5.05);
+    for (let x = -7.5; x <= 1.6; x += 1.5) S.seg(x, 0.02, -5.28, x, 0.24, -5.05);
+  }
+  for (let x = -7.4; x <= 1.8; x += 1.3) b.stool(x, -4.6);
   // spine della gazzosa e mensole con le bottiglie
   for (const x of [-5, -4, -3]) {
     S.seg(x, 1.18, -6.0, x, 1.55, -6.0).seg(x, 1.55, -6.0, x, 1.55, -5.8);
@@ -188,10 +210,36 @@ export function buildPub(): World {
     for (let i = 0; i < 16; i++) S.cylinder(-8.2 + i * 0.68, sy + 0.06, -7.75, 0.07, 0.3 + (i % 3) * 0.06, 6);
   }
   wallText('GAZZOSA ALLA SPINA\nfrizzante · molto frizzante · Gigante', -3, 3.25, -7.86, 5, 0.8, '+z');
-  // il microfono del quiz (sul bancone)
-  D.seg(1.2, 1.18, -5.6, 1.2, 1.7, -5.4);
-  D.circle(1.2, 1.74, -5.38, 0.05, 'x', 8);
-  sign('QUIZ DELLA SERATA\nsquadre da tre', 4.5, 2.4, -7.85, 2.2, 0.9, '+z', { font: HAND_FONT });
+  // --- il palco del quiz: pedana, gradino, asta col microfono (grande: si vede dal tavolo), faro ---
+  {
+    const { x: sx, z: sz, w: sw, d: sd, h: sh } = STAGE;
+    b.solid(sx, sz, sw, sd, sh);
+    for (let x = sx - sw / 2 + 0.3; x < sx + sw / 2; x += 0.4) D.seg(x, 0.02, sz + sd / 2 + 0.005, x, sh - 0.02, sz + sd / 2 + 0.005, { over: 0 });
+    S.box(sx - sw / 2 + 0.45, 0, sz + sd / 2 + 0.25, 0.7, 0.17, 0.5);
+    // l'asta
+    S.circle(MIC.x, sh + 0.01, MIC.z, 0.2, 'y', 12);
+    S.seg(MIC.x, sh, MIC.z, MIC.x, MIC.y - 0.2, MIC.z);
+    // il microfono: impugnatura e testa a griglia (scura)
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.028, 0.24, 8), new THREE.MeshBasicMaterial({ color: '#3a3129' }));
+    handle.position.set(MIC.x, MIC.y - 0.1, MIC.z + 0.03);
+    handle.rotation.x = -0.35;
+    b.group.add(handle);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), new THREE.MeshBasicMaterial({ color: '#4a4038' }));
+    head.position.set(MIC.x, MIC.y + 0.04, MIC.z - 0.02);
+    b.group.add(head);
+    D.circle(MIC.x, MIC.y + 0.04, MIC.z - 0.02, 0.105, 'x', 12).circle(MIC.x, MIC.y + 0.04, MIC.z - 0.02, 0.105, 'z', 12);
+    // il filo, per terra
+    D.curve([[MIC.x, sh + 0.02, MIC.z], [MIC.x + 0.5, sh + 0.02, MIC.z + 0.3], [MIC.x + 1.0, sh + 0.02, MIC.z - 0.2], [sx + sw / 2 - 0.1, sh + 0.02, MIC.z + 0.4]]);
+    // il faro dal soffitto: un cono di luce sul palco
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(1.25, h - 0.1 - sh, 24, 1, true),
+      new THREE.MeshBasicMaterial({ color: '#f5dc9a', transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }),
+    );
+    cone.position.set(sx, (h - 0.1 + sh) / 2, sz - 0.1);
+    b.group.add(cone);
+    D.circle(sx, h - 0.12, sz - 0.1, 0.14, 'y', 10);
+    sign('QUIZ DELLA SERATA\nsquadre da tre', sx, 2.95, -7.85, 2.2, 0.9, '+z', { font: HAND_FONT });
+  }
   // --- il bersaglio (parete est) e la linea di tiro ---
   {
     const board = new THREE.Mesh(new THREE.CircleGeometry(0.52, 48), new THREE.MeshBasicMaterial({ map: dartboardTexture() }));
@@ -252,20 +300,60 @@ export function buildPub(): World {
   };
   // la squadra: tu a nord (verso il bancone), Marco a sud-ovest, Martina a sud-est
   const team = table(TABLE.x, TABLE.z, 0.8, 3, -Math.PI / 2);
-  const pastelli = table(-6.5, 5.6, 0.75, 3, -Math.PI / 2);
-  const biro = table(0.5, 5.6, 0.75, 3, -Math.PI / 2);
+  const pastelli = table(TABLES.pastelli.x, TABLES.pastelli.z, 0.75, 3, -Math.PI / 2);
+  const biro = table(TABLES.biro.x, TABLES.biro.z, 0.75, 3, -Math.PI / 2);
   table(4.5, 2.2, 0.6, 2);
-  // la Gazzosa Gigante (arriva dopo il quiz): tre litri, una cannuccia
+  table(-4, 2.5, 0.6, 2);
+  // la Gazzosa Gigante (arriva dopo il quiz): per terra, alta più di Pennino, una cannuccia sola
   {
     const gz = new Sketch();
     gz.style = { jitter: 0.004, over: 0.01 };
-    gz.cylinder(0, 0.79, 0, 0.2, 0.7, 14);
-    gz.cylinder(0, 1.49, 0, 0.09, 0.22, 10);
-    gz.seg(0.02, 1.4, 0, 0.1, 2.25, 0.05).seg(0.1, 2.25, 0.05, 0.3, 2.35, 0.1);
-    for (let i = 0; i < 9; i++) gz.circle(((i * 37) % 11) / 11 * 0.26 - 0.13, 0.9 + i * 0.065, 0.2, 0.018, 'z', 5);
+    const R = GAZ.r;
+    gz.cylinder(0, 0, 0, R, 1.45, 18);
+    // spalla, collo, tappo
+    gz.circle(0, 1.75, 0, 0.16, 'y', 12);
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      gz.seg(Math.cos(a) * R, 1.45, Math.sin(a) * R, Math.cos(a) * 0.16, 1.75, Math.sin(a) * 0.16);
+    }
+    gz.cylinder(0, 1.75, 0, 0.16, 0.25, 10);
+    gz.cylinder(0, 2.0, 0, 0.19, 0.08, 10);
+    // bollicine sulla bottiglia
+    const r = b.r;
+    for (let k = 0; k < 26; k++) {
+      const a = r() * Math.PI * 2, yy = 0.15 + r() * 1.2;
+      const ax = Math.abs(Math.cos(a)) > Math.abs(Math.sin(a)) ? 'x' : 'z';
+      gz.circle(Math.cos(a) * (R + 0.005), yy, Math.sin(a) * (R + 0.005), 0.02 + r() * 0.025, ax, 6);
+    }
     const grp = new THREE.Group();
     grp.add(gz.build(REFS9.lm!, b.fill));
-    grp.position.set(TABLE.x, 0, TABLE.z);
+    // la gazzosa dentro (quanta ne resta)
+    const liquid = new THREE.Mesh(
+      new THREE.CylinderGeometry(R - 0.03, R - 0.03, 1, 20).translate(0, 0.5, 0),
+      new THREE.MeshBasicMaterial({ color: '#e3d77e', transparent: true, opacity: 0.5, depthWrite: false }),
+    );
+    liquid.position.y = 0.03;
+    liquid.scale.y = 1.38;
+    grp.add(liquid);
+    REFS9.gazLiquid = liquid;
+    // l'etichetta tutto intorno
+    const lt = textTexture('GAZZOSA GIGANTE  ·  3 LITRI (DICE)  ·  ', { w: 1024, h: 128, size: 58, font: MARKER_FONT, bg: '#f4ead0', color: '#b03a32' });
+    const label = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.012, R + 0.012, 0.34, 28, 1, true), new THREE.MeshBasicMaterial({ map: lt }));
+    label.position.y = 0.72;
+    grp.add(label);
+    // la cannuccia: esce dal collo, sale, e a zig-zag arriva sopra il tavolo
+    const straw: [number, number, number][] = [[0.03, 1.85, 0], [0.04, 2.4, 0.01]];
+    const tx = TABLE.x - GAZ.x, tz = TABLE.z - GAZ.z, tl = Math.hypot(tx, tz);
+    for (let k = 1; k <= 6; k++) {
+      const f = (k / 6) * 0.97, side = k % 2 ? 0.09 : -0.09;
+      straw.push([0.04 + tx * f - (tz / tl) * side, 2.4 + (k % 2 ? 0.08 : -0.02), 0.01 + tz * f + (tx / tl) * side]);
+    }
+    straw.push([tx * 0.97, 1.3, tz * 0.97]);
+    const sk = new Sketch();
+    sk.style = { jitter: 0.004, over: 0 };
+    sk.curve(straw);
+    grp.add(sk.build(b.lineMat(4.5, RED_HEX), b.fill));
+    grp.position.set(GAZ.x, 0, GAZ.z);
     grp.visible = false;
     b.group.add(grp);
     REFS9.gazzosa = grp;
@@ -307,15 +395,13 @@ export function buildPub(): World {
   // l'insegna del pub (al neon, calda)
   b.neon('DA DARIO', 0, h + 0.6, z1 + 0.15, 5, 1.2, '+z', '#f2b84b');
   sign('pub · gazzosa · freccette', -4, 2.9, z1 + 0.14, 3.2, 0.5, '+z', { font: HAND_FONT });
-  // finestre illuminate sulla facciata del pub
-  const litMat = new THREE.MeshBasicMaterial({ color: '#f3d58c', transparent: true, opacity: 0.55 });
-  const lit = (x: number, yy: number, z: number, w: number, hh: number, rot: number) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, hh), litMat);
-    m.position.set(x, yy, z);
-    m.rotation.y = rot;
-    b.group.add(m);
-  };
-  for (const x of [-6, -2, 2]) lit(x, 1.75, z1 + 0.14, 1.35, 1.25, 0);
+  // le finestre del pub, da fuori: cornice disegnata e dentro la luce accesa
+  for (const x of [-6, -2, 2]) {
+    D.window(x - 0.7, 1.1, z1 + 0.145, 1.4, 1.3, 'x');
+    b.litPane(x, 1.75, z1 + 0.13, 1.36, 1.26, 0);
+  }
+  // finestre accese qua e là, sempre dentro finestre vere (poche: è sera, non tutti sono a casa)
+  const litAt = (seed: number) => (f: number, i: number) => (seed * 7 + i * 5 + f * 3) % 9 < 3;
   // case a nord (dietro il marciapiede) e a sud; lasciano il posto ai lotti e al canale
   const north: [number, number, number, 'flat' | 'gable'][] = [
     [-14, -10.5, 6, 'gable'], [10.5, 22, 7, 'flat'], [22.5, 36, 6, 'gable'], [36.5, 50, 8, 'flat'], [50.5, 67, 6.5, 'gable'],
@@ -323,9 +409,9 @@ export function buildPub(): World {
   ];
   for (const [bx0, bx1, bh, roof] of north) {
     const isMarco = bx0 === 118.5;
-    b.building({ x0: bx0, x1: bx1, z0: -4, z1: 7.8, h: bh, face: '+z', roof, door: isMarco ? HOMES.marco.x : undefined, sign: isMarco ? 'Famiglia di Marco\n(bussare piano)' : undefined, signW: 3 });
-    // finestre illuminate qua e là
-    if ((bx0 * 7) % 3 < 1.6) lit((bx0 + bx1) / 2 - 1.5, 1.7, 7.84, 1.1, 1.3, 0);
+    // a casa di Marco la mamma aspetta sveglia: la luce del piano terra è accesa
+    const lit = isMarco ? (f: number, i: number) => f === 0 && i === 0 : litAt(Math.round(bx0));
+    b.building({ x0: bx0, x1: bx1, z0: -4, z1: 7.8, h: bh, face: '+z', roof, door: isMarco ? HOMES.marco.x : undefined, sign: isMarco ? 'Famiglia di Marco\n(bussare piano)' : undefined, signW: 3, lit });
   }
   const south: [number, number, number, 'flat' | 'gable'][] = [
     [-14, 4, 6, 'flat'], [4.5, 20, 7, 'gable'], [20.5, 34, 6, 'flat'], [34.5, 49.5, 7, 'gable'], [50, 60, 6, 'gable'],
@@ -333,8 +419,20 @@ export function buildPub(): World {
   ];
   for (const [bx0, bx1, bh, roof] of south) {
     const isMartina = bx0 === 50;
-    b.building({ x0: bx0, x1: bx1, z0: 18.2, z1: 30, h: bh, face: '-z', roof, door: isMartina ? HOMES.martina.x : undefined, sign: isMartina ? 'Martina\n(e la sua collezione)' : undefined, signW: 3 });
-    if ((bx1 * 5) % 3 < 1.4) lit((bx0 + bx1) / 2 + 1.2, 1.7, 18.16, 1.1, 1.3, Math.PI);
+    // da Martina è tutto spento: si accende la sua camera (primo piano, la prima a sinistra) quando entra
+    const lit = isMartina ? () => false : litAt(Math.round(bx1) + 3);
+    b.building({ x0: bx0, x1: bx1, z0: 18.2, z1: 30, h: bh, face: '-z', roof, door: isMartina ? HOMES.martina.x : undefined, sign: isMartina ? 'Martina\n(e la sua collezione)' : undefined, signW: 3, lit });
+  }
+  {
+    const win = b.litPane(51.8, 4.6, 18.185, 1.14, 1.34, Math.PI, new THREE.MeshBasicMaterial({ color: '#f7c9dc', transparent: true, opacity: 0.75 }));
+    win.visible = false;
+    REFS9.martinaWin = win;
+    const tappo = new THREE.Mesh(new THREE.CircleGeometry(0.13, 18), new THREE.MeshBasicMaterial({ color: '#f2c200', side: THREE.DoubleSide }));
+    tappo.position.set(51.8, 4.45, 18.165);
+    tappo.rotation.y = Math.PI;
+    tappo.visible = false;
+    b.group.add(tappo);
+    REFS9.tappo = tappo;
   }
   // lampioni
   for (let x = -8; x < 132; x += 12) {
@@ -402,8 +500,9 @@ export function buildPub(): World {
   col.rect(132, -8, 136, 34);
   S.box(132, 0, 13, 0.3, 1.1, 10);
   sign('FINE DEL FOGLIO\n(si torna indietro)', 131.8, 1.6, 13, 2, 0.7, '-x', { font: HAND_FONT });
-  // dietro le case non si va
-  col.rect(-18, -8, 136, -4);
+  // dietro le case non si va (il pub no: arriva fino a z -8, bancone compreso)
+  col.rect(-18, -8, PUB.x0 - 0.15, -4);
+  col.rect(PUB.x1 + 0.15, -8, 136, -4);
   col.rect(-18, 30, 136, 34);
 
   // =========================================================================
@@ -423,8 +522,10 @@ export function buildPub(): World {
   A('penna', biro[1][0], 0.25, biro[1][1]);
   A('pennino', biro[2][0], 0.25, biro[2][1]);
   A('teamTable', TABLE.x, 0.8, TABLE.z);
-  A('mic', 1.2, 1.7, -5.4);
-  A('darioMic', 1.2, 0, -6.6);
+  A('mic', MIC.x, MIC.y, MIC.z);
+  A('darioMic', MIC.x, STAGE.h, MIC.z - 0.42);
+  A('darioGaz', GAZ.x + 0.6, 0, GAZ.z - 0.75); // dove si ferma Dario, accanto alla bottiglia
+  A('martinaDoor', HOMES.martina.x, 0, HOMES.martina.z - 0.55);
   A('tray', -0.4, 1.16, -5.45);
   A('tavolo7', -8.3, 0.8, -2.6);
   A('jukebox', x0 + 0.45, 1.1, 2);

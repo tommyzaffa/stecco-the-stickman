@@ -860,7 +860,7 @@ export class Game {
     this.damageFx = Math.max(0, this.damageFx - dt * 1.5);
     this.updateFocus(playing && !this.interactOff && !this.dialogue.isOpen && !this.hud.diarioOpen && !this.minigame);
     this.updateHud();
-    this.post.render(this.time, this.damageFx, this.player.dizzy * (1 - 0.6 * this.player.steady));
+    this.post.render(this.time, this.damageFx, Math.pow(this.player.dizzy, 1.5) * (1 - 0.6 * this.player.steady));
     inp.endFrame();
   }
 

@@ -33,6 +33,7 @@ export interface BuildingOpts {
   signW?: number;
   shopWindow?: boolean;
   noCollider?: boolean;
+  lit?: (floor: number, i: number) => boolean; // finestre sulla facciata con la luce accesa (di sera)
 }
 
 export class WorldBuilder {
@@ -245,9 +246,13 @@ export class WorldBuilder {
         }
         continue;
       }
+      let i = 0;
       for (let x = o.x0 + 1.2; x + 1.2 < o.x1 - 0.6; x += 2.8) {
         if (f === 0 && Math.abs(x + 0.6 - dx) < dw) continue;
         D.window(x, y, fz, 1.2, 1.4, 'x');
+        // la luce accesa sta dentro la cornice (appena dietro le linee della finestra)
+        if (o.lit?.(f, i)) this.litPane(x + 0.6, y + 0.7, o.face === '-z' ? o.z0 - 0.015 : o.z1 + 0.015, 1.14, 1.34, o.face === '-z' ? Math.PI : 0);
+        i++;
       }
       for (let x = o.x0 + 2; x + 1.2 < o.x1 - 1; x += 4) D.window(x, y, bz, 1.2, 1.4, 'x');
       for (let z = o.z0 + 2; z + 1.2 < o.z1 - 1; z += 4) {
@@ -259,6 +264,18 @@ export class WorldBuilder {
       const sw = o.signW ?? Math.min(w - 1, 6);
       this.sign(o.sign, dx, Math.min(o.h - 0.6, 3.0), fz + (o.face === '-z' ? -0.05 : 0.05), sw, sw * 0.22, o.face);
     }
+  };
+
+  // Una finestra illuminata (di sera): un vetro color lampadina, centro (x, y, z), girato di rotY
+  litColor = '#f3d58c';
+  private litMat: THREE.MeshBasicMaterial | null = null;
+  litPane = (x: number, y: number, z: number, w: number, h: number, rotY: number, mat?: THREE.Material) => {
+    this.litMat ??= new THREE.MeshBasicMaterial({ color: this.litColor, transparent: true, opacity: 0.6 });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat ?? this.litMat);
+    m.position.set(x, y, z);
+    m.rotation.y = rotY;
+    this.group.add(m);
+    return m;
   };
 
   // Cielo di giorno: sole con la faccina, nuvole, e all'orizzonte montagne o palazzi

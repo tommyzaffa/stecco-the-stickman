@@ -5,6 +5,7 @@ import { parryName } from '../../settings';
 import { TRAY } from './tray';
 import { dartsLosses, playDarts } from './darts';
 import { afterDarts, startWater } from './story';
+import { STAGE, TABLES } from './world';
 
 // ---------------------------------------------------------------------------
 // Capitolo 9: da Dario. Dario al bancone, Barnie alle freccette, Marco e Martina al tavolo della
@@ -16,12 +17,31 @@ const ROSA_PASTELLO = '#f4a3c4';
 const BIRO_BLU = '#4d7cf0';
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 
-// seduto su uno sgabello (alto: 25 cm più su del pavimento)
-export function seat(g: Game, id: string, anchor = id) {
+// chi sta seduto a quale tavolo (si guardano tra loro, attorno al tavolo)
+const SEATS: Record<string, { x: number; z: number }> = {
+  marco: TABLES.team, martina: TABLES.team,
+  penna: TABLES.biro, pennino: TABLES.biro,
+  pRosso: TABLES.pastelli, pGiallo: TABLES.pastelli, pBlu: TABLES.pastelli,
+};
+
+// seduto su uno sgabello (alto: 25 cm più su del pavimento), girato verso il suo tavolo
+export function seat(g: Game, id: string) {
   const A = g.world.anchors;
   const n = g.npc(id);
-  n.pos.set(A[anchor].x, A[anchor].y, A[anchor].z);
+  n.pos.set(A[id].x, A[id].y, A[id].z);
   n.setBehavior({ type: 'sit' });
+  n.homeRot = Math.atan2(SEATS[id].x - n.pos.x, SEATS[id].z - n.pos.z);
+  n.body.root.rotation.y = n.homeRot;
+}
+
+// durante il quiz tutti i seduti guardano il palco; poi tornano a guardarsi attorno al tavolo
+export function seatedLook(g: Game, where: 'table' | 'stage') {
+  for (const id of Object.keys(SEATS)) {
+    const n = g.npc(id);
+    if (n.hidden || n.behavior.type !== 'sit') continue;
+    const t = where === 'stage' ? STAGE : SEATS[id];
+    n.homeRot = Math.atan2(t.x - n.pos.x, t.z - n.pos.z);
+  }
 }
 
 export function createCharacters(g: Game) {
@@ -166,9 +186,9 @@ export function createCharacters(g: Game) {
             { t: 'Dopo.', next: 'dopoAllenamento' },
           ],
         },
-        dopoAllenamento: { say: ['Sono qui. Sono sempre qui. Il bancone mi tiene su.'] },
+        dopoAllenamento: { say: ['Sono qui. Sono sempre qui, vicino al bersaglio. Come un cane da guardia. Buono.'] },
         via: {
-          say: ['* Barnie si alza. Il bancone scricchiola di sollievo.'],
+          say: ['* Barnie prende tre freccette dal barattolo. Le guarda come si guardano dei vecchi amici.'],
           do: (g) => g.after(0.2, () => playDarts(g, 'final', (r) => afterDarts(g, r))),
         },
         dopo: {

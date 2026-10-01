@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import type { Game } from '../../game/game';
 import { Sketch } from '../../render/sketch';
-import { Stickman } from '../../entities/stickman';
 import { TOUCH } from '../../touch';
 import { parryName } from '../../settings';
 import { dots, finishBooth, fireName, openBooth, type Booth } from '../../game/booth';
@@ -198,12 +197,8 @@ export const DARTS_BOOTH: Booth = {
       S.timer -= dt;
       if (S.timer <= 0 && S.thrown < 3) {
         const n = g.npc('barnie');
-        if (n.body instanceof Stickman) {
-          n.body.action = 'strike';
-          g.after(0.3, () => {
-            if (n.body instanceof Stickman) n.body.action = 'drink';
-          });
-        }
+        n.baseAction = 'strike';
+        g.after(0.3, () => (n.baseAction = 'drink'));
         throwDart(g, barnieHand(g), pointFor(barnieHits()[S.thrown]), 'barnie');
         S.thrown++;
         S.timer = 1.0;
@@ -268,7 +263,7 @@ export const DARTS_BOOTH: Booth = {
     clearDarts(g);
     g.player.steady = 0;
     const n = g.npc('barnie');
-    if (n.body instanceof Stickman) n.body.action = 'drink';
+    n.baseAction = 'drink';
   },
 };
 

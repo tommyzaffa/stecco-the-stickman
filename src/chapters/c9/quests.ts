@@ -6,7 +6,12 @@ import { TRAY } from './tray';
 
 // stato del capitolo (sparisce con il capitolo: quello che conta dopo va nei flag)
 export const Q9 = {
-  fizz: 0, // bollicine in corpo (0..1): il capogiro
+  fizz: 0, // bollicine in corpo (0..1): il capogiro (sale piano verso target, dopo aver bevuto)
+  target: 0, // quanto hai bevuto: dove arriveranno le bollicine
+  carry: false, // Dario sta portando la Gazzosa Gigante al tavolo
+  leaving: [] as string[], // clienti che escono dal pub (a fine serata)
+  martinaIn: false, // Martina sta entrando in casa
+  marcoIn: false, // Marco e la mamma stanno entrando
   team: 'Gli Stecchini', // il nome della squadra al quiz
   score: 0, // risposte giuste al quiz
   hicT: 9, // prossimo singhiozzo
