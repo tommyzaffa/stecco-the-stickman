@@ -3,6 +3,7 @@ import { CHAPTERS } from '../chapters';
 import { DEMO } from '../chapters/demo';
 import { ACTIONS, QUALITY_LABEL, SETTINGS, bindKey, codeLabel, keyName, resetKeys, saveSettings, type Quality } from '../settings';
 import { TOUCH } from '../touch';
+import { enterFull, exitFull, isFull, restoreFull } from '../fullscreen';
 import { ACCOUNT, authError, type Progress } from '../account';
 
 // ---------------------------------------------------------------------------
@@ -135,7 +136,7 @@ export function setupFlow(g: Game) {
         .requestFullscreen?.({ navigationUI: 'hide' })
         .then(() => (window.screen.orientation as unknown as { lock?: (o: string) => Promise<void> }).lock?.('landscape'))
         .catch(() => {});
-    }
+    } else restoreFull();
   };
 
   const play = (m: Mode, num: number, state: 'fresh' | 'minimal' | RawState) => {
@@ -500,6 +501,7 @@ export function setupFlow(g: Game) {
         ${controls()}
         <div class="buttons">
           <button class="primary" data-a="resume">Riprendi</button>
+          ${TOUCH ? '' : `<button data-a="full">${isFull() ? 'Esci dallo schermo intero' : 'Schermo intero'}</button>`}
           <button data-a="settings">Impostazioni</button>
           <button data-a="menu">Menu principale</button>
         </div>
@@ -511,6 +513,12 @@ export function setupFlow(g: Game) {
           g.audio.resume();
           hide();
           g.input.lock();
+          restoreFull();
+        } else if (a === 'full') {
+          const p = isFull() ? (exitFull(), null) : enterFull();
+          // il testo del pulsante cambia quando il browser ha finito
+          if (p) p.then(pauseMenu).catch(() => {});
+          else setTimeout(pauseMenu, 150);
         } else if (a === 'settings') {
           settingsMenu(pauseMenu, 'overlay');
         } else if (a === 'menu') {
@@ -558,6 +566,7 @@ export function setupFlow(g: Game) {
         g.mode = 'play';
         hide();
         g.input.lock();
+        restoreFull();
       },
     );
   };

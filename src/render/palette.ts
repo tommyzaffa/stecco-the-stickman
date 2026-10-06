@@ -15,7 +15,7 @@ export const HIGHLIGHT_YELLOW_HEX = '#e8f53a';
 export interface Theme {
   paper: string;
   ink: string;
-  grid?: { size: number; color: string; major?: number; rows?: boolean; dots?: boolean; staff?: boolean }; // carta a quadretti (major: una riga più marcata ogni N; rows: solo righe orizzontali, quaderno a righe; dots: solo i puntini agli incroci; staff: righe a gruppi di cinque, carta da musica)
+  grid?: { size: number; color: string; major?: number; rows?: boolean; dots?: boolean; staff?: boolean; bands?: boolean }; // carta a quadretti (major: una riga più marcata ogni N; rows: solo righe orizzontali, quaderno a righe; dots: solo i puntini agli incroci; staff: righe a gruppi di cinque, carta da musica)
 }
 export const THEME: { paperHex: string; inkHex: string; night: boolean; grid: Theme['grid'] | null } = {
   paperHex: PAPER_HEX,
@@ -45,6 +45,9 @@ export const PENTAGRAMMA: Theme = { paper: '#f1e6cf', ink: '#2a2119', grid: { si
 
 // Capitolo 10, il condominio di notte: carta carbone (blu notte), inchiostro azzurro chiaro
 export const CARBONE: Theme = { paper: '#1c2232', ink: '#d3dbf2' };
+
+// Capitolo 11, l'Ufficio Protocollo: carta a modulo continuo (strisce verdi, come i tabulati)
+export const MODULO: Theme = { paper: '#f7f8f1', ink: '#1f2629', grid: { size: 0.45, color: '#b7d9b1', rows: true, bands: true } };
 
 // Mercato Nero: carta da pacchi. Tutto quello che si vende qui sotto è incartato.
 export const PACCHI: Theme = { paper: '#d8c29d', ink: '#2a2119' };

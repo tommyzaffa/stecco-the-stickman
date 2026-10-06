@@ -30,7 +30,8 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
     carta millimetrata: `grid.major` = una riga più marcata ogni N, `RIGHE` quaderno a righe:
     `grid.rows` = solo righe orizzontali, anche sui muri, `PUNTINI` carta a puntini: `grid.dots` =
     solo un puntino a ogni incrocio, `PENTAGRAMMA` carta da musica: `grid.staff` = righe a gruppi di
-    cinque, `CARBONE` carta carbone blu notte con l'inchiostro azzurro). `CERA` = colori dei Pastelli a Cera.
+    cinque, `CARBONE` carta carbone blu notte con l'inchiostro azzurro, `MODULO` carta a modulo continuo:
+    `grid.bands` = bande verdi alternate come i tabulati). `CERA` = colori dei Pastelli a Cera.
     Il tema va impostato prima di costruire un capitolo (lo fa `Game.loadChapter`).
 - `src/world/` — `builder.ts` (`WorldBuilder`: muri, porte, edifici, cartelli, neon, alberi,
   `ceiling` per gli interni, `wallText` per le scritte sui muri...; `finish()` restituisce un
@@ -52,12 +53,13 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   bip, sorgenti nel mondo (`addEmitter`), filtro "musica ovattata" (`setMusicMuffle`);
   `music.ts` sequencer + brani (`paese`, `club`, `sbiadisco`, `indagine`, `mercato`, `sparatoria`,
   `cena`, `violino`, `consegna`, `trasloco`, `sagra`, `giostra`, `pub`, `pubRotto` (disco rigato che
-  salta), `notte`, `notturno` (in punta di piedi); strumento `accordion` = fisarmonica).
+  salta), `notte`, `notturno` (in punta di piedi), `attesa` / `attesaFretta` (musica d'attesa, la seconda
+  per gli ultimi minuti); strumento `accordion` = fisarmonica).
   Suoni della macchina (capitolo 6): `car(v, freno, sbandata)` continuo, `crash`, `bump`, `scrape`,
   `horn`, `wiper`, `bleat`, `glow`, `erase`. Sagra (capitolo 8): `clang`, `canDrop`, `tonk`, `splash`,
   `plop`, `ding`, `tokens`, `creak`. Pub (capitolo 9): `dart(nelSughero)`, `fizz`, `glug`, `hic`,
   `clink`, `scratch`. Condominio (capitolo 10): `floorCreak`, `squeak`, `drip`, `cry`, `thumps`, `growl`;
-  `footstep(..., volume)`.
+  `footstep(..., volume)`. Ufficio (capitolo 11): `chime(tuo)` (din don del chiamanumeri), `stamp`, `shutter`.
   L'AudioContext si sblocca solo con un click (schermata del titolo).
 
 ## Sistemi riusabili
@@ -147,6 +149,20 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   Barnie, fiato limitato per stare fermi; ogni rivincita persa lo stanca. Vassoio (`c9/tray.ts`):
   `player.carrying` + tre bicchieri che si svuotano se il vassoio si inclina (accelerazioni, curve,
   capogiro). Quiz a squadre con `DNode.timer` (se non rispondi risponde Marco).
+- **Ufficio: orologio, sportelli e numeri** (capitolo 11, `c11/office.ts`): `OFF.min` = minuti dalle 9:00
+  (2 secondi veri = 1 minuto; fermo durante i dialoghi, non durante moduli e minigiochi), le 12:00 = game
+  over e "il giorno dopo" (si riparte dalle 9:00 tenendo quello che hai fatto). Ogni sportello (`OFF.wins`)
+  ha orari, pause (l'impiegato va nell'angolo del personale e torna), tabellone (`setDisplay`) e una coda di
+  numeri: dei clienti PNG (si alzano, vanno allo sportello, se ne vanno, rientrano con un numero nuovo; code
+  limitate), "fantasmi" (chiamati e saltati) e i tuoi (`takeTicket`, `OFF.mine`). Quando chiamano il tuo
+  hai `GRACE` secondi per presentarti (`present`/`served`), poi il numero è perso. Pannello `.pratica`
+  (ora, numeri, cose fatte e da fare) da `OFF.steps`.
+- **Moduli da compilare** (`c11/forms.ts`): `openForm(g, FormDef, onMistake, onDone)`: foglio a crocette
+  (penna finta mossa dal mouse; sul telefono si tocca), istruzioni in piccolo, un errore = correttore
+  (`onMistake`: tempo perso); `ok` può essere una lista (es. le foto venute bene); le risposte restano se
+  lo lasci a metà. **Timbri a tempo** (`c11/stamp.ts`): il timbro oscilla, ORA! (il tasto per colpire)
+  lo abbassa, caselle in ordine sparse sul foglio, tre storti = annullato. **Fototessera** (`c11/photo.ts`,
+  un `Booth`): seduto, quattro pose; buona se guardi l'obiettivo (che si sposta) e stai fermo.
 - **Opzioni del capitolo sul Game** (tornano normali allo scarico): `g.touchMode` = pulsanti a
   schermo speciali (`{fire, use, jump, crouch, parry}`: testo o `null` per nasconderlo), `g.hideNameTags`,
   `g.interactOff` (niente "parla con"/"usa"). Gli elementi HTML con classe `chapter-ui` spariscono
@@ -174,6 +190,10 @@ runtime (`src/render/textures.ts`), le animazioni degli omini sono procedurali.
   (blocco rotazione spento) il gioco va in pausa con l'avviso "Attiva il blocco rotazione"
   (`VIEW.needLock`; `?iphone=1` lo simula). Android, iPad e schermata Home: nessun blocco.
 
+- **Schermo intero sul computer** (`src/fullscreen.ts`): F11 e il pulsante nella pausa usano lo schermo
+  intero del gioco (Fullscreen API) con ESC bloccato (Keyboard Lock, Chrome/Edge): ESC apre la pausa e lo
+  schermo resta intero (per uscire: ESC tenuto premuto, o il pulsante). Dove non c'è (Firefox, Safari) ESC
+  esce, ma "Riprendi" ci torna da solo.
 - **Mai emoji** (sul telefono ▶ ◀ e simili diventano emoji colorate): frecce e simboli vanno
   disegnati (SVG, es. `arrowSvg()` in `ui/touch.ts`); nei testi, se proprio serve, con `\uFE0E`.
 - **Mai `confirm()`/`alert()` del browser**: per le conferme c'è `ask()` in `flow.ts` (foglietto
@@ -231,7 +251,8 @@ Completati: capitolo 1 (San Scarabocchio), 2 (Il Parallelepipedo), 3 (Il Banco d
 7 (Il trasloco: mobili giù per la scala a U con Marco, incastro nel cassone del furgone),
 8 (La sagra: bancarelle a minigiochi e gettoni, la ruota panoramica con Martina, la fontana ridisegnata),
 9 (Da Dario: quiz a squadre, Gazzosa Gigante e capogiro, freccette contro Barnie, il vassoio, a casa a piedi),
-10 (Il condominio: di notte, quattro piani sovrapposti, il pacco al 3° senza svegliare nessuno).
+10 (Il condominio: di notte, quattro piani sovrapposti, il pacco al 3° senza svegliare nessuno),
+11 (Modulo 27-B: l'Ufficio Protocollo entro mezzogiorno, numeri, sportelli con le pause, moduli, timbri, fototessera).
 Piano di tutti i capitoli: `docs/CAPITOLI.md`.
 
 ## Convenzioni per i contenuti

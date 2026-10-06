@@ -6,7 +6,8 @@ export type ItemId =
   | 'album' | 'briciola'
   | 'tappoStella' | 'pesce' | 'fischietto' | 'palloncino' | 'orsetto'
   | 'sottobicchiereOro' | 'mezzoSottobicchiere'
-  | 'pantofole' | 'letteraRighello' | 'paccoStecco';
+  | 'pantofole' | 'letteraRighello' | 'paccoStecco'
+  | 'modulo27A' | 'modulo27B' | 'marcaBollo' | 'fototessera' | 'occhialiAttesa' | 'caffe';
 
 export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolean }> = {
   pacco: {
@@ -141,5 +142,30 @@ export const ITEMS: Record<ItemId, { name: string; desc: string; weapon?: boolea
   paccoStecco: {
     name: 'Il pacco del trasloco',
     desc: 'La tua roba. Dentro c\'è il cuscino: senza, non si dorme. Il corriere l\'ha lasciato all\'interno 12.',
+  },
+  // capitolo 11: l'Ufficio Protocollo
+  modulo27A: {
+    name: 'Modulo 27-A',
+    desc: 'Richiesta del Modulo 27-B. Bianco, a righe verdi, coi buchi ai lati. Serve solo a chiedere un altro modulo.',
+  },
+  modulo27B: {
+    name: 'Modulo 27-B',
+    desc: 'Dichiarazione di residenza. Esaurito in rastrelliera, protocollato allo sportello B. Ha un campo per la foto.',
+  },
+  marcaBollo: {
+    name: 'Marca da bollo',
+    desc: 'Un francobollo che non va da nessuna parte. Costa sedici monete e rende ufficiale tutto quello che tocca.',
+  },
+  fototessera: {
+    name: 'Fototessera',
+    desc: 'Quattro pose sulla stessa striscia. In alcune guardi l\'obiettivo. In altre guardi il tuo futuro: la fila.',
+  },
+  occhialiAttesa: {
+    name: 'Occhiali da vista',
+    desc: 'Due cerchi e un ponticello. Del signor Attesa, prima fila. Senza, vede tutto a matita.',
+  },
+  caffe: {
+    name: 'Caffè della macchinetta',
+    desc: 'Uscito dopo un pugno. Caldo, disegnato, in un bicchierino che trema. Per la signora Tampona.',
   },
 };

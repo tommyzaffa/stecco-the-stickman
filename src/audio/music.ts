@@ -805,6 +805,47 @@ export const NOTTURNO: Track = {
   },
 };
 
+// --- l'ufficio (capitolo 11): musica d'attesa, quella del telefono quando "la sua chiamata è
+// importante per noi". Bossa stanca: basso, accordi in levare, una melodia fischiettata. Negli ultimi
+// minuti (fretta = true) va più veloce e il fischio sale di un tono.
+const ATT_CH: number[][] = [
+  [41, 57, 60, 64], // Fmaj7
+  [38, 57, 60, 65], // Dm7
+  [43, 58, 62, 65], // Gm7
+  [36, 58, 64, 67], // C7
+];
+const ATT_MEL: number[] = [
+  72, _, 69, _, 70, 72, _, 0, 74, _, 72, _, 69, _, _, 0,
+  70, _, 67, _, 69, 70, _, 0, 72, _, 70, 69, 67, _, _, 0,
+];
+function attesa(fretta: boolean): Track {
+  return {
+    bpm: fretta ? 132 : 104,
+    stepsPerBeat: 2,
+    swing: 0.03,
+    play(m, step, t) {
+      const bar = Math.floor(step / 8) % 4;
+      const slot = step % 8;
+      const ch = ATT_CH[bar];
+      const up = fretta ? 2 : 0;
+      // basso della bossa: uno ... (tre) e
+      if (slot === 0) m.bass(mtof(ch[0] + up), t, 0.45, 0.11);
+      if (slot === 3) m.bass(mtof(ch[0] + 7 + up), t, 0.2, 0.08);
+      if (slot === 4) m.bass(mtof(ch[0] + 7 + up), t, 0.3, 0.09);
+      // accordi in levare, piano
+      if (slot === 2 || slot === 5 || slot === 7) m.stab(ch.slice(1).map((n) => n + up), t, 0.016, 0.1);
+      // il ticchettio (spazzola)
+      if (slot % 2 === 1) m.hit(t, 0.01, 6000, 'highpass');
+      if (fretta && slot % 2 === 0) m.hit(t, 0.014, 2400);
+      // la melodia fischiettata (dalla seconda volta)
+      if (Math.floor(step / 32) % 2 === 1) {
+        const n = ATT_MEL[step % 32];
+        if (n > 0) m.whistle(mtof(n + up), t, 0.3, 0.035);
+      }
+    },
+  };
+}
+
 export const TRACKS = {
   paese: PAESE,
   club: disco(false),
@@ -822,5 +863,7 @@ export const TRACKS = {
   pubRotto: pub(true),
   notte: NOTTE,
   notturno: NOTTURNO,
+  attesa: attesa(false),
+  attesaFretta: attesa(true),
 };
 export type TrackName = keyof typeof TRACKS;

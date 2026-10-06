@@ -53,6 +53,7 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
         uGridRows: { value: THEME.grid?.rows ? 1 : 0 },
         uGridDots: { value: THEME.grid?.dots ? 1 : 0 },
         uGridStaff: { value: THEME.grid?.staff ? 1 : 0 },
+        uGridBands: { value: THEME.grid?.bands ? 1 : 0 },
       },
     ]),
     vertexShader: /* glsl */ `
@@ -80,6 +81,7 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
       uniform float uGridRows;
       uniform float uGridDots;
       uniform float uGridStaff;
+      uniform float uGridBands;
       varying vec3 vN;
       varying vec3 vW;
       #include <fog_pars_fragment>
@@ -129,6 +131,12 @@ export function makeHatchMaterial(opts: { density?: number; strength?: number } 
             float L = 1.0 - clamp(min(D.x, D.y) - 0.7, 0.0, 1.0);
             float F = 1.0 - clamp(max(W.x, W.y) * 2.5, 0.0, 1.0);
             a = max(a, L * F * 0.85);
+          }
+          if (uGridBands > 0.5) {
+            // carta a modulo continuo (quella delle stampanti): una striscia colorata sì e una no
+            float band = step(0.5, fract(g.y * 0.5));
+            float far = clamp(w.y * 2.0, 0.0, 1.0);
+            base = mix(base, uGridColor, mix(band, 0.5, far) * 0.45);
           }
           base = mix(base, uGridColor, a);
         }

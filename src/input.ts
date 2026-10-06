@@ -1,5 +1,6 @@
 import { SETTINGS, type Action } from './settings';
 import { TOUCH } from './touch';
+import { toggleFull } from './fullscreen';
 
 // Tastiera + mouse. "pressed" vale solo per il frame in cui il tasto è stato premuto.
 // Le azioni (avanti, salta, parla...) passano dai tasti scelti nelle impostazioni.
@@ -29,6 +30,18 @@ export class Input {
         return;
       }
       if (e.code === 'Tab' || e.code === 'Space') e.preventDefault();
+      // F11: lo schermo intero del gioco (non quello del browser), così ESC apre la pausa e basta
+      if (e.code === 'F11' && !TOUCH) {
+        e.preventDefault();
+        toggleFull();
+        return;
+      }
+      // ESC = pausa. A schermo intero con ESC bloccato (Keyboard Lock) il browser non molla il mouse da
+      // solo: lo lasciamo noi, e la pausa si apre
+      if (e.code === 'Escape' && this.locked && !TOUCH) {
+        e.preventDefault();
+        this.unlock();
+      }
       if (!e.repeat) this.pressed.add(e.code);
       this.down.add(e.code);
     });

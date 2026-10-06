@@ -820,6 +820,26 @@ export class Sound {
     this.tone(95, 0.6, { type: 'sawtooth', to: 80, vol: 0.05, vibrato: [18, 12], filter: { type: 'lowpass', freq: 500 } });
   }
 
+  // --- l'ufficio (capitolo 11) ---------------------------------------------------------
+  // il chiamanumeri: din-don (high = è il tuo numero, più forte)
+  chime(high = false) {
+    const v = high ? 0.075 : 0.04;
+    this.tone(high ? 988 : 880, 0.5, { type: 'sine', vol: v });
+    this.tone(high ? 784 : 698, 0.7, { type: 'sine', vol: v, delay: 0.32 });
+  }
+
+  // il timbro che scende sul foglio: TUNF
+  stamp(k = 1) {
+    this.tone(120, 0.12, { to: 60, vol: 0.14 * k });
+    this.noise(0.06, 0.07 * k, { type: 'lowpass', freq: 1200 });
+  }
+
+  // lo scatto della fototessera: clic e il lampo che si ricarica
+  shutter() {
+    this.noise(0.03, 0.12, { type: 'highpass', freq: 3000 });
+    this.tone(2600, 0.5, { type: 'sine', to: 5200, vol: 0.012, delay: 0.08 });
+  }
+
   // --- ambiente ----------------------------------------------------------------------
   private loopNoise() {
     const s = this.ctx!.createBufferSource();

@@ -87,7 +87,7 @@ alla sagra. Nel parco, la panchina di Arturo non c'è più: solo briciole di gom
 | 8 ✅ | La sagra | La piazza di San Scarabocchio in festa (carta a puntini) | **Bancarelle**: tanti minigiochi, gettoni e premi |
 | 9 ✅ | Da Dario | Il pub, di sera (carta pentagrammata) | **Capogiro da bollicine**: visuale e comandi che ondeggiano, freccette con Barnie |
 | 10 ✅ | Il condominio | Via della Penna 3, di notte (carta carbone) | **Furtività col rumore**: pavimenti che scricchiolano, vicini che dormono |
-| 11 | Modulo 27-B | L'Ufficio Protocollo di Quadropoli | **Burocrazia a tempo**: code, sportelli che chiudono, timbri |
+| 11 ✅ | Modulo 27-B | L'Ufficio Protocollo di Quadropoli (carta a modulo continuo) | **Burocrazia a tempo**: code, sportelli che chiudono, timbri |
 | 12 | Il pranzo della domenica | A casa della famiglia di Martina | **Fare tutto insieme**: piatti, parenti e domande, niente disastri |
 | 13 | Il campeggio | Al bordo del foglio | **Scappare da un posto che si cancella**: il terreno sparisce sotto i piedi |
 
@@ -130,9 +130,21 @@ col pacco in braccio, telefona Marco (urla). Il signor Gufo, che non dorme mai, 
 scale. Missioni: le pantofole di Nonna Pina, il rubinetto che gocciola (il neonato lo sente nei tubi),
 la lettera per i Righello da infilare sotto la porta. Nel pacco: il cuscino e la lettera dell'Ufficio
 Protocollo (Modulo 27-B).
-**11. Modulo 27-B.** Per registrare il nuovo indirizzo serve un modulo che richiede un altro modulo.
-Code che si spostano, sportelli che chiudono per pausa, timbri nell'ordine giusto. Tra i moduli,
-Stecco trova una pratica: "Richiesta di cancellazione totale. Firmato: G."
+**11. Modulo 27-B.** Per la residenza nuova serve il 27-B, esaurito: lo dà il Protocollo a chi porta il
+27-A compilato, con la marca da bollo e timbrato. Dalle 9:00 a mezzogiorno (l'orologio corre, ma si ferma
+quando si parla), quattro sportelli con orari e pause (Tampona va a prendere il caffè, Spillatrice fa
+merenda, la Cassa chiude per i conti, le Residenze aprono alle 10:30), l'eliminacode (un numero per
+sportello: chiamano anche i "fantasmi"; se non ti presenti in tempo il numero è perso), clienti che si
+alzano, vanno allo sportello e tornano col numero nuovo. Moduli a crocette con le istruzioni in piccolo
+(ogni errore, cinque minuti di correttore), timbri a tempo ("ORA!": Tampona abbassa il timbro solo quando
+glielo dici tu, caselle in ordine, tre storti = rifare la fila), la fototessera (guardare l'obiettivo che si
+sposta, lo sgabello che scende). Al Protocollo, pinzata al 27-B, la pratica "Richiesta di cancellazione
+totale. Del quaderno. Firmato: G.", che profuma di fragola. Missioni: gli occhiali del signor Attesa (che
+aspetta dal 1998 lo sportello sbagliato e ti regala l'A 2), il caffè per Tampona (la macchinetta dà il
+caffè "quando vuole lei": un pugno) che le toglie la pausa, l'archivio (di nascosto, durante la merenda di
+Spillatrice): le cancellazioni approvate, Via della Penna respinta, "il quaderno, tutto: in attesa di timbro,
+sportello C". Alle 12:00 si torna "il giorno dopo" con quello che si è fatto. Finale: residenza registrata
+(la quinta in Via della Penna, questa settimana) e il messaggio di Martina per il pranzo della domenica.
 **12. Il pranzo della domenica.** Martina porta Stecco dalla sua famiglia (matite colorate, tutte
 di colori diversi, tutte molto curiose). Bisogna passare i piatti, rispondere a tre parenti insieme
 e non rovesciare niente: si fa tutto contemporaneamente.

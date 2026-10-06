@@ -144,3 +144,14 @@ Object.assign(VOICES, {
   portinaia: { base: 300, type: 'square', spread: 6, every: 2, vol: 0.045 },
   biscotto: { base: 300, type: 'square', spread: 4, every: 2 },
 });
+
+// Capitolo 11
+Object.assign(VOICES, {
+  usciere: { base: 135, type: 'square', spread: 3, every: 3, vol: 0.05 },
+  cartella: { base: 310, type: 'triangle', spread: 3, every: 3 },
+  spillatrice: { base: 360, type: 'square', spread: 8, every: 1, vol: 0.04 },
+  tampona: { base: 270, type: 'sawtooth', spread: 4, every: 2, vol: 0.05 },
+  spiccioli: { base: 175, type: 'triangle', spread: 6, every: 2 },
+  attesa: { base: 120, type: 'sine', spread: 4, every: 3, vol: 0.07, vibrato: 9 },
+});
+for (let i = 0; i < 9; i++) VOICES[`cliente${i}`] = { base: 150 + ((i * 47) % 220), type: i % 3 === 0 ? 'square' : 'triangle', spread: 3 + (i % 5), every: 2 };

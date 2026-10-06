@@ -551,3 +551,104 @@ body.touch .pack { pointer-events: auto; touch-action: none; }
 body.touch .booth { top: 62px; }
 html.compact .booth { zoom: .72; }
 html.compact body.touch .booth { top: 74px; }
+
+/* capitolo 11: il modulo da compilare (carta a modulo continuo) e la penna */
+.modulo {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20;
+  width: min(660px, calc(var(--gw, 100vw) * 0.94)); max-height: calc(var(--gh, 100vh) * 0.92); overflow: hidden;
+  padding: 14px 22px 12px; color: var(--ink); pointer-events: auto;
+  background: repeating-linear-gradient(#f7f8f1 0 21px, #dcebd8 21px 42px);
+  border: 2.5px solid var(--ink); border-radius: 6px 3px 7px 4px; box-shadow: 5px 6px 0 rgba(0,0,0,.22);
+}
+.modulo::before, .modulo::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 12px;
+  background: radial-gradient(circle at 6px 10px, transparent 3px, transparent 3.5px) 0 0 / 12px 21px;
+  border-right: 1.5px dashed rgba(0,0,0,.25);
+}
+.modulo::before { left: 0; } .modulo::after { right: 0; border-right: 0; border-left: 1.5px dashed rgba(0,0,0,.25); }
+.modulo .t { font-family: var(--marker); font-size: 22px; text-align: center; }
+.modulo .n { font-size: 13px; text-align: center; opacity: .7; margin-bottom: 6px; }
+.modulo .f { display: flex; gap: 10px; align-items: baseline; padding: 3px 0; border-bottom: 1px dashed rgba(0,0,0,.2); }
+.modulo .q { flex: 0 0 40%; font-size: 15px; line-height: 1.15; }
+.modulo .q small { display: block; font-size: 11.5px; opacity: .6; }
+.modulo .o { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.modulo .opt { font-size: 15px; padding: 1px 5px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+.modulo .opt i { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--ink); margin-right: 5px; vertical-align: -2px; position: relative; background: #fff; }
+.modulo .opt.ok i::after { content: ''; position: absolute; left: 3px; top: -6px; width: 6px; height: 13px; border-right: 3px solid #d6333a; border-bottom: 3px solid #d6333a; transform: rotate(40deg); }
+.modulo .opt.no { text-decoration: line-through; opacity: .4; }
+.modulo .opt.no i { background: #fff; box-shadow: inset 0 0 0 6px #fff; }
+.modulo .opt.hover { background: rgba(232,176,74,.35); }
+.modulo .f.done .q { opacity: .6; }
+.modulo .msg { min-height: 20px; color: #d6333a; text-align: center; font-size: 15px; margin-top: 4px; }
+.modulo .h { font-size: 12.5px; opacity: .7; text-align: center; }
+.modulo .stamp {
+  position: absolute; right: 26px; bottom: 26px; transform: rotate(-12deg); font-family: var(--marker); font-size: 32px;
+  color: #d6333a; border: 3px solid #d6333a; padding: 2px 12px; opacity: .85; border-radius: 6px;
+}
+.fakecursor { position: absolute; left: 0; top: 0; z-index: 25; pointer-events: none; }
+html.compact #hud .modulo { zoom: .66; max-height: none; }
+html.compact #hud .modulo .f { padding: 1px 0; }
+
+/* capitolo 11: la pratica (orologio, numeri presi, cose fatte) */
+.pratica {
+  position: absolute; left: 14px; bottom: 14px; width: 250px; padding: 8px 12px; font-size: 14px; line-height: 1.25;
+  background: var(--paper-2); border: 2px solid var(--ink); border-radius: var(--sketch-radius); pointer-events: none;
+}
+.pratica .ora { font-family: var(--marker); font-size: 22px; }
+.pratica .ora small { font-family: var(--hand); font-size: 13px; opacity: .7; margin-left: 6px; }
+.pratica .tk { margin: 3px 0 5px; }
+.pratica .tk b { font-family: var(--marker); }
+.pratica .tk .call { color: #d6333a; font-weight: bold; }
+.pratica .c { display: flex; align-items: center; gap: 6px; }
+.pratica .c i { display: inline-block; width: 11px; height: 11px; border: 2px solid var(--ink); position: relative; flex: none; }
+.pratica .c.on { opacity: .55; text-decoration: line-through; }
+.pratica .c.on i::after { content: ''; position: absolute; left: 2px; top: -5px; width: 5px; height: 11px; border-right: 2.5px solid #d6333a; border-bottom: 2.5px solid #d6333a; transform: rotate(40deg); }
+/* sul telefono: una riga in alto al centro (ora e numeri); le cose da fare sono già nell'obiettivo */
+body.touch .pratica { bottom: auto; top: 6px; left: 50%; transform: translateX(-50%); width: auto; max-width: 48%; padding: 3px 10px; font-size: 12.5px; text-align: center; }
+body.touch .pratica .c { display: none; }
+body.touch .pratica .ora { display: inline; font-size: 18px; margin-right: 6px; }
+body.touch .pratica .tk { display: inline; margin: 0; }
+html.compact #hud .pratica { zoom: .72; }
+#hud.in-booth .pratica, #hud.in-menu .pratica { display: none; }
+
+/* capitolo 11: i timbri (Tampona fa oscillare il timbro, tu dici ORA!) */
+.timbri {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20;
+  width: min(640px, calc(var(--gw, 100vw) * 0.94)); padding: 14px 22px 12px; color: var(--ink); pointer-events: none;
+  background: repeating-linear-gradient(#f7f8f1 0 21px, #dcebd8 21px 42px);
+  border: 2.5px solid var(--ink); border-radius: 6px 3px 7px 4px; box-shadow: 5px 6px 0 rgba(0,0,0,.22);
+}
+.timbri .t { font-family: var(--marker); font-size: 22px; text-align: center; }
+.timbri .n { font-size: 13px; text-align: center; opacity: .75; }
+.timbri .area { position: relative; height: 172px; margin: 8px 10px 6px; border-bottom: 1.5px dashed rgba(0,0,0,.25); }
+.timbri .bx { position: absolute; bottom: 6px; height: 66px; border: 2px dashed var(--ink); border-radius: 4px; text-align: center; background: rgba(247,248,241,.7); }
+.timbri .bx span { display: block; font-family: var(--marker); font-size: 22px; line-height: 1.2; }
+.timbri .bx small { display: block; font-size: 10.5px; opacity: .7; line-height: 1; }
+.timbri .bx.next { border-style: solid; border-width: 2.5px; background: rgba(232,176,74,.22); }
+.timbri .bx em {
+  position: absolute; left: 3px; right: 3px; top: 10px; bottom: 8px; display: flex; align-items: center; justify-content: center;
+  color: #2f5fb5; border: 2.5px solid #2f5fb5; border-radius: 50%; font-style: normal; font-family: var(--marker); font-size: 13px;
+  transform: rotate(-9deg); background: rgba(247,248,241,.75);
+}
+.timbri .mk {
+  position: absolute; bottom: 14px; transform: translateX(-50%) rotate(14deg); color: #d6333a; border: 2px solid #d6333a;
+  font-family: var(--marker); font-size: 13px; padding: 0 4px; opacity: .85; background: rgba(247,248,241,.6);
+}
+.timbri .stamper { position: absolute; top: 0; left: 50%; width: 58px; z-index: 2; }
+.timbri .stamper .hd { width: 20px; height: 42px; margin: 0 auto; background: #7a5634; border: 2px solid var(--ink); border-radius: 10px 10px 3px 3px; }
+.timbri .stamper .ft { height: 22px; border: 2.5px solid var(--ink); background: #f7f8f1; font-family: var(--marker); font-size: 11px; text-align: center; line-height: 18px; border-radius: 3px; }
+.timbri .h { font-size: 13px; text-align: center; opacity: .8; min-height: 18px; }
+.timbri .err i { display: inline-block; width: 11px; height: 11px; border: 2px solid var(--ink); border-radius: 50%; margin: 0 2px; vertical-align: -2px; }
+.timbri .err i.on { background: #d6333a; }
+.timbri .stamp {
+  position: absolute; right: 30px; top: 46px; transform: rotate(-12deg); font-family: var(--marker); font-size: 34px;
+  color: #2f5fb5; border: 3px solid #2f5fb5; padding: 2px 12px; opacity: .9; border-radius: 6px; background: rgba(247,248,241,.7);
+}
+.timbri .stamp.bad { color: #d6333a; border-color: #d6333a; }
+html.compact #hud .timbri { zoom: .78; }
+
+/* capitolo 11: la striscia della fototessera (quattro pose) */
+.fotostrip { display: flex; gap: 6px; justify-content: center; margin: 6px 0 2px; }
+.fotostrip svg { background: #f7f8f1; border: 2px solid var(--ink); border-radius: 2px; }
+.fotostrip div { text-align: center; font-size: 12px; }
+.booth .s .big { font-family: var(--marker); font-size: 34px; line-height: 1; }
